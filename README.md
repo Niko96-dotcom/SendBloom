@@ -140,3 +140,24 @@ Automated gates (`ctest` 62 tests, pluginval strictness 5, RT60 impulse tests) m
 6. Send release — tail decays naturally without hard cut.
 
 Reply `approved` when complete, or describe reverb/routing issues found.
+
+### Phase 6 — Wet Overdrive + Dry Integrity DAW Smoke
+
+Automated gates (`ctest` 69 tests, pluginval strictness 5, dry-path THD test) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom on a guitar or DI track.
+2. Set level ~50%, size ~50%, distn ~30%, send on, gate Post, defaults elsewhere.
+3. Play — confirm wash has subtle asymmetric grind on the wet path.
+4. Raise **distn** to 100% — confirm grind increases on wash only; dry pick attack unchanged.
+5. Level at 100% with distn max — dry guitar stays pristine (no added grit on direct signal).
+6. Bloom-then-chop routing still feels correct.
+
+Reply `approved` when complete, or describe overdrive/routing issues found.
+
