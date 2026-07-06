@@ -64,6 +64,19 @@ target_link_libraries(SharedCode
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
 
+juce_add_binary_data(SendBloomPresets
+    SOURCES
+        resources/presets/Sparkle_Verb.xml
+        resources/presets/Cut_Sample_Gate.xml
+        resources/presets/Spacerock_Burn.xml
+        resources/presets/Dry_Dub_Sends.xml
+        resources/presets/Dark_Bloom.xml
+        resources/presets/Firm_Pressure.xml
+        resources/presets/Gated_Room.xml
+        resources/presets/Hot_Clip.xml)
+
+target_link_libraries(SharedCode INTERFACE SendBloomPresets)
+
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 
 # include(PamplejuceIPP)

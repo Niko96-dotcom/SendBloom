@@ -200,3 +200,23 @@ Automated gates (`ctest` 88 tests, pluginval strictness 7, realtime stress + Fdn
 
 Reply `approved` when complete, or describe stability/latency issues found.
 
+### Phase 9 — UI + Presets DAW Smoke
+
+Automated gates (`ctest` 96 tests, pluginval strictness 7, preset round-trip tests) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom; confirm pedal layout (In, Size, Lvl, Distn, Out + Dark + Gate toggles).
+2. Press and drag on the pressure pad — bloom visual and send response.
+3. Drive input hot — CLIP LED lights during clip hold.
+4. Open Advanced drawer — Gate Sens, Send Feel, 32k Color active; Extended Stereo / Dirt OS greyed out.
+5. Load each of 8 factory presets from the menu; audition briefly.
+6. Save a user preset in the host; reload and confirm parameters match.
+
+Reply `approved` when complete, or describe UI/preset issues found.
+

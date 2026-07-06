@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<SendBloomParams>
+  <PARAM id="input_gain" value="0.6"/>
+  <PARAM id="input_threshold" value="0.55"/>
+  <PARAM id="size" value="0.25"/>
+  <PARAM id="level" value="0.55"/>
+  <PARAM id="distn" value="0.2"/>
+  <PARAM id="output_gain" value="0.0"/>
+  <PARAM id="dark_mode" value="0"/>
+  <PARAM id="gate_pre_post" value="1"/>
+  <PARAM id="send_connected" value="0"/>
+  <PARAM id="send_amount" value="0.7"/>
+  <PARAM id="send_feel" value="0"/>
+  <PARAM id="authentic_color" value="1"/>
+  <PARAM id="extended_stereo" value="0"/>
+  <PARAM id="dirt_os" value="0"/>
+  <PARAM id="bypass" value="0"/>
+</SendBloomParams>
