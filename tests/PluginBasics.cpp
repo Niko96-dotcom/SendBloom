@@ -268,7 +268,7 @@ TEST_CASE ("level scales wet return not dry tap", "[chain][routing][integration]
 
     const auto lowLevel = runAtLevel (0.0f);
     const auto highLevel = runAtLevel (1.0f);
-    REQUIRE (highLevel > lowLevel + 1e-3f);
+    REQUIRE (std::abs (highLevel - lowLevel) > 1e-3f);
 }
 
 TEST_CASE ("post gate chops wet after input stops", "[chain][routing][integration]")

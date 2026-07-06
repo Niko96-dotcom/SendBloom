@@ -120,3 +120,23 @@ Automated gates (`ctest` 53 tests, pluginval strictness 5) must pass before huma
 7. Toggle Pre/Post — gate position changes on wet path only.
 
 Reply `approved` when complete, or describe IO/gate issues found.
+
+### Phase 5 — SchroederTank32 Reverb DAW Smoke
+
+Automated gates (`ctest` 62 tests, pluginval strictness 5, RT60 impulse tests) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom on a guitar or DI track.
+2. Raise **Size** — reverb tail lengthens audibly.
+3. Toggle **Dark** — predelay + darker tail vs Bright (immediate, brighter).
+4. **authentic_color** ON — subtle lo-fi FV-style coloration.
+5. Bloom-then-chop routing still feels correct (dry clean, wet gated).
+6. Send release — tail decays naturally without hard cut.
+
+Reply `approved` when complete, or describe reverb/routing issues found.
