@@ -6,6 +6,7 @@
 #include "ParameterCurves.h"
 #include "BypassCrossfade.h"
 #include "ParallelWetMixer.h"
+#include "OutputStage.h"
 
 namespace sendbloom
 {
@@ -102,6 +103,7 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     smoothedBank.prepare (sampleRate);
     chain.prepare (sampleRate, samplesPerBlock);
+    inputStage.prepare (sampleRate);
     dryBuffer.setSize (getTotalNumOutputChannels(), samplesPerBlock);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
     smoothedBank.snapToTargets();
@@ -176,7 +178,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             monoSum += dryBuffer.getReadPointer (channel)[sample];
 
         monoSum /= static_cast<float> (numChannels);
-        const auto monoIn = monoSum * inputGain;
+        const auto monoIn = inputStage.processSample (monoSum, inputGain);
         const auto env = chain.getEnvelope().process (std::abs (monoIn));
         const auto wet = chain.processSample (monoIn, env, rt60, distnBlend, sendGain,
                                               gatePreSoft, thresholdDb);
@@ -185,7 +187,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
             const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
-            buffer.getWritePointer (channel)[sample] = (dryTap * dryMix + mixed * bypassWet) * outputGain;
+            const auto preOutput = dryTap * dryMix + mixed * bypassWet;
+            buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
         }
     }
 }

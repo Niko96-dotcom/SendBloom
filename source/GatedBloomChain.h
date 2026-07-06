@@ -1,9 +1,9 @@
 #pragma once
 
+#include "EnvelopeDetector.h"
+#include "NoiseGate.h"
 #include "PlaceholderReverb.h"
 #include "PlaceholderWetDirt.h"
-#include "StubInputEnvelope.h"
-#include "StubNoiseGate.h"
 #include "StubPressureSend.h"
 
 namespace sendbloom
@@ -15,13 +15,13 @@ public:
     void prepare (double sampleRate, int maxBlockSize) noexcept
     {
         reverb.prepare (sampleRate, maxBlockSize);
-        envelope.prepare (sampleRate);
-        preGate.prepare (sampleRate, 150.0f, 0.1f);
-        postGate.prepare (sampleRate, 7.0f, 0.0f);
+        envelope.prepare (sampleRate, 5.0f, 10.0f);
+        preGate.prepare (sampleRate, GateProfile::PreSoft);
+        postGate.prepare (sampleRate, GateProfile::PostHard);
     }
 
-    StubInputEnvelope& getEnvelope() noexcept { return envelope; }
-    const StubInputEnvelope& getEnvelope() const noexcept { return envelope; }
+    EnvelopeDetector& getEnvelope() noexcept { return envelope; }
+    const EnvelopeDetector& getEnvelope() const noexcept { return envelope; }
 
     float processSample (float input,
                          float inputEnvelope,
@@ -48,9 +48,9 @@ public:
 
 private:
     PlaceholderReverb reverb;
-    StubInputEnvelope envelope;
-    StubNoiseGate preGate;
-    StubNoiseGate postGate;
+    EnvelopeDetector envelope;
+    NoiseGate preGate;
+    NoiseGate postGate;
 };
 
 } // namespace sendbloom

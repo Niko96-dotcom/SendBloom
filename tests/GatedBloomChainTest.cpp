@@ -79,10 +79,10 @@ TEST_CASE ("GatedBloomChain wet-only dirt increases wet magnitude", "[chain][rou
     REQUIRE (mixedDirty == Catch::Approx (dryTap + dirtyWet.back() * 0.5f).margin (1e-4f));
 }
 
-TEST_CASE ("StubInputEnvelope decays during silence", "[chain][routing][envelope]")
+TEST_CASE ("EnvelopeDetector decays during silence", "[chain][routing][envelope]")
 {
-    sendbloom::StubInputEnvelope env;
-    env.prepare (kSampleRate);
+    sendbloom::EnvelopeDetector env;
+    env.prepare (kSampleRate, 5.0f, 10.0f);
 
     for (int i = 0; i < kWarmupSamples; ++i)
         env.process (0.5f);
@@ -106,7 +106,7 @@ TEST_CASE ("GatedBloomChain post gate keyed from input envelope", "[chain][routi
     for (int i = 0; i < kWarmupSamples; ++i)
         wet.push_back (processChainSample (chain, 0.5f, rt60, 0.3f, 1.0f, false));
 
-    for (int i = 0; i < 2400; ++i)
+    for (int i = 0; i < 4800; ++i)
         wet.push_back (processChainSample (chain, 0.0f, rt60, 0.3f, 1.0f, false));
 
     const auto silenceSlice = std::vector<float> (wet.end() - 512, wet.end());

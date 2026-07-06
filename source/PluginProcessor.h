@@ -4,6 +4,8 @@
 #include "ParameterSnapshot.h"
 #include "SmoothedParameterBank.h"
 #include "GatedBloomChain.h"
+#include "InputStage.h"
+#include "OutputStage.h"
 
 namespace sendbloom
 {
@@ -52,6 +54,7 @@ public:
     SmoothedParameterBank smoothedBank;
     juce::AudioBuffer<float> dryBuffer;
     GatedBloomChain chain;
+    InputStage inputStage;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
