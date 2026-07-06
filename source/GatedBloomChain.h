@@ -4,7 +4,7 @@
 #include "NoiseGate.h"
 #include "SchroederTank32.h"
 #include "WetOverdrive.h"
-#include "StubPressureSend.h"
+#include "PressureSend.h"
 
 namespace sendbloom
 {
@@ -38,7 +38,7 @@ public:
         if (gatePreSoft)
             wet *= preGate.process (inputEnvelope, thresholdDb);
 
-        wet = StubPressureSend::process (wet, sendGain);
+        wet = PressureSend::process (wet, sendGain);
         wet = reverb.processSample (wet, rt60Seconds, darkModeMix, authenticColor);
         wet = WetOverdrive::process (wet, distnBlend);
 

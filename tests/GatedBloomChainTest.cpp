@@ -127,12 +127,15 @@ TEST_CASE ("GatedBloomChain send release preserves tank energy", "[chain][routin
     for (int i = 0; i < kWarmupSamples; ++i)
         wet.push_back (processChainSample (chain, 0.5f, rt60, 0.0f, 1.0f, true));
 
-    for (int i = 0; i < 240; ++i)
+    constexpr auto kTrailSamples = 24000;
+    for (int i = 0; i < kTrailSamples; ++i)
         wet.push_back (processChainSample (chain, 0.0f, rt60, 0.0f, 0.0f, true));
 
-    const auto tailSlice = std::vector<float> (wet.end() - 240, wet.end());
-    REQUIRE (sendbloom::test::rms (tailSlice) > 1e-4f);
-    REQUIRE (sendbloom::test::rms (tailSlice) > 1e-6f);
+    const auto tailAt500ms = std::vector<float> (wet.end() - 480, wet.end() - 480 + 240);
+    REQUIRE (sendbloom::test::rms (tailAt500ms) > 1e-5f);
+
+    const auto finalSlice = std::vector<float> (wet.end() - 240, wet.end());
+    REQUIRE (sendbloom::test::rms (finalSlice) > 1e-6f);
 }
 
 TEST_CASE ("GatedBloomChain topology smoke with reverb stub", "[chain][routing][GatedBloomChain][tank]")
