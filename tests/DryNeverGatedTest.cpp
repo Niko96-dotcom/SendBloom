@@ -14,13 +14,13 @@ TEST_CASE ("Dry path unchanged when gate closes wet", "[gate][DryNever][GatedBlo
     for (int i = 0; i < 15000; ++i)
     {
         const auto env = chain.getEnvelope().process (0.5f);
-        chain.processSample (0.5f, env, 1.0f, 0.0f, 1.0f, false, kThresholdDb);
+        chain.processSample (0.5f, env, 1.0f, 0.0f, false, 0.0f, 1.0f, false, kThresholdDb);
     }
 
     for (int i = 0; i < 4800; ++i)
     {
         const auto env = chain.getEnvelope().process (0.0f);
-        const auto wet = chain.processSample (0.0f, env, 1.0f, 0.0f, 1.0f, false, kThresholdDb);
+        const auto wet = chain.processSample (0.0f, env, 1.0f, 0.0f, false, 0.0f, 1.0f, false, kThresholdDb);
         const auto mixed = sendbloom::ParallelWetMixer::mix (dryTap, wet, 0.0f);
         REQUIRE (mixed == Catch::Approx (dryTap));
     }
@@ -37,7 +37,7 @@ TEST_CASE ("Pre gate affects wet only not dry tap", "[gate][DryNever][GatedBloom
     for (int i = 0; i < 15000; ++i)
     {
         const auto env = chain.getEnvelope().process (0.0f);
-        const auto wet = chain.processSample (0.0f, env, 1.0f, 0.0f, 1.0f, true, kThresholdDb);
+        const auto wet = chain.processSample (0.0f, env, 1.0f, 0.0f, false, 0.0f, 1.0f, true, kThresholdDb);
         const auto mixed = sendbloom::ParallelWetMixer::mix (dryTap, wet, 0.5f);
         REQUIRE (mixed == Catch::Approx (dryTap + wet * 0.5f).margin (1e-4f));
     }

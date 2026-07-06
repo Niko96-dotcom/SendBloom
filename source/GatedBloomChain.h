@@ -2,7 +2,7 @@
 
 #include "EnvelopeDetector.h"
 #include "NoiseGate.h"
-#include "PlaceholderReverb.h"
+#include "SchroederTank32.h"
 #include "PlaceholderWetDirt.h"
 #include "StubPressureSend.h"
 
@@ -26,6 +26,8 @@ public:
     float processSample (float input,
                          float inputEnvelope,
                          float rt60Seconds,
+                         float darkModeMix,
+                         bool authenticColor,
                          float distnBlend,
                          float sendGain,
                          bool gatePreSoft,
@@ -37,7 +39,7 @@ public:
             wet *= preGate.process (inputEnvelope, thresholdDb);
 
         wet = StubPressureSend::process (wet, sendGain);
-        wet = reverb.processSample (wet, rt60Seconds);
+        wet = reverb.processSample (wet, rt60Seconds, darkModeMix, authenticColor);
         wet = PlaceholderWetDirt::process (wet, distnBlend);
 
         if (! gatePreSoft)
@@ -47,7 +49,7 @@ public:
     }
 
 private:
-    PlaceholderReverb reverb;
+    SchroederTank32 reverb;
     EnvelopeDetector envelope;
     NoiseGate preGate;
     NoiseGate postGate;

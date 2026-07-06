@@ -166,7 +166,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         const auto outputGain = smoothedBank.getNextOutputGainLinear();
 
         (void) smoothedBank.getNextLevelDryGain();
-        (void) smoothedBank.getNextDarkModeTarget();
+        const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
+        const auto authenticColor = smoothedBank.getNextAuthenticColorTarget() > 0.5f;
 
         const auto rt60 = ParameterCurves::sizeToRT60 (sizeNorm);
         const auto thresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
@@ -180,8 +181,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         monoSum /= static_cast<float> (numChannels);
         const auto monoIn = inputStage.processSample (monoSum, inputGain);
         const auto env = chain.getEnvelope().process (std::abs (monoIn));
-        const auto wet = chain.processSample (monoIn, env, rt60, distnBlend, sendGain,
-                                              gatePreSoft, thresholdDb);
+        const auto wet = chain.processSample (monoIn, env, rt60, darkModeMix, authenticColor,
+                                              distnBlend, sendGain, gatePreSoft, thresholdDb);
 
         for (int channel = 0; channel < numChannels; ++channel)
         {

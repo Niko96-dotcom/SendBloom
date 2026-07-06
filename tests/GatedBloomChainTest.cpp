@@ -20,10 +20,13 @@ float processChainSample (sendbloom::GatedBloomChain& chain,
                           float rt60,
                           float distnBlend,
                           float sendGain,
-                          bool gatePreSoft)
+                          bool gatePreSoft,
+                          float darkModeMix = 0.0f,
+                          bool authenticColor = false)
 {
     const auto env = chain.getEnvelope().process (std::abs (input));
-    return chain.processSample (input, env, rt60, distnBlend, sendGain, gatePreSoft, kThresholdDb);
+    return chain.processSample (input, env, rt60, darkModeMix, authenticColor,
+                                distnBlend, sendGain, gatePreSoft, kThresholdDb);
 }
 
 std::vector<float> renderChain (sendbloom::GatedBloomChain& chain,
