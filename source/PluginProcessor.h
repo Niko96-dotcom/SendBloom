@@ -1,6 +1,8 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "ParameterSnapshot.h"
+#include "SmoothedParameterBank.h"
 
 namespace sendbloom
 {
@@ -45,6 +47,8 @@ public:
     juce::AudioProcessorParameter* getBypassParameter() const override;
 
     juce::AudioProcessorValueTreeState apvts;
+
+    SmoothedParameterBank smoothedBank;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)

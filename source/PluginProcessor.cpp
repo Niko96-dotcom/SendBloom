@@ -2,6 +2,7 @@
 #include "PluginEditor.h"
 #include "ParameterLayout.h"
 #include "ParameterIDs.h"
+#include "ParameterSnapshot.h"
 
 namespace sendbloom
 {
@@ -96,7 +97,10 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 
 void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    juce::ignoreUnused (samplesPerBlock);
+    smoothedBank.prepare (sampleRate);
+    smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
+    smoothedBank.snapToTargets();
 }
 
 void PluginProcessor::releaseResources()
@@ -134,7 +138,29 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // Passthrough: input samples remain unchanged in-place.
+    const auto snap = ParameterSnapshot::capture (apvts);
+    smoothedBank.setTargets (snap);
+
+    const auto numSamples = buffer.getNumSamples();
+
+    for (int sample = 0; sample < numSamples; ++sample)
+    {
+        const auto inputGain = smoothedBank.getNextInputGainLinear();
+        const auto outputGain = smoothedBank.getNextOutputGainLinear();
+
+        // Advance all smoothers each sample to keep bank state aligned.
+        (void) smoothedBank.getNextSizeNorm();
+        (void) smoothedBank.getNextInputThresholdNorm();
+        (void) smoothedBank.getNextLevelWetGain();
+        (void) smoothedBank.getNextLevelDryGain();
+        (void) smoothedBank.getNextDistnBlend();
+        (void) smoothedBank.getNextSendGain();
+        (void) smoothedBank.getNextDarkModeTarget();
+        (void) smoothedBank.getNextBypassWetMix();
+
+        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+            buffer.getWritePointer (channel)[sample] *= inputGain * outputGain;
+    }
 }
 
 bool PluginProcessor::hasEditor() const
