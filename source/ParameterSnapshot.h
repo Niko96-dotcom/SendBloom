@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ParameterCurves.h>
-#include <ParameterIDs.h>
+#include "ParameterCurves.h"
+#include "ParameterIDs.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace sendbloom
