@@ -220,3 +220,36 @@ Automated gates (`ctest` 96 tests, pluginval strictness 7, preset round-trip tes
 
 Reply `approved` when complete, or describe UI/preset issues found.
 
+### Phase 10 — Multi-DAW Release Smoke
+
+Automated gates (`ctest` 103 tests, pluginval strictness **10**, legal metadata audit) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Logic (AU):**
+
+1. Copy or symlink `SendBloom.component` to `~/Library/Audio/Plug-Ins/Components/`.
+2. Rescan plugins in Logic; load SendBloom on a guitar track.
+3. Confirm pedal UI, all 8 factory presets, pressure pad, and clip LED.
+4. Process audio 2+ minutes — no dropouts or runaway feedback.
+
+**Cubase (VST3):**
+
+1. Install `SendBloom.vst3` to system VST3 folder.
+2. Rescan; insert on audio track.
+3. Confirm plugin info shows SendBloom / Niko Audio Labs.
+4. Toggle bypass; confirm dry passthrough when bypassed.
+
+**REAPER (VST3):**
+
+1. Add SendBloom as track FX (VST3).
+2. Confirm UI and parameter automation slots.
+3. Test pressure pad send and gate Pre/Post toggle during playback.
+
+Reply `approved` when all three hosts pass, or describe host-specific failures.
+
+See also `docs/RELEASE_CHECKLIST.md` and `docs/CLEAN_ROOM.md`.
+
