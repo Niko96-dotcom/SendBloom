@@ -2,6 +2,7 @@
 #include "PluginEditor.h"
 #include "ParameterLayout.h"
 #include "ParameterIDs.h"
+#include "FactoryPresets.h"
 #include "ParameterSnapshot.h"
 #include "ParameterCurves.h"
 #include "BypassCrossfade.h"
@@ -76,23 +77,27 @@ double PluginProcessor::getTailLengthSeconds() const
 
 int PluginProcessor::getNumPrograms()
 {
-    return 1;
+    return FactoryPresets::kNumPresets;
 }
 
 int PluginProcessor::getCurrentProgram()
 {
-    return 0;
+    return currentProgramIndex;
 }
 
 void PluginProcessor::setCurrentProgram (int index)
 {
-    juce::ignoreUnused (index);
+    if (index < 0 || index >= FactoryPresets::kNumPresets)
+        return;
+
+    currentProgramIndex = index;
+    FactoryPresets::applyPreset (apvts, index);
+    smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
 }
 
 const juce::String PluginProcessor::getProgramName (int index)
 {
-    juce::ignoreUnused (index);
-    return {};
+    return FactoryPresets::getPresetName (index);
 }
 
 void PluginProcessor::changeProgramName (int index, const juce::String& newName)
@@ -208,6 +213,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
         }
     }
+
+    clipHoldFlag.store (inputStage.isClipHoldActive());
 }
 
 bool PluginProcessor::hasEditor() const

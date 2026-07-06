@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ParameterSnapshot.h"
 #include "SmoothedParameterBank.h"
@@ -49,6 +50,8 @@ public:
 
     juce::AudioProcessorParameter* getBypassParameter() const override;
 
+    bool isClipHoldActive() const noexcept { return clipHoldFlag.load(); }
+
     juce::AudioProcessorValueTreeState apvts;
 
     SmoothedParameterBank smoothedBank;
@@ -57,6 +60,9 @@ public:
     InputStage inputStage;
 
 private:
+    std::atomic<bool> clipHoldFlag { false };
+    int currentProgramIndex { 0 };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
 
