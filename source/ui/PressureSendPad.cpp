@@ -42,6 +42,7 @@ void PressureSendPad::paint (juce::Graphics& g)
 
 void PressureSendPad::mouseDown (const juce::MouseEvent& e)
 {
+    stopBloomFade();
     isPressed = true;
     touchPoint = e.position;
     setConnected (true);
@@ -60,8 +61,18 @@ void PressureSendPad::mouseUp (const juce::MouseEvent&)
 {
     isPressed = false;
     setConnected (false);
-    displayAmount = 0.0f;
+    startBloomFade();
+}
+
+void PressureSendPad::timerCallback()
+{
+    const auto elapsed = juce::Time::getMillisecondCounterHiRes() - fadeStartTimeMs;
+    const auto progress = juce::jlimit (0.0, 1.0, elapsed / static_cast<double> (kBloomFadeMs));
+    displayAmount = fadeStartAmount * static_cast<float> (1.0 - progress);
     repaint();
+
+    if (progress >= 1.0)
+        stopBloomFade();
 }
 
 void PressureSendPad::setConnected (bool connected)
@@ -79,6 +90,26 @@ void PressureSendPad::setAmountFromY (float y)
     const auto norm = juce::jlimit (0.0f, 1.0f, 1.0f - (y - bounds.getY()) / bounds.getHeight());
     amountParam->setValueNotifyingHost (norm);
     displayAmount = norm;
+}
+
+void PressureSendPad::startBloomFade()
+{
+    if (displayAmount <= 0.001f)
+    {
+        displayAmount = 0.0f;
+        repaint();
+        return;
+    }
+
+    fadeStartAmount = displayAmount;
+    fadeStartTimeMs = juce::Time::getMillisecondCounterHiRes();
+    startTimerHz (60);
+}
+
+void PressureSendPad::stopBloomFade()
+{
+    stopTimer();
+    displayAmount = 0.0f;
 }
 
 float PressureSendPad::currentAmount() const

@@ -6,7 +6,7 @@
 namespace sendbloom::ui
 {
 
-class PressureSendPad : public juce::Component
+class PressureSendPad : public juce::Component, private juce::Timer
 {
 public:
     PressureSendPad (juce::AudioProcessorValueTreeState& apvts,
@@ -19,15 +19,22 @@ public:
     void mouseUp (const juce::MouseEvent& e) override;
 
 private:
+    void timerCallback() override;
     void setConnected (bool connected);
     void setAmountFromY (float y);
+    void startBloomFade();
+    void stopBloomFade();
     float currentAmount() const;
+
+    static constexpr int kBloomFadeMs = 200;
 
     juce::RangedAudioParameter* connectedParam { nullptr };
     juce::RangedAudioParameter* amountParam { nullptr };
     juce::Point<float> touchPoint;
     bool isPressed { false };
     float displayAmount { 0.0f };
+    float fadeStartAmount { 0.0f };
+    double fadeStartTimeMs { 0.0 };
 };
 
 } // namespace sendbloom::ui
