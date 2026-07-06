@@ -76,4 +76,26 @@ codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/VST3/SendBloom.
 codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/AU/SendBloom.component"
 ```
 
-Document results in phase verification notes when completing Phase 1.
+### Phase 3 — Ugly Signature Chain DAW Smoke
+
+Automated gates (`ctest` 36 tests, pluginval strictness 5) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom from the artefact paths above on a guitar or DI track.
+2. Set level ~50%, size ~50%, distn ~30%, send connected on, gate Post, defaults elsewhere.
+3. Play a palm-muted riff — confirm dry attack stays clean while wash blooms in parallel.
+4. Raise distn to 100% — confirm grind on the wash only; dry pick attack unchanged.
+5. Stop playing — confirm wet chops hard within ~15 ms ("edited sample" feel) with gate Post active.
+6. Hold send pad or automate send 1→0 during ring — confirm tail decays naturally, not instant mute.
+7. Toggle gate Pre — confirm hum-suppression character changes on the wet feed (crude stub OK).
+8. Note tone is intentionally ugly; routing feel is the pass criteria.
+
+Reply `approved` in the GSD session when complete, or describe routing issues found.
+
+Document results in phase verification notes when completing Phase 3.
