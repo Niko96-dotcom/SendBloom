@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ParameterSnapshot.h"
 #include "SmoothedParameterBank.h"
+#include "DummyDspHooks.h"
 
 namespace sendbloom
 {
@@ -49,6 +50,8 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
     SmoothedParameterBank smoothedBank;
+    juce::AudioBuffer<float> dryBuffer;
+    DummyDspState dummyState;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)

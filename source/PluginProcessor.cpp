@@ -3,6 +3,8 @@
 #include "ParameterLayout.h"
 #include "ParameterIDs.h"
 #include "ParameterSnapshot.h"
+#include "BypassCrossfade.h"
+#include "DummyDspHooks.h"
 
 namespace sendbloom
 {
@@ -97,8 +99,9 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 
 void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    juce::ignoreUnused (samplesPerBlock);
     smoothedBank.prepare (sampleRate);
+    dummyState.prepare (sampleRate);
+    dryBuffer.setSize (getTotalNumOutputChannels(), samplesPerBlock);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
     smoothedBank.snapToTargets();
 }
@@ -142,24 +145,35 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedBank.setTargets (snap);
 
     const auto numSamples = buffer.getNumSamples();
+    const auto numChannels = juce::jmin (buffer.getNumChannels(), dryBuffer.getNumChannels());
+
+    for (int channel = 0; channel < numChannels; ++channel)
+        dryBuffer.copyFrom (channel, 0, buffer, channel, 0, numSamples);
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
         const auto inputGain = smoothedBank.getNextInputGainLinear();
+        const auto sizeNorm = smoothedBank.getNextSizeNorm();
+        const auto distnBlend = smoothedBank.getNextDistnBlend();
+        const auto wetLevel = smoothedBank.getNextLevelWetGain();
+        const auto sendGain = smoothedBank.getNextSendGain();
+        const auto darkTarget = smoothedBank.getNextDarkModeTarget();
+        const auto bypassWet = smoothedBank.getNextBypassWetMix();
         const auto outputGain = smoothedBank.getNextOutputGainLinear();
 
-        // Advance all smoothers each sample to keep bank state aligned.
-        (void) smoothedBank.getNextSizeNorm();
         (void) smoothedBank.getNextInputThresholdNorm();
-        (void) smoothedBank.getNextLevelWetGain();
         (void) smoothedBank.getNextLevelDryGain();
-        (void) smoothedBank.getNextDistnBlend();
-        (void) smoothedBank.getNextSendGain();
-        (void) smoothedBank.getNextDarkModeTarget();
-        (void) smoothedBank.getNextBypassWetMix();
 
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-            buffer.getWritePointer (channel)[sample] *= inputGain * outputGain;
+        const auto dryMix = 1.0f - bypassWet;
+
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            auto wet = buffer.getWritePointer (channel)[sample] * inputGain;
+            wet = DummyDspHooks::processSample (wet, sizeNorm, distnBlend, wetLevel, sendGain,
+                                                darkTarget, dummyState, channel);
+            const auto dry = dryBuffer.getReadPointer (channel)[sample];
+            buffer.getWritePointer (channel)[sample] = (dry * dryMix + wet * bypassWet) * outputGain;
+        }
     }
 }
 
