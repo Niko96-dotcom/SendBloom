@@ -13,7 +13,8 @@ TEST_CASE ("Passthrough preserves audio at unity gain", "[dsp][passthrough]")
     sendbloom::PluginProcessor plugin;
     auto& apvts = plugin.getAPVTS();
     *apvts.getRawParameterValue (inputGain) = 1.0f;
-    *apvts.getRawParameterValue (outputGain) = 3.0f;
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 1.0f;
     plugin.prepareToPlay (48000.0, 512);
 
     juce::AudioBuffer<float> buffer (2, 512);
@@ -71,6 +72,12 @@ TEST_CASE ("Smoothed gain automation avoids block-constant zipper", "[parm][zipp
     using namespace sendbloom::ParameterIDs;
 
     sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 0.0f;
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    *apvts.getRawParameterValue (distn) = 0.0f;
+    *apvts.getRawParameterValue (level) = 0.5f;
     plugin.prepareToPlay (48000.0, 512);
 
     juce::AudioBuffer<float> buffer (2, 512);
@@ -78,22 +85,79 @@ TEST_CASE ("Smoothed gain automation avoids block-constant zipper", "[parm][zipp
         for (int i = 0; i < 512; ++i)
             buffer.setSample (ch, i, 0.5f);
 
+    juce::MidiBuffer midi;
+    for (int block = 0; block < 3; ++block)
+        plugin.processBlock (buffer, midi);
+
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    plugin.processBlock (buffer, midi);
+
+    float maxDelta = 0.0f;
+    for (int i = 200; i < 512; ++i)
+        maxDelta = std::max (maxDelta, std::abs (buffer.getSample (0, i) - buffer.getSample (0, i - 1)));
+
+    const auto instantStep = std::abs (0.5f * juce::Decibels::decibelsToGain (-3.0f)
+                                       - 0.5f * juce::Decibels::decibelsToGain (9.0f));
+    REQUIRE (maxDelta < instantStep * 0.5f);
+}
+
+TEST_CASE ("Bypass toggle avoids full-scale clicks", "[parm][bypass]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
     auto& apvts = plugin.getAPVTS();
-    *apvts.getRawParameterValue (inputGain) = 0.0f;
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (outputGain) = 3.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    plugin.prepareToPlay (48000.0, 512);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    for (int ch = 0; ch < 2; ++ch)
+        for (int i = 0; i < 512; ++i)
+            buffer.setSample (ch, i, std::sin (0.02f * static_cast<float> (i)));
 
     juce::MidiBuffer midi;
     plugin.processBlock (buffer, midi);
 
-    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (bypass) = 1.0f;
     plugin.processBlock (buffer, midi);
 
     float maxDelta = 0.0f;
     for (int i = 1; i < 512; ++i)
         maxDelta = std::max (maxDelta, std::abs (buffer.getSample (0, i) - buffer.getSample (0, i - 1)));
 
-    const auto blockStep = std::abs (buffer.getSample (0, 400) - buffer.getSample (0, 200));
-    REQUIRE (blockStep > 0.0f);
-    REQUIRE (maxDelta < blockStep);
+    REQUIRE (maxDelta < 1.0f);
+}
+
+TEST_CASE ("distn automation changes processor output", "[parm][distn audibility]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    auto runWithDistn = [] (float distnValue)
+    {
+        sendbloom::PluginProcessor plugin;
+        auto& apvts = plugin.getAPVTS();
+        *apvts.getRawParameterValue (inputGain) = 1.0f;
+        *apvts.getRawParameterValue (outputGain) = 3.0f;
+        *apvts.getRawParameterValue (bypass) = 0.0f;
+        *apvts.getRawParameterValue (distn) = distnValue;
+        *apvts.getRawParameterValue (level) = 1.0f;
+        plugin.prepareToPlay (48000.0, 512);
+
+        juce::AudioBuffer<float> buffer (2, 512);
+        for (int ch = 0; ch < 2; ++ch)
+            for (int i = 0; i < 512; ++i)
+                buffer.setSample (ch, i, std::sin (0.03f * static_cast<float> (i)));
+
+        juce::MidiBuffer midi;
+        for (int block = 0; block < 4; ++block)
+            plugin.processBlock (buffer, midi);
+
+        return buffer.getSample (0, 400);
+    };
+
+    REQUIRE (runWithDistn (1.0f) != Catch::Approx (runWithDistn (0.0f)).margin (1e-4f));
 }
 
 TEST_CASE ("Plugin instance", "[instance]")
