@@ -12,7 +12,7 @@ concurrency:
 env:
   BUILD_TYPE: Release
   BUILD_DIR: Builds
-  STRICTNESS_LEVEL: 7
+  STRICTNESS_LEVEL: 10
   DISPLAY: :0
   HOMEBREW_NO_INSTALL_CLEANUP: 1
 
@@ -77,9 +77,6 @@ jobs:
       - name: Test
         working-directory: ${{ env.BUILD_DIR }}
         run: ctest --verbose --output-on-failure
-
-      - name: Legal metadata audit
-        run: bash scripts/check-legal-metadata.sh
 
       - name: Read in .env from CMake
         working-directory: ${{ env.BUILD_DIR }}

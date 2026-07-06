@@ -52,14 +52,14 @@ while IFS= read -r line; do
   done
 done < CMakeLists.txt
 
-for path in source tests README.md .github/workflows; do
+for path in source tests README.md .github/workflows resources/presets resources; do
   [[ -e "$path" ]] || continue
   if [[ -f "$path" ]]; then
     scan_file "$path"
   else
     while IFS= read -r -d '' file; do
       scan_file "$file"
-    done < <(find "$path" -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" \) -print0)
+    done < <(find "$path" -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" -o -name "*.xml" -o -name "*.txt" \) -print0)
   fi
 done
 
