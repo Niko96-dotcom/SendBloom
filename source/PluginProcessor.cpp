@@ -22,6 +22,7 @@ PluginProcessor::PluginProcessor()
                        ),
        apvts (*this, nullptr, "SendBloomParams", createParameterLayout())
 {
+    setLatencySamples (0);
 }
 
 PluginProcessor::~PluginProcessor() = default;

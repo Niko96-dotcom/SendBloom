@@ -1,10 +1,13 @@
 #pragma once
 
 #include "EnvelopeDetector.h"
+#include "Fdn8Reverb.h"
+#include "IReverbEngine.h"
 #include "NoiseGate.h"
+#include "PressureSend.h"
 #include "SchroederTank32.h"
 #include "WetOverdrive.h"
-#include "PressureSend.h"
+#include <memory>
 
 namespace sendbloom
 {
@@ -14,10 +17,18 @@ class GatedBloomChain
 public:
     void prepare (double sampleRate, int maxBlockSize) noexcept
     {
-        reverb.prepare (sampleRate, maxBlockSize);
+        if (reverb == nullptr)
+            reverb = std::make_unique<SchroederTank32>();
+
+        reverb->prepare (sampleRate, maxBlockSize);
         envelope.prepare (sampleRate, 5.0f, 10.0f);
         preGate.prepare (sampleRate, GateProfile::PreSoft);
         postGate.prepare (sampleRate, GateProfile::PostHard);
+    }
+
+    void setReverbEngineForTests (std::unique_ptr<IReverbEngine> engine) noexcept
+    {
+        reverb = std::move (engine);
     }
 
     EnvelopeDetector& getEnvelope() noexcept { return envelope; }
@@ -39,7 +50,7 @@ public:
             wet *= preGate.process (inputEnvelope, thresholdDb);
 
         wet = PressureSend::process (wet, sendGain);
-        wet = reverb.processSample (wet, rt60Seconds, darkModeMix, authenticColor);
+        wet = reverb->processSample (wet, rt60Seconds, darkModeMix, authenticColor);
         wet = WetOverdrive::process (wet, distnBlend);
 
         if (! gatePreSoft)
@@ -49,7 +60,7 @@ public:
     }
 
 private:
-    SchroederTank32 reverb;
+    std::unique_ptr<IReverbEngine> reverb;
     EnvelopeDetector envelope;
     NoiseGate preGate;
     NoiseGate postGate;
