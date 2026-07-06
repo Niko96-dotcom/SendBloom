@@ -99,3 +99,24 @@ Automated gates (`ctest` 36 tests, pluginval strictness 5) must pass before huma
 Reply `approved` in the GSD session when complete, or describe routing issues found.
 
 Document results in phase verification notes when completing Phase 3.
+
+### Phase 4 — IO + Gate Correctness DAW Smoke
+
+Automated gates (`ctest` 53 tests, pluginval strictness 5) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom on a guitar or DI track.
+2. Raise **In** — level increases; push hot input — soft clip (no harsh digital clip).
+3. **Out** knob trims overall level.
+4. Gate **Post** — stop playing — wet chops within ~15 ms ("edited sample" feel).
+5. Gate **Pre** — quiet passages show hum suppression on wet feed only.
+6. Dry pick attack stays clean when gate closes (dry never gated).
+7. Toggle Pre/Post — gate position changes on wet path only.
+
+Reply `approved` when complete, or describe IO/gate issues found.
