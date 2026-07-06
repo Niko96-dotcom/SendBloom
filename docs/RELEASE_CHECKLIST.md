@@ -5,7 +5,7 @@
 
 ## Pre-Release Automated Gates
 
-- [x] Full Catch2 suite passes (`ctest --test-dir Builds --output-on-failure`) — **103/103**
+- [x] Full Catch2 suite passes (`ctest --test-dir Builds --output-on-failure`) — **104/104**
 - [x] Release AU + VST3 build succeeds (`cmake --build Builds --config Release`)
 - [x] pluginval strictness **10** passes on Release VST3
 - [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`)

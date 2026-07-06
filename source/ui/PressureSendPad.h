@@ -24,7 +24,6 @@ private:
     void setAmountFromY (float y);
     void startBloomFade();
     void stopBloomFade();
-    float currentAmount() const;
 
     static constexpr int kBloomFadeMs = 200;
 

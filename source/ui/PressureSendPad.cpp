@@ -112,12 +112,4 @@ void PressureSendPad::stopBloomFade()
     displayAmount = 0.0f;
 }
 
-float PressureSendPad::currentAmount() const
-{
-    if (amountParam == nullptr)
-        return 0.0f;
-
-    return amountParam->getValue();
-}
-
 } // namespace sendbloom::ui

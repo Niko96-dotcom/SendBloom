@@ -222,7 +222,7 @@ Reply `approved` when complete, or describe UI/preset issues found.
 
 ### Phase 10 — Multi-DAW Release Smoke
 
-Automated gates (`ctest` 103 tests, pluginval strictness **10**, legal metadata audit) must pass before human verification.
+Automated gates (`ctest` 104 tests, pluginval strictness **10**, legal metadata audit) must pass before human verification.
 
 **Artifacts:**
 

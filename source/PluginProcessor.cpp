@@ -72,7 +72,11 @@ bool PluginProcessor::isMidiEffect() const
 
 double PluginProcessor::getTailLengthSeconds() const
 {
-    return 0.0;
+    const auto sizeNorm = apvts.getRawParameterValue (ParameterIDs::size)->load();
+    const auto rt60 = ParameterCurves::sizeToRT60 (sizeNorm);
+    const auto darkMode = apvts.getRawParameterValue (ParameterIDs::darkMode)->load() > 0.5f;
+    constexpr auto kDarkPredelaySeconds = 0.055f;
+    return static_cast<double> (rt60 + (darkMode ? kDarkPredelaySeconds : 0.0f));
 }
 
 int PluginProcessor::getNumPrograms()
