@@ -135,7 +135,22 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                     juce::MidiBuffer& midiMessages)
 {
-    juce::ignoreUnused (midiMessages);
+    for (const auto metadata : midiMessages)
+    {
+        const auto message = metadata.getMessage();
+
+        if (message.isController() && message.getControllerNumber() == 1)
+        {
+            if (apvts.getRawParameterValue (ParameterIDs::sendConnected)->load() > 0.5f)
+            {
+                if (auto* sendParam = apvts.getParameter (ParameterIDs::sendAmount))
+                {
+                    const auto norm = static_cast<float> (message.getControllerValue()) / 127.0f;
+                    sendParam->setValueNotifyingHost (norm);
+                }
+            }
+        }
+    }
 
     juce::ScopedNoDenormals noDenormals;
     const auto totalNumInputChannels  = getTotalNumInputChannels();

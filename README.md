@@ -161,3 +161,23 @@ Automated gates (`ctest` 69 tests, pluginval strictness 5, dry-path THD test) mu
 
 Reply `approved` when complete, or describe overdrive/routing issues found.
 
+### Phase 7 — Pressure Send & MIDI DAW Smoke
+
+Automated gates (`ctest` 78 tests, pluginval strictness 5, pressure trail + MIDI CC1 tests) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom on a guitar or DI track.
+2. Enable **send_connected**, set size ~50%, level ~50%, gate Pre, defaults elsewhere.
+3. Play with send_amount low — momentary press (or mod wheel CC1) opens wash.
+4. Release send — tail decays naturally ≥500 ms without hard cut.
+5. Toggle send_connected off — wet feed stays always-on regardless of mod wheel.
+6. Bloom-then-chop routing still feels correct.
+
+Reply `approved` when complete, or describe send/MIDI/routing issues found.
+
