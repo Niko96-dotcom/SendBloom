@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DampedComb.h"
+#include "IReverbEngine.h"
 #include "SchroederAllpass.h"
 #include "SchroederTank32DelayTable.h"
 #include <array>
@@ -9,10 +10,10 @@
 namespace sendbloom
 {
 
-class SchroederTank32
+class SchroederTank32 : public IReverbEngine
 {
 public:
-    void prepare (double sampleRate, int /*maxBlockSize*/) noexcept
+    void prepare (double sampleRate, int /*maxBlockSize*/) noexcept override
     {
         hostRate = sampleRate;
         useAuthenticPath = false;
@@ -51,7 +52,7 @@ public:
     float processSample (float input,
                          float rt60Seconds,
                          float darkMix,
-                         bool authenticColor) noexcept
+                         bool authenticColor) noexcept override
     {
         if (authenticColor != useAuthenticPath)
         {
