@@ -5,6 +5,53 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <cmath>
+#include <vector>
+
+namespace
+{
+
+float bufferRms (const juce::AudioBuffer<float>& buffer, int channel = 0, int start = 0, int count = -1)
+{
+    if (count < 0)
+        count = buffer.getNumSamples() - start;
+
+    double sum = 0.0;
+
+    for (int i = start; i < start + count; ++i)
+    {
+        const auto s = buffer.getSample (channel, i);
+        sum += static_cast<double> (s) * static_cast<double> (s);
+    }
+
+    return static_cast<float> (std::sqrt (sum / static_cast<double> (count)));
+}
+
+void fillSine (juce::AudioBuffer<float>& buffer, float amplitude, float phaseInc)
+{
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            buffer.setSample (ch, i, amplitude * std::sin (phaseInc * static_cast<float> (i)));
+}
+
+void renderPlugin (sendbloom::PluginProcessor& plugin,
+                   juce::AudioBuffer<float>& buffer,
+                   int blocks,
+                   bool refillEachBlock = false,
+                   float amplitude = 0.5f,
+                   float phaseInc = 0.03f)
+{
+    juce::MidiBuffer midi;
+
+    for (int block = 0; block < blocks; ++block)
+    {
+        if (refillEachBlock)
+            fillSine (buffer, amplitude, phaseInc);
+
+        plugin.processBlock (buffer, midi);
+    }
+}
+
+} // namespace
 
 TEST_CASE ("Passthrough preserves audio at unity gain", "[dsp][passthrough]")
 {
@@ -139,20 +186,18 @@ TEST_CASE ("distn automation changes processor output", "[parm][distn audibility
         sendbloom::PluginProcessor plugin;
         auto& apvts = plugin.getAPVTS();
         *apvts.getRawParameterValue (inputGain) = 1.0f;
-        *apvts.getRawParameterValue (outputGain) = 3.0f;
+        *apvts.getRawParameterValue (outputGain) = 0.0f;
         *apvts.getRawParameterValue (bypass) = 0.0f;
         *apvts.getRawParameterValue (distn) = distnValue;
         *apvts.getRawParameterValue (level) = 1.0f;
+        *apvts.getRawParameterValue (size) = 0.5f;
+        *apvts.getRawParameterValue (sendConnected) = 1.0f;
+        *apvts.getRawParameterValue (sendAmount) = 1.0f;
         plugin.prepareToPlay (48000.0, 512);
 
         juce::AudioBuffer<float> buffer (2, 512);
-        for (int ch = 0; ch < 2; ++ch)
-            for (int i = 0; i < 512; ++i)
-                buffer.setSample (ch, i, std::sin (0.03f * static_cast<float> (i)));
-
-        juce::MidiBuffer midi;
-        for (int block = 0; block < 4; ++block)
-            plugin.processBlock (buffer, midi);
+        fillSine (buffer, 0.5f, 0.03f);
+        renderPlugin (plugin, buffer, 40, true);
 
         return buffer.getSample (0, 400);
     };
@@ -169,4 +214,115 @@ TEST_CASE ("Plugin instance", "[instance]")
         CHECK_THAT (testPlugin.getName().toStdString(),
                     Catch::Matchers::Equals ("SendBloom"));
     }
+}
+
+TEST_CASE ("dry unchanged when distn max with level at zero", "[chain][routing][integration]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    auto runAtDistn = [] (float distnValue)
+    {
+        sendbloom::PluginProcessor plugin;
+        auto& apvts = plugin.getAPVTS();
+        *apvts.getRawParameterValue (inputGain) = 1.0f;
+        *apvts.getRawParameterValue (outputGain) = 0.0f;
+        *apvts.getRawParameterValue (bypass) = 0.0f;
+        *apvts.getRawParameterValue (level) = 0.0f;
+        *apvts.getRawParameterValue (distn) = distnValue;
+        *apvts.getRawParameterValue (sendConnected) = 1.0f;
+        *apvts.getRawParameterValue (sendAmount) = 1.0f;
+        plugin.prepareToPlay (48000.0, 512);
+
+        juce::AudioBuffer<float> buffer (2, 512);
+        fillSine (buffer, 0.5f, 0.03f);
+        renderPlugin (plugin, buffer, 40, true);
+        return bufferRms (buffer);
+    };
+
+    REQUIRE (runAtDistn (1.0f) == Catch::Approx (runAtDistn (0.0f)).margin (1e-3f));
+}
+
+TEST_CASE ("level scales wet return not dry tap", "[chain][routing][integration]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    auto runAtLevel = [] (float levelValue)
+    {
+        sendbloom::PluginProcessor plugin;
+        auto& apvts = plugin.getAPVTS();
+        *apvts.getRawParameterValue (inputGain) = 1.0f;
+        *apvts.getRawParameterValue (outputGain) = 0.0f;
+        *apvts.getRawParameterValue (bypass) = 0.0f;
+        *apvts.getRawParameterValue (level) = levelValue;
+        *apvts.getRawParameterValue (distn) = 0.0f;
+        *apvts.getRawParameterValue (size) = 0.5f;
+        *apvts.getRawParameterValue (sendConnected) = 1.0f;
+        *apvts.getRawParameterValue (sendAmount) = 1.0f;
+        plugin.prepareToPlay (48000.0, 512);
+
+        juce::AudioBuffer<float> buffer (2, 512);
+        fillSine (buffer, 0.5f, 0.03f);
+        renderPlugin (plugin, buffer, 40, true);
+        return bufferRms (buffer);
+    };
+
+    const auto lowLevel = runAtLevel (0.0f);
+    const auto highLevel = runAtLevel (1.0f);
+    REQUIRE (highLevel > lowLevel + 1e-3f);
+}
+
+TEST_CASE ("post gate chops wet after input stops", "[chain][routing][integration]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    *apvts.getRawParameterValue (level) = 0.75f;
+    *apvts.getRawParameterValue (distn) = 0.3f;
+    *apvts.getRawParameterValue (size) = 0.5f;
+    *apvts.getRawParameterValue (sendConnected) = 1.0f;
+    *apvts.getRawParameterValue (sendAmount) = 1.0f;
+    *apvts.getRawParameterValue (gatePrePost) = 1.0f;
+    *apvts.getRawParameterValue (inputThreshold) = 0.35f;
+    plugin.prepareToPlay (48000.0, 512);
+
+    juce::AudioBuffer<float> burst (2, 512);
+    fillSine (burst, 0.5f, 0.04f);
+
+    juce::AudioBuffer<float> silence (2, 512);
+    silence.clear();
+
+    juce::MidiBuffer midi;
+
+    for (int block = 0; block < 40; ++block)
+    {
+        fillSine (burst, 0.5f, 0.04f);
+        plugin.processBlock (burst, midi);
+    }
+
+    const auto burstRms = bufferRms (burst, 0, 256, 256);
+
+    for (int block = 0; block < 12; ++block)
+    {
+        silence.clear();
+        plugin.processBlock (silence, midi);
+    }
+
+    const auto silenceRms = bufferRms (silence, 0, 256, 256);
+    REQUIRE (silenceRms < 0.02f * burstRms);
+}
+
+TEST_CASE ("processBlock completes without throw", "[chain][routing][integration]")
+{
+    sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (48000.0, 512);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    fillSine (buffer, 0.25f, 0.02f);
+    juce::MidiBuffer midi;
+
+    REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
 }
