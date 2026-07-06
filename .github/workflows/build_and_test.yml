@@ -15,8 +15,6 @@ env:
   STRICTNESS_LEVEL: 5
   DISPLAY: :0
   HOMEBREW_NO_INSTALL_CLEANUP: 1
-  SCCACHE_GHA_ENABLED: true
-  SCCACHE_CACHE_MULTIARCH: 1
 
 defaults:
   run:
@@ -54,7 +52,7 @@ jobs:
       - name: Install JUCE Linux deps
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update && sudo apt install -y libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build
+          sudo apt-get update && sudo apt install libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build
           sudo /usr/bin/Xvfb $DISPLAY &
 
       - name: Install Ninja (Windows)
@@ -70,11 +68,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Cache the build
-        uses: mozilla-actions/sccache-action@v0.0.10
-
       - name: Configure
-        run: cmake -B ${{ env.BUILD_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache ${{ matrix.extra-flags }} .
+        run: cmake -B ${{ env.BUILD_DIR }} -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ${{ matrix.extra-flags }} .
 
       - name: Build
         run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
@@ -83,10 +78,14 @@ jobs:
         working-directory: ${{ env.BUILD_DIR }}
         run: ctest --verbose --output-on-failure
 
+      - name: Legal metadata audit
+        run: bash scripts/check-legal-metadata.sh
+
       - name: Read in .env from CMake
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
-          cat ${{ env.BUILD_DIR }}/.env
-          cat ${{ env.BUILD_DIR }}/.env >> $GITHUB_ENV
+          cat .env
+          cat .env >> $GITHUB_ENV
 
       - name: Set additional env vars
         run: |
@@ -94,11 +93,11 @@ jobs:
           echo "ARTIFACTS_PATH=$ARTIFACTS_PATH" >> $GITHUB_ENV
           echo "VST3_PATH=$ARTIFACTS_PATH/VST3/${{ env.PRODUCT_NAME }}.vst3" >> $GITHUB_ENV
 
+      - name: Legal metadata audit
+        run: bash scripts/check-legal-metadata.sh
+
       - name: Pluginval
         run: |
           curl -LO "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_${{ runner.os }}.zip"
           7z x pluginval_${{ runner.os }}.zip
-          ${{ matrix.pluginval-binary }} \
-            --strictness-level ${{ env.STRICTNESS_LEVEL }} \
-            --verbose \
-            --validate "${{ env.VST3_PATH }}"
+          ${{ matrix.pluginval-binary }} --strictness-level ${{ env.STRICTNESS_LEVEL }} --verbose --validate "${{ env.VST3_PATH }}"

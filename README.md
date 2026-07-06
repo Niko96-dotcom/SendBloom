@@ -1,54 +1,49 @@
 # SendBloom
 
-SendBloom is a JUCE 8 audio effect plugin (AU + VST3) built on a pamplejuce-style CMake scaffold. Phase 1 delivers a passthrough processor with Catch2 tests and CI validation.
+Clean-room JUCE 8 audio plugin — gated dirty ambience guitar effect (AU + VST3).
 
-**Manufacturer:** Niko Audio Labs  
-**Plugin codes:** NkMo / SbLm  
-**Bundle ID:** com.nikoaudiolabs.sendbloom
-
-## Prerequisites
-
-- CMake 3.25 or newer
-- Git with submodule support
-- macOS: Xcode (for AU builds)
-- Ninja (recommended)
-
-## Submodule setup
+## Build
 
 ```bash
 git submodule update --init --recursive
-```
-
-Pin JUCE to a stable 8.0.x release after init:
-
-```bash
-cd JUCE && git checkout 8.0.12 && cd ..
-```
-
-## Configure and build
-
-```bash
 cmake -B Builds -DCMAKE_BUILD_TYPE=Release
 cmake --build Builds --config Release
+ctest --test-dir Builds --output-on-failure -C Release
 ```
 
-AU builds are macOS-only. VST3 builds on macOS, Windows, and Linux.
+Artifacts:
 
-## Run tests
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+## Legal / Metadata
+
+Product: **SendBloom** by **Niko Audio Labs**  
+Manufacturer code: `NkMo` | Plugin code: `SbLm`
+
+Placeholder codes must be verified unique before any commercial release (SCAF-05).
+
+Run the legal audit locally:
 
 ```bash
-ctest --test-dir Builds --verbose --output-on-failure
+bash scripts/check-legal-metadata.sh
 ```
 
-## Artifacts
+## DAW Smoke Test
 
-Release plugin binaries are written under:
+Phase 1 completion gate — verify passthrough in a real host:
 
+1. Build Release and locate artifacts under `Builds/SendBloom_artefacts/Release/`.
+2. Rescan plugins in your DAW (Logic, REAPER, Cubase, etc.).
+3. Insert SendBloom on an audio track; play guitar or a sine source.
+4. Confirm output matches bypass — toggle plugin off/on; level unchanged (passthrough).
+5. Verify plugin manager shows **SendBloom** by **Niko Audio Labs**.
+
+**macOS note:** Unsigned local builds may require ad-hoc codesign:
+
+```bash
+codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
+codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/AU/SendBloom.component"
 ```
-Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3
-Builds/SendBloom_artefacts/Release/AU/SendBloom.component   # macOS only
-```
 
-## Legal / metadata
-
-Manufacturer and four-character plugin codes are placeholders. Verify uniqueness with the plugin registry before commercial distribution.
+Document results in phase verification notes when completing Phase 1.
