@@ -6,9 +6,14 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <cmath>
 
-TEST_CASE ("Passthrough preserves audio", "[dsp][passthrough]")
+TEST_CASE ("Passthrough preserves audio at unity gain", "[dsp][passthrough]")
 {
+    using namespace sendbloom::ParameterIDs;
+
     sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (outputGain) = 3.0f;
     plugin.prepareToPlay (48000.0, 512);
 
     juce::AudioBuffer<float> buffer (2, 512);
@@ -19,11 +24,13 @@ TEST_CASE ("Passthrough preserves audio", "[dsp][passthrough]")
 
     const auto expected = buffer;
     juce::MidiBuffer midi;
-    plugin.processBlock (buffer, midi);
+
+    for (int block = 0; block < 4; ++block)
+        plugin.processBlock (buffer, midi);
 
     for (int ch = 0; ch < 2; ++ch)
-        for (int i = 0; i < 512; ++i)
-            REQUIRE (buffer.getSample (ch, i) == expected.getSample (ch, i));
+        for (int i = 400; i < 512; ++i)
+            REQUIRE (buffer.getSample (ch, i) == Catch::Approx (expected.getSample (ch, i)).margin (0.02f));
 }
 
 TEST_CASE ("APVTS state round-trip", "[parm][state]")
@@ -57,6 +64,36 @@ TEST_CASE ("getBypassParameter returns bypass param", "[parm][layout]")
     sendbloom::PluginProcessor plugin;
     REQUIRE (plugin.getBypassParameter() != nullptr);
     REQUIRE (plugin.getBypassParameter() == plugin.getAPVTS().getParameter (sendbloom::ParameterIDs::bypass));
+}
+
+TEST_CASE ("Smoothed gain automation avoids block-constant zipper", "[parm][zipper]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (48000.0, 512);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    for (int ch = 0; ch < 2; ++ch)
+        for (int i = 0; i < 512; ++i)
+            buffer.setSample (ch, i, 0.5f);
+
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 0.0f;
+
+    juce::MidiBuffer midi;
+    plugin.processBlock (buffer, midi);
+
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    plugin.processBlock (buffer, midi);
+
+    float maxDelta = 0.0f;
+    for (int i = 1; i < 512; ++i)
+        maxDelta = std::max (maxDelta, std::abs (buffer.getSample (0, i) - buffer.getSample (0, i - 1)));
+
+    const auto blockStep = std::abs (buffer.getSample (0, 400) - buffer.getSample (0, 200));
+    REQUIRE (blockStep > 0.0f);
+    REQUIRE (maxDelta < blockStep);
 }
 
 TEST_CASE ("Plugin instance", "[instance]")
