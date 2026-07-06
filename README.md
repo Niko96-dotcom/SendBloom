@@ -181,3 +181,22 @@ Automated gates (`ctest` 78 tests, pluginval strictness 5, pressure trail + MIDI
 
 Reply `approved` when complete, or describe send/MIDI/routing issues found.
 
+### Phase 8 — Full Integration / Realtime / Fallback DAW Smoke
+
+Automated gates (`ctest` 88 tests, pluginval strictness 7, realtime stress + Fdn8 fallback tests) must pass before human verification.
+
+**Artifacts:**
+
+- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
+- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+
+**Human checklist:**
+
+1. Load SendBloom on a guitar or DI track.
+2. Play 5+ minutes with varying size, level, gate Pre/Post, and momentary send.
+3. Confirm no clicks, dropouts, or runaway feedback during extended session.
+4. Toggle authentic_color, Dark, and distn while playing — confirm smooth transitions.
+5. Verify plugin latency report shows zero samples in host plugin info.
+
+Reply `approved` when complete, or describe stability/latency issues found.
+
