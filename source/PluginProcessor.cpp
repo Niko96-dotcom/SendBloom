@@ -173,6 +173,11 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedBank.setTargets (snap);
 
     const auto numSamples = buffer.getNumSamples();
+    const auto numOutputChannels = getTotalNumOutputChannels();
+
+    if (dryBuffer.getNumChannels() < numOutputChannels || dryBuffer.getNumSamples() < numSamples)
+        dryBuffer.setSize (numOutputChannels, numSamples, false, false, true);
+
     const auto numChannels = juce::jmin (buffer.getNumChannels(), dryBuffer.getNumChannels());
     const auto gatePreSoft = snap.gatePreSoft;
     const auto extendedStereo = snap.extendedStereo;

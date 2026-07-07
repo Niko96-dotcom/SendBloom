@@ -74,6 +74,31 @@ TEST_CASE ("processBlock survives 10k varying block stress", "[realtime][integra
     REQUIRE (peak < 4.0f);
 }
 
+TEST_CASE ("processBlock tolerates larger-than-prepared block size", "[realtime][integration][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (44100.0, 512);
+
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    *apvts.getRawParameterValue (authenticColor) = 1.0f;
+    *apvts.getRawParameterValue (level) = 0.5f;
+
+    juce::AudioBuffer<float> buffer (2, 1024);
+    fillNoise (buffer, 0);
+
+    juce::MidiBuffer midi;
+    REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
+
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            REQUIRE (std::isfinite (buffer.getSample (ch, i)));
+}
+
 TEST_CASE ("processBlock stress with authentic color toggling", "[realtime][integration][stress]")
 {
     using namespace sendbloom::ParameterIDs;
