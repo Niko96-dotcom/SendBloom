@@ -3,16 +3,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 
-namespace
-{
-
-float symmetricTanhDrive (float wet) noexcept
-{
-    return std::tanh (wet * 3.0f);
-}
-
-} // namespace
-
 TEST_CASE ("WetOverdrive passes clean wet at distnBlend zero", "[od][WetOverdrive]")
 {
     REQUIRE (sendbloom::WetOverdrive::process (0.35f, 0.0f) == Catch::Approx (0.35f));
@@ -28,11 +18,11 @@ TEST_CASE ("WetOverdrive fully drives at distnBlend one", "[od][WetOverdrive]")
 
 TEST_CASE ("WetOverdrive asymmetry drives positive harder than negative", "[od][WetOverdrive]")
 {
-    const auto pos = sendbloom::WetOverdrive::asymmetricTanh (0.25f);
-    const auto neg = sendbloom::WetOverdrive::asymmetricTanh (-0.25f);
-    const auto symPos = symmetricTanhDrive (0.25f);
+    const auto pos = sendbloom::WetOverdrive::clipTamedTanh (0.25f);
+    const auto neg = sendbloom::WetOverdrive::clipTamedTanh (-0.25f);
+    const auto symPos = sendbloom::WetOverdrive::clipTamedTanhSymmetric (0.25f);
 
-    REQUIRE (std::abs (pos) > std::abs (symPos));
+    REQUIRE (std::abs (pos) > std::abs (symPos) + 1e-4f);
     REQUIRE (std::abs (pos) > std::abs (neg));
 }
 
@@ -44,4 +34,18 @@ TEST_CASE ("WetOverdrive blend interpolates clean and driven", "[od][WetOverdriv
     const auto expected = input + blend * (driven - input);
 
     REQUIRE (sendbloom::WetOverdrive::process (input, blend) == Catch::Approx (expected));
+}
+
+TEST_CASE ("WetOverdrive stateful matches stateless at distn extremes", "[od][WetOverdrive]")
+{
+    sendbloom::WetOverdriveState od;
+    od.prepare (48000.0);
+
+    const auto input = 0.25f;
+    REQUIRE (od.process (input, 0.0f) == Catch::Approx (input));
+
+    const auto statelessDriven = sendbloom::WetOverdrive::asymmetricTanh (input);
+    const auto statefulDriven = od.process (input, 1.0f);
+    REQUIRE (statefulDriven != Catch::Approx (input).margin (1e-4f));
+    REQUIRE (statefulDriven != Catch::Approx (statelessDriven).margin (1e-4f));
 }
