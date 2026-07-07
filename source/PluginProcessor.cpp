@@ -153,10 +153,10 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             if (apvts.getRawParameterValue (ParameterIDs::sendConnected)->load() > 0.5f)
             {
-                if (auto* sendParam = apvts.getParameter (ParameterIDs::sendAmount))
+                if (auto* sendParam = apvts.getRawParameterValue (ParameterIDs::sendAmount))
                 {
                     const auto norm = static_cast<float> (message.getControllerValue()) / 127.0f;
-                    sendParam->setValueNotifyingHost (norm);
+                    sendParam->store (norm);
                 }
             }
         }
@@ -175,6 +175,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const auto numSamples = buffer.getNumSamples();
     const auto numChannels = juce::jmin (buffer.getNumChannels(), dryBuffer.getNumChannels());
     const auto gatePreSoft = snap.gatePreSoft;
+    const auto extendedStereo = snap.extendedStereo;
 
     for (int channel = 0; channel < numChannels; ++channel)
         dryBuffer.copyFrom (channel, 0, buffer, channel, 0, numSamples);
@@ -209,12 +210,24 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         const auto wet = chain.processSample (monoIn, env, rt60, darkModeMix, authenticColor,
                                               distnBlend, sendGain, gatePreSoft, thresholdDb);
 
-        for (int channel = 0; channel < numChannels; ++channel)
+        if (extendedStereo)
         {
-            const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
-            const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
-            const auto preOutput = dryTap * dryMix + mixed * bypassWet;
-            buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
+            for (int channel = 0; channel < numChannels; ++channel)
+            {
+                const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
+                const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
+                const auto preOutput = dryTap * dryMix + mixed * bypassWet;
+                buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
+            }
+        }
+        else
+        {
+            const auto mixed = ParallelWetMixer::mix (monoSum, wet, wetGain);
+            const auto preOutput = monoSum * dryMix + mixed * bypassWet;
+            const auto out = OutputStage::processSample (preOutput, outputGain);
+
+            for (int channel = 0; channel < numChannels; ++channel)
+                buffer.getWritePointer (channel)[sample] = out;
         }
     }
 

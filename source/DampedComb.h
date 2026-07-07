@@ -38,6 +38,23 @@ public:
         dampingFilter.setCutoffFrequency (juce::jlimit (100.0f, static_cast<float> (sr * 0.45), hz));
     }
 
+    void setProcessingSampleRate (double sampleRate) noexcept
+    {
+        if (std::abs (sampleRate - sr) < 1.0)
+            return;
+
+        sr = sampleRate;
+
+        juce::dsp::ProcessSpec spec;
+        spec.sampleRate = sr;
+        spec.maximumBlockSize = 512;
+        spec.numChannels = 1;
+
+        dampingFilter.prepare (spec);
+        dampingFilter.reset();
+        dampingFilter.setType (juce::dsp::StateVariableTPTFilterType::lowpass);
+    }
+
     void setFeedbackForRT60 (float rt60Seconds, float referenceDelaySamples) noexcept
     {
         const auto rt60 = juce::jmax (rt60Seconds, 0.05f);
@@ -45,6 +62,8 @@ public:
         feedback = std::exp (-6.9078f * delaySec / rt60);
         feedback = juce::jlimit (0.0f, 0.98f, feedback);
     }
+
+    float getFeedback() const noexcept { return feedback; }
 
     float processSample (float input) noexcept
     {

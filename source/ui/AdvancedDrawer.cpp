@@ -23,6 +23,9 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
     sendFeelBox.addItem ("Soft", 2);
     addChildComponent (sendFeelBox);
 
+    colorToggle.setTooltip ("Steps the tank at 32,768 Hz with fixed delay-table lengths, "
+                            "per-comb feedback, damping, and 9-bit quantization. "
+                            "Original software — not firmware-derived.");
     addChildComponent (colorToggle);
     addChildComponent (extendedStereoToggle);
     addChildComponent (dirtOsToggle);

@@ -43,6 +43,7 @@ public:
         tankAp.setFeedback (SchroederTank32DelayTable::kTankApFeedback);
 
         resetDelayLengths (false);
+        syncCombProcessingRate();
         lfoPhase = 0.0f;
         inputAccumulator = 0.0;
         outputHold = 0.0f;
@@ -58,6 +59,7 @@ public:
         {
             useAuthenticPath = authenticColor;
             resetDelayLengths (useAuthenticPath);
+            syncCombProcessingRate();
         }
 
         updateCoeffs (rt60Seconds, darkMix);
@@ -94,6 +96,14 @@ private:
         tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay, authentic));
     }
 
+    void syncCombProcessingRate() noexcept
+    {
+        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
+
+        for (auto& comb : parallelCombs)
+            comb.setProcessingSampleRate (effectiveRate);
+    }
+
     void updateCoeffs (float rt60Seconds, float darkMix) noexcept
     {
         const auto mix = juce::jlimit (0.0f, 1.0f, darkMix);
@@ -110,16 +120,13 @@ private:
         auto rt60 = juce::jmax (rt60Seconds, 0.05f);
 
         float maxCombDelay = 0.0f;
-        float sumCombDelay = 0.0f;
 
         for (const auto d : SchroederTank32DelayTable::kParallelCombDelays)
         {
             const auto scaled = scaleDelay (d, useAuthenticPath);
             maxCombDelay = std::max (maxCombDelay, scaled);
-            sumCombDelay += scaled;
         }
 
-        const auto referenceCombDelay = sumCombDelay / static_cast<float> (SchroederTank32DelayTable::kParallelCombDelays.size());
         juce::ignoreUnused (maxCombDelay);
 
         if (useAuthenticPath)
@@ -130,10 +137,15 @@ private:
             rt60 = juce::jmax (rt60Norm, 0.05f);
         }
 
-        for (auto& comb : parallelCombs)
+        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
+        juce::ignoreUnused (effectiveRate);
+
+        for (size_t i = 0; i < parallelCombs.size(); ++i)
         {
-            comb.setDampingCutoff (dampingHz);
-            comb.setFeedbackForRT60 (rt60, referenceCombDelay);
+            const auto combDelay = scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i],
+                                               useAuthenticPath);
+            parallelCombs[i].setDampingCutoff (dampingHz);
+            parallelCombs[i].setFeedbackForRT60 (rt60, combDelay);
         }
     }
 

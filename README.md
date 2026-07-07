@@ -11,14 +11,22 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 ## Features
 
 - Parallel dry/wet routing — dry path never gated or distorted
-- Schroeder tank reverb with 32 kHz authenticity coloration
+- Schroeder tank reverb with optional **32k Color** — steps the tank at 32,768 Hz (resampled to host rate) using fixed delay-table lengths, per-comb feedback calibration, damping, and 9-bit parameter quantization; original software, not firmware-derived
 - Wet-only overdrive blended independently via `distn`
 - Dual gate profiles: Pre (hum suppression) and Post (≤15 ms wet chop)
 - Pressure send pad and MIDI CC1 momentary control
 - 8 factory presets with host save/load round-trip
 - Pedal-style UI with clip LED and advanced drawer
 - Zero reported latency, mono-first authentic mode
-- 104 Catch2 tests + pluginval strictness 10 in CI
+- Catch2 test suite + pluginval strictness 10 in CI
+
+## Signal routing
+
+SendBloom uses a parallel pedal topology:
+
+- **Dry path:** Unity copy of the mono-summed input, taken **before** input gain. Never gated or distorted.
+- **Wet path:** Mono sum → `InputStage` (input gain + soft clip) → gated reverb chain → wet return.
+- **Output:** Authentic mode writes dual-mono (identical L/R) unless Extended Stereo is enabled.
 
 ## Build
 
@@ -59,7 +67,7 @@ See [docs/CLEAN_ROOM.md](docs/CLEAN_ROOM.md) and [docs/RELEASE_CHECKLIST.md](doc
 
 ## CI
 
-GitHub Actions builds and tests on Linux, macOS, and Windows. Each matrix leg runs the legal metadata audit, full Catch2 suite, and pluginval at strictness level 10.
+GitHub Actions builds and tests on Linux, macOS, and Windows. Each matrix leg runs the legal metadata audit, full Catch2 suite, and **pluginval strictness 10 on the Release VST3** (AU is not validated by pluginval in CI). Local verification on this machine covers macOS Release build, tests, and VST3 pluginval only — Windows/Linux matrix legs and AU pluginval are **not verified** locally.
 
 ## Project Structure
 
@@ -67,7 +75,7 @@ GitHub Actions builds and tests on Linux, macOS, and Windows. Each matrix leg ru
 source/          Plugin processor, DSP chain, UI
 tests/           Catch2 unit and integration tests
 resources/       Factory presets
-cmake/           Build helpers (Pamplejuce-style)
+cmake/           CMake build helpers
 scripts/         Legal metadata checker
 docs/            Clean-room and release documentation
 ```
