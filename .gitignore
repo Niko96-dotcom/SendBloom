@@ -21,3 +21,7 @@ cmake-build-release
 cmake-build-relwithdebinfo
 
 .planning/
+.claude/
+
+# Local pluginval downloads (CI fetches its own)
+pluginval*

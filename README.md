@@ -1,8 +1,28 @@
 # SendBloom
 
-Clean-room JUCE 8 audio plugin — gated dirty ambience guitar effect (AU + VST3).
+Gated dirty ambience guitar effect — AU and VST3 plugin built with JUCE 8.
+
+SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placement, and a momentary pressure/send control. The dry guitar stays clean while the wet path blooms then chops hard when you stop playing — the signature "edited sample" ambience feel.
+
+**Publisher:** Niko Audio Labs  
+**Formats:** AU (macOS), VST3 (macOS, Windows, Linux)  
+**License:** MIT
+
+## Features
+
+- Parallel dry/wet routing — dry path never gated or distorted
+- Schroeder tank reverb with 32 kHz authenticity coloration
+- Wet-only overdrive blended independently via `distn`
+- Dual gate profiles: Pre (hum suppression) and Post (≤15 ms wet chop)
+- Pressure send pad and MIDI CC1 momentary control
+- 8 factory presets with host save/load round-trip
+- Pedal-style UI with clip LED and advanced drawer
+- Zero reported latency, mono-first authentic mode
+- 104 Catch2 tests + pluginval strictness 10 in CI
 
 ## Build
+
+Requires CMake 3.25+, a C++20 compiler, and Git submodules initialized.
 
 ```bash
 git submodule update --init --recursive
@@ -11,245 +31,43 @@ cmake --build Builds --config Release
 ctest --test-dir Builds --output-on-failure -C Release
 ```
 
-Artifacts:
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-## Legal / Metadata
-
-Product: **SendBloom** by **Niko Audio Labs**  
-Manufacturer code: `NkMo` | Plugin code: `SbLm`
-
-Placeholder codes must be verified unique before any commercial release (SCAF-05).
-
-Run the legal audit locally:
-
-```bash
-bash scripts/check-legal-metadata.sh
-```
-
-## DAW Smoke Test
-
-### Phase 1 — Passthrough
-
-Phase 1 completion gate — verify passthrough in a real host:
-
-1. Build Release and locate artifacts under `Builds/SendBloom_artefacts/Release/`.
-2. Rescan plugins in your DAW (Logic, REAPER, Cubase, etc.).
-3. Insert SendBloom on an audio track; play guitar or a sine source.
-4. Confirm output matches bypass — toggle plugin off/on; level unchanged (passthrough).
-5. Verify plugin manager shows **SendBloom** by **Niko Audio Labs**.
-
-### Phase 2 — Parameter Automation Smoke
-
-Automated gates (`ctest`, 22 tests) must pass before human verification:
-
-```bash
-cmake --build Builds --config Release
-ctest --test-dir Builds --output-on-failure -C Release
-```
-
 **Artifacts:**
 
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+| Format | Path |
+|--------|------|
+| VST3 | `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3` |
+| AU (macOS) | `Builds/SendBloom_artefacts/Release/AU/SendBloom.component` |
 
-**Human checklist:**
+### macOS local install
 
-1. Load SendBloom in REAPER, Logic, or Cubase from the artefact paths above.
-2. Open the host parameter/automation view — confirm **15 parameters** including split `input_gain` and `input_threshold`.
-3. Play guitar or a sine test tone; automate **Size** for 10 seconds — listen for smooth tone change without stepped zipper noise.
-4. Automate **input_gain** — confirm smooth level ride without blocky steps.
-5. Toggle **bypass** five times quickly — confirm no audible clicks (5 ms crossfade).
-6. Automate **distn** from 0 to 100% — confirm audible grind increase on the dummy wet path.
-7. Save the project, reload — confirm parameter values restore (host state round-trip).
-
-**Assumptions to spot-check** (see `02-RESEARCH.md` Assumptions Log A1–A8): default `input_gain` 0.5, `input_threshold` 0.35, main knob ramps 20–50 ms, soft send exponent 1.2.
-
-Reply `approved` in the GSD session when complete, or describe issues found.
-
-**macOS note:** Unsigned local builds may require ad-hoc codesign:
+Unsigned local builds may need ad-hoc codesign:
 
 ```bash
 codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
 codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/AU/SendBloom.component"
 ```
 
-### Phase 3 — Ugly Signature Chain DAW Smoke
+## Legal & Clean-Room
 
-Automated gates (`ctest` 36 tests, pluginval strictness 5) must pass before human verification.
+SendBloom is an original software implementation inspired by publicly described gated ambience behavior — not reverse-engineered firmware or proprietary hardware.
 
-**Artifacts:**
+- Product metadata uses **SendBloom** / **Niko Audio Labs** branding only
+- Manufacturer code: `NkMo` | Plugin code: `SbLm`
+- Legal metadata audit: `bash scripts/check-legal-metadata.sh`
 
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
+See [docs/CLEAN_ROOM.md](docs/CLEAN_ROOM.md) and [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for full positioning and release procedures.
 
-**Human checklist:**
+## CI
 
-1. Load SendBloom from the artefact paths above on a guitar or DI track.
-2. Set level ~50%, size ~50%, distn ~30%, send connected on, gate Post, defaults elsewhere.
-3. Play a palm-muted riff — confirm dry attack stays clean while wash blooms in parallel.
-4. Raise distn to 100% — confirm grind on the wash only; dry pick attack unchanged.
-5. Stop playing — confirm wet chops hard within ~15 ms ("edited sample" feel) with gate Post active.
-6. Hold send pad or automate send 1→0 during ring — confirm tail decays naturally, not instant mute.
-7. Toggle gate Pre — confirm hum-suppression character changes on the wet feed (crude stub OK).
-8. Note tone is intentionally ugly; routing feel is the pass criteria.
+GitHub Actions builds and tests on Linux, macOS, and Windows. Each matrix leg runs the legal metadata audit, full Catch2 suite, and pluginval at strictness level 10.
 
-Reply `approved` in the GSD session when complete, or describe routing issues found.
+## Project Structure
 
-Document results in phase verification notes when completing Phase 3.
-
-### Phase 4 — IO + Gate Correctness DAW Smoke
-
-Automated gates (`ctest` 53 tests, pluginval strictness 5) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Human checklist:**
-
-1. Load SendBloom on a guitar or DI track.
-2. Raise **In** — level increases; push hot input — soft clip (no harsh digital clip).
-3. **Out** knob trims overall level.
-4. Gate **Post** — stop playing — wet chops within ~15 ms ("edited sample" feel).
-5. Gate **Pre** — quiet passages show hum suppression on wet feed only.
-6. Dry pick attack stays clean when gate closes (dry never gated).
-7. Toggle Pre/Post — gate position changes on wet path only.
-
-Reply `approved` when complete, or describe IO/gate issues found.
-
-### Phase 5 — SchroederTank32 Reverb DAW Smoke
-
-Automated gates (`ctest` 62 tests, pluginval strictness 5, RT60 impulse tests) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Human checklist:**
-
-1. Load SendBloom on a guitar or DI track.
-2. Raise **Size** — reverb tail lengthens audibly.
-3. Toggle **Dark** — predelay + darker tail vs Bright (immediate, brighter).
-4. **authentic_color** ON — subtle lo-fi FV-style coloration.
-5. Bloom-then-chop routing still feels correct (dry clean, wet gated).
-6. Send release — tail decays naturally without hard cut.
-
-Reply `approved` when complete, or describe reverb/routing issues found.
-
-### Phase 6 — Wet Overdrive + Dry Integrity DAW Smoke
-
-Automated gates (`ctest` 69 tests, pluginval strictness 5, dry-path THD test) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Human checklist:**
-
-1. Load SendBloom on a guitar or DI track.
-2. Set level ~50%, size ~50%, distn ~30%, send on, gate Post, defaults elsewhere.
-3. Play — confirm wash has subtle asymmetric grind on the wet path.
-4. Raise **distn** to 100% — confirm grind increases on wash only; dry pick attack unchanged.
-5. Level at 100% with distn max — dry guitar stays pristine (no added grit on direct signal).
-6. Bloom-then-chop routing still feels correct.
-
-Reply `approved` when complete, or describe overdrive/routing issues found.
-
-### Phase 7 — Pressure Send & MIDI DAW Smoke
-
-Automated gates (`ctest` 78 tests, pluginval strictness 5, pressure trail + MIDI CC1 tests) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Human checklist:**
-
-1. Load SendBloom on a guitar or DI track.
-2. Enable **send_connected**, set size ~50%, level ~50%, gate Pre, defaults elsewhere.
-3. Play with send_amount low — momentary press (or mod wheel CC1) opens wash.
-4. Release send — tail decays naturally ≥500 ms without hard cut.
-5. Toggle send_connected off — wet feed stays always-on regardless of mod wheel.
-6. Bloom-then-chop routing still feels correct.
-
-Reply `approved` when complete, or describe send/MIDI/routing issues found.
-
-### Phase 8 — Full Integration / Realtime / Fallback DAW Smoke
-
-Automated gates (`ctest` 88 tests, pluginval strictness 7, realtime stress + Fdn8 fallback tests) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Human checklist:**
-
-1. Load SendBloom on a guitar or DI track.
-2. Play 5+ minutes with varying size, level, gate Pre/Post, and momentary send.
-3. Confirm no clicks, dropouts, or runaway feedback during extended session.
-4. Toggle authentic_color, Dark, and distn while playing — confirm smooth transitions.
-5. Verify plugin latency report shows zero samples in host plugin info.
-
-Reply `approved` when complete, or describe stability/latency issues found.
-
-### Phase 9 — UI + Presets DAW Smoke
-
-Automated gates (`ctest` 96 tests, pluginval strictness 7, preset round-trip tests) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Human checklist:**
-
-1. Load SendBloom; confirm pedal layout (In, Size, Lvl, Distn, Out + Dark + Gate toggles).
-2. Press and drag on the pressure pad — bloom visual and send response.
-3. Drive input hot — CLIP LED lights during clip hold.
-4. Open Advanced drawer — Gate Sens, Send Feel, 32k Color active; Extended Stereo / Dirt OS greyed out.
-5. Load each of 8 factory presets from the menu; audition briefly.
-6. Save a user preset in the host; reload and confirm parameters match.
-
-Reply `approved` when complete, or describe UI/preset issues found.
-
-### Phase 10 — Multi-DAW Release Smoke
-
-Automated gates (`ctest` 104 tests, pluginval strictness **10**, legal metadata audit) must pass before human verification.
-
-**Artifacts:**
-
-- **VST3:** `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3`
-- **AU (macOS):** `Builds/SendBloom_artefacts/Release/AU/SendBloom.component`
-
-**Logic (AU):**
-
-1. Copy or symlink `SendBloom.component` to `~/Library/Audio/Plug-Ins/Components/`.
-2. Rescan plugins in Logic; load SendBloom on a guitar track.
-3. Confirm pedal UI, all 8 factory presets, pressure pad, and clip LED.
-4. Process audio 2+ minutes — no dropouts or runaway feedback.
-
-**Cubase (VST3):**
-
-1. Install `SendBloom.vst3` to system VST3 folder.
-2. Rescan; insert on audio track.
-3. Confirm plugin info shows SendBloom / Niko Audio Labs.
-4. Toggle bypass; confirm dry passthrough when bypassed.
-
-**REAPER (VST3):**
-
-1. Add SendBloom as track FX (VST3).
-2. Confirm UI and parameter automation slots.
-3. Test pressure pad send and gate Pre/Post toggle during playback.
-
-Reply `approved` when all three hosts pass, or describe host-specific failures.
-
-See also `docs/RELEASE_CHECKLIST.md` and `docs/CLEAN_ROOM.md`.
-
+```
+source/          Plugin processor, DSP chain, UI
+tests/           Catch2 unit and integration tests
+resources/       Factory presets
+cmake/           Build helpers (Pamplejuce-style)
+scripts/         Legal metadata checker
+docs/            Clean-room and release documentation
+```
