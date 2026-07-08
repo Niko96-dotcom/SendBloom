@@ -287,6 +287,18 @@ TEST_CASE ("processBlock does not call setValueNotifyingHost", "[release][realti
     REQUIRE (body.find ("setValueNotifyingHost") == std::string::npos);
 }
 
+TEST_CASE ("PluginProcessor drives GatedBloomChain at block level",
+           "[chain][PluginProcessor][INTEG-02][processBlock]")
+{
+    const auto sourcePath = findRepoRoot().getChildFile ("source/PluginProcessor.cpp");
+    const auto source = readTextFile (sourcePath);
+    const auto body = extractProcessBlockBody (source);
+
+    REQUIRE_FALSE (body.empty());
+    REQUIRE (body.find ("chain.processBlock") != std::string::npos);
+    REQUIRE (body.find ("chain.processSample") == std::string::npos);
+}
+
 TEST_CASE ("32k Color docs describe software model not firmware claims", "[release][verb][authentic]")
 {
     const auto root = findRepoRoot();
