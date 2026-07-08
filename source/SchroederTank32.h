@@ -57,18 +57,6 @@ public:
         resetDelayLengths();
         syncCombProcessingRate();
         lfoPhase = 0.0f;
-        inputAccumulator = 0.0;
-        outputHold = 0.0f;
-        lastInternalOut = 0.0f;
-
-        juce::dsp::ProcessSpec antiImageSpec;
-        antiImageSpec.sampleRate = hostRate;
-        antiImageSpec.maximumBlockSize = 512;
-        antiImageSpec.numChannels = 1;
-        antiImageFilter.prepare (antiImageSpec);
-        antiImageFilter.reset();
-        antiImageFilter.setType (juce::dsp::StateVariableTPTFilterType::lowpass);
-        antiImageFilter.setCutoffFrequency (SchroederTank32DelayTable::kAuthenticAntiImageLpHz);
     }
 
     float processSample (float input,
@@ -263,24 +251,6 @@ private:
         return tankAp.processSample (combSum) * 0.85f;
     }
 
-    float processAuthentic (float input) noexcept
-    {
-        const auto ratio = SchroederTank32DelayTable::kInternalRate / hostRate;
-        inputAccumulator += ratio;
-
-        while (inputAccumulator >= 1.0)
-        {
-            inputAccumulator -= 1.0;
-            lastInternalOut = processTank (input);
-        }
-
-        const auto frac = static_cast<float> (inputAccumulator);
-        const auto held = lastInternalOut * (1.0f - frac) + outputHold * frac;
-        outputHold = lastInternalOut;
-        const auto filtered = antiImageFilter.processSample (0, held);
-        return juce::jlimit (-4.0f, 4.0f, filtered);
-    }
-
     HostRateReverbEngine hostEngine;
     FixedRateAdapter fixedRate_;
     EngineCrossfade engineCrossfade_;
@@ -298,10 +268,6 @@ private:
     bool useAuthenticPath { false };
     float predelaySamples { 0.0f };
     float lfoPhase { 0.0f };
-    double inputAccumulator { 0.0 };
-    float outputHold { 0.0f };
-    float lastInternalOut { 0.0f };
-    juce::dsp::StateVariableTPTFilter<float> antiImageFilter;
 };
 
 } // namespace sendbloom
