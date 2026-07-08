@@ -8,6 +8,7 @@
 #include "SchroederTank32.h"
 #include "WetOverdrive.h"
 #include <memory>
+#include <vector>
 
 namespace sendbloom
 {
@@ -25,6 +26,10 @@ public:
         preGate.prepare (sampleRate, GateProfile::PreSoft);
         postGate.prepare (sampleRate, GateProfile::PostHard);
         overdrive.prepare (sampleRate);
+
+        maxBlockSize_ = maxBlockSize;
+        wetSendScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
+        reverbScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
     }
 
     void setReverbEngineForTests (std::unique_ptr<IReverbEngine> engine) noexcept
@@ -60,12 +65,31 @@ public:
         return wet;
     }
 
+    void processBlock (const float* monoIn,
+                       const float* envelope,
+                       float* wetOut,
+                       int numSamples,
+                       float rt60Seconds,
+                       float darkMix,
+                       bool authenticColor,
+                       float distnBlend,
+                       float sendGain,
+                       bool gatePreSoft,
+                       float thresholdDb) noexcept
+    {
+        if (numSamples > maxBlockSize_)
+            return;
+    }
+
 private:
     std::unique_ptr<IReverbEngine> reverb;
     EnvelopeDetector envelope;
     NoiseGate preGate;
     NoiseGate postGate;
     WetOverdriveState overdrive;
+    int maxBlockSize_ = 0;
+    std::vector<float> wetSendScratch_;
+    std::vector<float> reverbScratch_;
 };
 
 } // namespace sendbloom
