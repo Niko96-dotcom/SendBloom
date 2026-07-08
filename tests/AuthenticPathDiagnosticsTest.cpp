@@ -8,7 +8,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <cmath>
+#include <set>
 #include <string>
 
 namespace
@@ -88,4 +90,42 @@ TEST_CASE ("Three-path render matrix CSV at 48 kHz", "[diagnostics][DIAG-01]")
     REQUIRE (properGuitarImaging < kImagingBandPeakRmsMax);
 
     SUCCEED ("three-path matrix metrics printed to stdout");
+}
+
+TEST_CASE ("Five fixtures render finite across three-path harness", "[diagnostics][DIAG-02]")
+{
+    const auto fixtures = allFixtures();
+    REQUIRE (fixtures.size() == 5);
+
+    const std::set<std::string> expected {
+        "guitar_pluck",
+        "sine220_decay",
+        "sine880_decay",
+        "impulse",
+        "swept_sine",
+    };
+
+    for (const auto& [name, input] : fixtures)
+        REQUIRE (expected.count (name) == 1);
+
+    for (const auto& [fixtureName, input] : fixtures)
+    {
+        const auto properWet = renderFreshTankPath (input, ReverbPath::ProperSRC);
+
+        for (const auto s : properWet)
+            REQUIRE (std::isfinite (s));
+    }
+
+    const auto impulseIt = std::find_if (fixtures.begin(),
+                                       fixtures.end(),
+                                       [] (const auto& p) { return p.first == "impulse"; });
+    REQUIRE (impulseIt != fixtures.end());
+
+    for (const auto path : { ReverbPath::HostRate, ReverbPath::LegacyAccumulator })
+    {
+        const auto wet = renderFreshTankPath (impulseIt->second, path);
+
+        for (const auto s : wet)
+            REQUIRE (std::isfinite (s));
+    }
 }
