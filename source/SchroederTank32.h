@@ -1,12 +1,15 @@
 #pragma once
 
+#include "Authentic32Mode.h"
 #include "DampedComb.h"
+#include "FixedRateAdapter.h"
 #include "HostRateReverbEngine.h"
 #include "IReverbEngine.h"
 #include "SchroederAllpass.h"
 #include "SchroederTank32DelayTable.h"
 #include <array>
 #include <cmath>
+#include <optional>
 
 namespace sendbloom
 {
@@ -17,9 +20,11 @@ public:
     void prepare (double sampleRate, int maxBlockSize) noexcept override
     {
         hostRate = sampleRate;
+        maxBlockSize_ = maxBlockSize;
         useAuthenticPath = false;
 
         hostEngine.prepare (sampleRate, maxBlockSize);
+        fixedRate_.prepare (sampleRate, maxBlockSize);
 
         const auto maxDelay = static_cast<int> (std::ceil (sampleRate * 1.2));
 
@@ -67,24 +72,43 @@ public:
                          float darkMix,
                          bool authenticColor) noexcept override
     {
-        if (authenticColor != useAuthenticPath)
-        {
-            useAuthenticPath = authenticColor;
+        if (! authenticColor)
+            return hostEngine.processSample (input, rt60Seconds, darkMix, false);
 
-            if (useAuthenticPath)
-            {
-                resetDelayLengths();
-                syncCombProcessingRate();
-            }
+        const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
+        float out = 0.0f;
+        fixedRate_.processBlock (&input, &out, 1, rt60Seconds, darkMix, mode);
+        return out;
+    }
+
+    void processBlock (const float* input,
+                       float* output,
+                       int numSamples,
+                       float rt60Seconds,
+                       float darkMix,
+                       bool authenticColor) noexcept override
+    {
+        if (numSamples > maxBlockSize_)
+            return;
+
+        if (! authenticColor)
+        {
+            IReverbEngine::processBlock (input, output, numSamples, rt60Seconds, darkMix, authenticColor);
+            return;
         }
 
-        if (useAuthenticPath)
-        {
-            updateCoeffs (rt60Seconds, darkMix);
-            return processAuthentic (input);
-        }
+        const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
+        fixedRate_.processBlock (input, output, numSamples, rt60Seconds, darkMix, mode);
+    }
 
-        return hostEngine.processSample (input, rt60Seconds, darkMix, false);
+    void setAuthentic32ModeForDiagnostics (Authentic32Mode mode) noexcept
+    {
+        diagnosticsMode_ = mode;
+    }
+
+    void clearAuthentic32ModeForDiagnostics() noexcept
+    {
+        diagnosticsMode_ = std::nullopt;
     }
 
 private:
@@ -194,6 +218,8 @@ private:
     }
 
     HostRateReverbEngine hostEngine;
+    FixedRateAdapter fixedRate_;
+    std::optional<Authentic32Mode> diagnosticsMode_;
 
     std::array<SchroederAllpass, 4> seriesApfs;
     std::array<DampedComb, 4> parallelCombs;
@@ -201,6 +227,7 @@ private:
 
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None> predelayLine;
     double hostRate { 48000.0 };
+    int maxBlockSize_ { 512 };
     bool useAuthenticPath { false };
     float predelaySamples { 0.0f };
     float lfoPhase { 0.0f };
