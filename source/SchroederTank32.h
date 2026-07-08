@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DampedComb.h"
+#include "HostRateReverbEngine.h"
 #include "IReverbEngine.h"
 #include "SchroederAllpass.h"
 #include "SchroederTank32DelayTable.h"
@@ -13,10 +14,12 @@ namespace sendbloom
 class SchroederTank32 : public IReverbEngine
 {
 public:
-    void prepare (double sampleRate, int /*maxBlockSize*/) noexcept override
+    void prepare (double sampleRate, int maxBlockSize) noexcept override
     {
         hostRate = sampleRate;
         useAuthenticPath = false;
+
+        hostEngine.prepare (sampleRate, maxBlockSize);
 
         const auto maxDelay = static_cast<int> (std::ceil (sampleRate * 1.2));
 
@@ -42,7 +45,7 @@ public:
         tankAp.prepare (sampleRate, maxDelay);
         tankAp.setFeedback (SchroederTank32DelayTable::kTankApFeedback);
 
-        resetDelayLengths (false);
+        resetDelayLengths();
         syncCombProcessingRate();
         lfoPhase = 0.0f;
         inputAccumulator = 0.0;
@@ -67,16 +70,21 @@ public:
         if (authenticColor != useAuthenticPath)
         {
             useAuthenticPath = authenticColor;
-            resetDelayLengths (useAuthenticPath);
-            syncCombProcessingRate();
+
+            if (useAuthenticPath)
+            {
+                resetDelayLengths();
+                syncCombProcessingRate();
+            }
         }
 
-        updateCoeffs (rt60Seconds, darkMix);
-
         if (useAuthenticPath)
+        {
+            updateCoeffs (rt60Seconds, darkMix);
             return processAuthentic (input);
+        }
 
-        return processHostRate (input);
+        return hostEngine.processSample (input, rt60Seconds, darkMix, false);
     }
 
 private:
@@ -86,74 +94,49 @@ private:
         return std::round (value * steps) / steps;
     }
 
-    float scaleDelay (int delayAt32k, bool authentic) const noexcept
+    float scaleDelay (int delayAt32k) const noexcept
     {
-        if (authentic)
-            return static_cast<float> (delayAt32k);
-
-        return static_cast<float> (delayAt32k) * static_cast<float> (hostRate / SchroederTank32DelayTable::kInternalRate);
+        return static_cast<float> (delayAt32k);
     }
 
-    void resetDelayLengths (bool authentic) noexcept
+    void resetDelayLengths() noexcept
     {
         for (size_t i = 0; i < seriesApfs.size(); ++i)
-            seriesApfs[i].setDelay (scaleDelay (SchroederTank32DelayTable::kSeriesApfDelays[i], authentic));
+            seriesApfs[i].setDelay (scaleDelay (SchroederTank32DelayTable::kSeriesApfDelays[i]));
 
         for (size_t i = 0; i < parallelCombs.size(); ++i)
-            parallelCombs[i].setDelay (scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i], authentic));
+            parallelCombs[i].setDelay (scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i]));
 
-        tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay, authentic));
+        tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay));
     }
 
     void syncCombProcessingRate() noexcept
     {
-        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
-
         for (auto& comb : parallelCombs)
-            comb.setProcessingSampleRate (effectiveRate);
+            comb.setProcessingSampleRate (SchroederTank32DelayTable::kInternalRate);
     }
 
     void updateCoeffs (float rt60Seconds, float darkMix) noexcept
     {
         const auto mix = juce::jlimit (0.0f, 1.0f, darkMix);
         const auto predelaySec = mix * SchroederTank32DelayTable::kDarkPredelaySeconds;
-        predelaySamples = predelaySec * static_cast<float> (useAuthenticPath
-                                                               ? SchroederTank32DelayTable::kInternalRate
-                                                               : hostRate);
+        predelaySamples = predelaySec * static_cast<float> (SchroederTank32DelayTable::kInternalRate);
         predelayLine.setDelay (predelaySamples);
 
         auto dampingHz = juce::jmap (mix,
-                                     useAuthenticPath ? SchroederTank32DelayTable::kAuthenticBrightDampingHz
-                                                      : SchroederTank32DelayTable::kBrightDampingHz,
+                                     SchroederTank32DelayTable::kAuthenticBrightDampingHz,
                                      SchroederTank32DelayTable::kDarkDampingHz);
 
         auto rt60 = juce::jmax (rt60Seconds, 0.05f);
 
-        float maxCombDelay = 0.0f;
-
-        for (const auto d : SchroederTank32DelayTable::kParallelCombDelays)
-        {
-            const auto scaled = scaleDelay (d, useAuthenticPath);
-            maxCombDelay = std::max (maxCombDelay, scaled);
-        }
-
-        juce::ignoreUnused (maxCombDelay);
-
-        if (useAuthenticPath)
-        {
-            const auto brightRef = SchroederTank32DelayTable::kAuthenticBrightDampingHz;
-            dampingHz = quantize9bit (dampingHz / brightRef) * brightRef;
-            const auto rt60Norm = quantize9bit (rt60 / 6.25f) * 6.25f;
-            rt60 = juce::jmax (rt60Norm, 0.05f);
-        }
-
-        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
-        juce::ignoreUnused (effectiveRate);
+        const auto brightRef = SchroederTank32DelayTable::kAuthenticBrightDampingHz;
+        dampingHz = quantize9bit (dampingHz / brightRef) * brightRef;
+        const auto rt60Norm = quantize9bit (rt60 / 6.25f) * 6.25f;
+        rt60 = juce::jmax (rt60Norm, 0.05f);
 
         for (size_t i = 0; i < parallelCombs.size(); ++i)
         {
-            const auto combDelay = scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i],
-                                               useAuthenticPath);
+            const auto combDelay = scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i]);
             parallelCombs[i].setDampingCutoff (dampingHz);
             parallelCombs[i].setFeedbackForRT60 (rt60, combDelay);
         }
@@ -179,22 +162,17 @@ private:
 
         combSum *= 0.25f;
 
-        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
         lfoPhase += static_cast<float> (2.0 * juce::MathConstants<double>::pi
-                                        * SchroederTank32DelayTable::kTankLfoHz / effectiveRate);
+                                        * SchroederTank32DelayTable::kTankLfoHz
+                                        / SchroederTank32DelayTable::kInternalRate);
 
         if (lfoPhase > juce::MathConstants<float>::twoPi)
             lfoPhase -= juce::MathConstants<float>::twoPi;
 
         const auto mod = std::sin (lfoPhase) * SchroederTank32DelayTable::kTankLfoDepthSamples;
-        tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay, useAuthenticPath) + mod);
+        tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay) + mod);
 
         return tankAp.processSample (combSum) * 0.85f;
-    }
-
-    float processHostRate (float input) noexcept
-    {
-        return juce::jlimit (-4.0f, 4.0f, processTank (input));
     }
 
     float processAuthentic (float input) noexcept
@@ -214,6 +192,8 @@ private:
         const auto filtered = antiImageFilter.processSample (0, held);
         return juce::jlimit (-4.0f, 4.0f, filtered);
     }
+
+    HostRateReverbEngine hostEngine;
 
     std::array<SchroederAllpass, 4> seriesApfs;
     std::array<DampedComb, 4> parallelCombs;
