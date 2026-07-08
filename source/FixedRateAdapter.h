@@ -23,6 +23,10 @@ public:
         converters.prepare (hostRate, maxBlockSize);
         legacy_.prepare (hostRate, maxBlockSize);
         hostScratch.assign (static_cast<size_t> (maxBlockSize), 0.0f);
+
+        const auto maxInternal = converters.getMaxUpsampledLen (maxBlockSize);
+        internalScratch.assign (static_cast<size_t> (maxInternal), 0.0);
+        internalProcessBuf.assign (static_cast<size_t> (maxInternal), 0.0);
     }
 
     void processBlock (const float* in,
@@ -46,9 +50,20 @@ public:
                 break;
 
             case Authentic32Mode::ProperSRC:
-                // Plan 13-04 implements the r8brain SRC sandwich around SchroederTankCore.
-                std::fill (out, out + n, 0.0f);
+            {
+                const int nInternal = converters.upsample (in, n, internalScratch.data());
+
+                for (int i = 0; i < nInternal; ++i)
+                {
+                    internalProcessBuf[static_cast<size_t> (i)] = static_cast<double> (
+                        core.processSample (static_cast<float> (internalScratch[static_cast<size_t> (i)]),
+                                            rt60,
+                                            darkMix));
+                }
+
+                converters.downsample (internalProcessBuf.data(), nInternal, out, n);
                 break;
+            }
         }
     }
 
@@ -69,6 +84,8 @@ private:
     RateConverterPair converters;
     LegacyAccumulatorPath legacy_;
     std::vector<float> hostScratch;
+    std::vector<double> internalScratch;
+    std::vector<double> internalProcessBuf;
     double hostRate_ { 48000.0 };
     int maxBlockSize_ { 512 };
 };
