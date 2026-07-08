@@ -153,6 +153,63 @@ TEST_CASE ("processBlock tolerates larger-than-prepared block size",
             REQUIRE (std::isfinite (buffer.getSample (ch, i)));
 }
 
+TEST_CASE ("processBlock survives 1000 authentic_color toggles",
+           "[realtime][integration][stress][XFADE-02]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (48000.0, 1024);
+
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    *apvts.getRawParameterValue (authenticColor) = 0.0f;
+    *apvts.getRawParameterValue (level) = 0.5f;
+    *apvts.getRawParameterValue (size) = 0.75f;
+
+    juce::MidiBuffer midi;
+    float peak = 0.0f;
+    int toggleCount = 0;
+
+    for (int toggleIndex = 0; toggleIndex < 1000; ++toggleIndex)
+    {
+        *apvts.getRawParameterValue (authenticColor) =
+            toggleIndex % 2 == 0 ? 1.0f : 0.0f;
+
+        const auto blockSize =
+            kBlockSizes[static_cast<size_t> (toggleIndex) % kBlockSizes.size()];
+        juce::AudioBuffer<float> buffer (2, blockSize);
+        fillNoise (buffer, toggleIndex);
+
+        REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
+        ++toggleCount;
+
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        {
+            for (int i = 0; i < buffer.getNumSamples(); ++i)
+            {
+                const auto s = buffer.getSample (ch, i);
+                REQUIRE (std::isfinite (s));
+                peak = std::max (peak, std::abs (s));
+            }
+        }
+
+        float maxAdjacentDelta = 0.0f;
+        for (int i = 1; i < buffer.getNumSamples(); ++i)
+        {
+            maxAdjacentDelta = std::max (
+                maxAdjacentDelta,
+                std::abs (buffer.getSample (0, i) - buffer.getSample (0, i - 1)));
+        }
+        REQUIRE (maxAdjacentDelta < 1.0f);
+    }
+
+    REQUIRE (toggleCount == 1000);
+    REQUIRE (peak < 4.0f);
+}
+
 TEST_CASE ("processBlock stress with authentic color toggling",
            "[realtime][integration][stress][TEST-09]")
 {
