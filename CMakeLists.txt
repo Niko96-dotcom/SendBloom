@@ -34,6 +34,8 @@ juce_add_plugin("${PROJECT_NAME}"
 
 add_library(SharedCode INTERFACE)
 
+include(R8brain)
+
 include(SharedCodeDefaults)
 target_compile_features(SharedCode INTERFACE cxx_std_20)
 
@@ -64,8 +66,11 @@ target_link_libraries(SharedCode
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
 
+target_link_libraries(SharedCode INTERFACE r8brain)
+
 juce_add_binary_data(SendBloomPresets
     SOURCES
+        resources/ui/reverbx-faceplate.png
         resources/presets/Sparkle_Verb.xml
         resources/presets/Cut_Sample_Gate.xml
         resources/presets/Spacerock_Burn.xml
@@ -78,6 +83,12 @@ juce_add_binary_data(SendBloomPresets
 target_link_libraries(SharedCode INTERFACE SendBloomPresets)
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
+
+add_executable(EditorSnapshot tools/EditorSnapshot.cpp)
+target_compile_features(EditorSnapshot PRIVATE cxx_std_20)
+target_include_directories(EditorSnapshot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
+target_compile_definitions(EditorSnapshot PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 
 # include(PamplejuceIPP)
 
