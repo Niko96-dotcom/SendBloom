@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ParameterCurves.h>
+#include <SchroederTank32.h>
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <utility>
@@ -81,6 +84,54 @@ inline std::vector<std::pair<std::string, std::vector<float>>> allFixtures()
         { "impulse", makeImpulseBurst (kRenderSamples) },
         { "swept_sine", makeSweptSine (kRenderSamples) },
     };
+}
+
+enum class ReverbPath
+{
+    HostRate,
+    LegacyAccumulator,
+    ProperSRC
+};
+
+inline void applyPathDiagnostics (sendbloom::SchroederTank32& tank, ReverbPath path) noexcept
+{
+    switch (path)
+    {
+        case ReverbPath::LegacyAccumulator:
+            tank.setAuthentic32ModeForDiagnostics (sendbloom::Authentic32Mode::LegacyAccumulator);
+            break;
+        case ReverbPath::ProperSRC:
+        case ReverbPath::HostRate:
+            tank.clearAuthentic32ModeForDiagnostics();
+            break;
+    }
+}
+
+inline std::vector<float> renderTankPath (sendbloom::SchroederTank32& tank,
+                                          const std::vector<float>& input,
+                                          ReverbPath path,
+                                          double sampleRate,
+                                          int blockSize)
+{
+    tank.prepare (sampleRate, blockSize);
+    applyPathDiagnostics (tank, path);
+
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+    const auto authentic = path != ReverbPath::HostRate;
+
+    std::vector<float> out (input.size(), 0.0f);
+    std::vector<float> inBlock (static_cast<size_t> (blockSize), 0.0f);
+    std::vector<float> outBlock (static_cast<size_t> (blockSize), 0.0f);
+
+    for (size_t offset = 0; offset < input.size(); offset += static_cast<size_t> (blockSize))
+    {
+        const int n = static_cast<int> (std::min (static_cast<size_t> (blockSize), input.size() - offset));
+        std::copy_n (input.begin() + static_cast<std::ptrdiff_t> (offset), n, inBlock.begin());
+        tank.processBlock (inBlock.data(), outBlock.data(), n, rt60, 0.0f, authentic);
+        std::copy_n (outBlock.begin(), n, out.begin() + static_cast<std::ptrdiff_t> (offset));
+    }
+
+    return out;
 }
 
 } // namespace sendbloom::test
