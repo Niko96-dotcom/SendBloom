@@ -4,6 +4,7 @@
 #include "LegacyAccumulatorPath.h"
 #include "ParameterCurves.h"
 #include "RateConverterPair.h"
+#include "SrcLatencyTable.h"
 #include "ReverbTestHelpers.h"
 #include "SchroederTank32.h"
 
@@ -239,6 +240,17 @@ TEST_CASE ("RateConverterPair tolerates variable block sizes",
 
     for (const auto sample : hostOut)
         REQUIRE (std::isfinite (sample));
+}
+
+TEST_CASE ("RateConverterPair round-trip latency at four host rates",
+           "[verb][LAT-01]")
+{
+    for (const auto& row : sendbloom::kMeasuredLatencyTable)
+    {
+        sendbloom::RateConverterPair converter;
+        converter.prepare (row.hostRateHz, sendbloom::kMaxHostBlock);
+        REQUIRE (converter.getRoundTripLatencySamples() == row.roundTripSamples);
+    }
 }
 
 TEST_CASE ("RateConverterPair round-trip latency is stable after reset",
