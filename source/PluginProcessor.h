@@ -67,6 +67,9 @@ private:
     std::vector<float> monoScratch_;
     std::vector<float> envelopeScratch_;
     std::vector<float> wetScratch_;
+    std::vector<float> wetGainScratch_;
+    std::vector<float> bypassWetScratch_;
+    std::vector<float> outputGainScratch_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
