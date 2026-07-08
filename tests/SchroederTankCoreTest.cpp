@@ -1,4 +1,5 @@
 #include "ReverbTestHelpers.h"
+#include <Authentic32Mode.h>
 #include <HostRateReverbEngine.h>
 #include <IReverbEngine.h>
 #include <ParameterCurves.h>
@@ -171,6 +172,36 @@ TEST_CASE ("HostRateReverbEngine RT60 within tolerance at size 0.5", "[verb][Hos
     const auto measured = measureRT60 (ir, kHostRate);
 
     REQUIRE (measured == Catch::Approx (target).margin (target * 0.15f));
+}
+
+TEST_CASE ("SchroederTankCore reset produces repeatable impulse response", "[verb][SchroederTankCore][reset]")
+{
+    sendbloom::SchroederTankCore core;
+    core.prepare (kCoreRate, 512);
+
+    constexpr float rt60 = 1.5f;
+    constexpr int numSamples = static_cast<int> (kCoreRate * 0.5);
+
+    const auto ir1 = renderCoreImpulse (core, rt60, 0.0f, numSamples);
+    core.reset();
+    const auto ir2 = renderCoreImpulse (core, rt60, 0.0f, numSamples);
+
+    REQUIRE (maxAbsDiff (ir1, ir2) < 1.0e-5f);
+}
+
+TEST_CASE ("Authentic32Mode exposes diagnostics-only enum values", "[verb][Authentic32Mode]")
+{
+    using sendbloom::Authentic32Mode;
+
+    REQUIRE (static_cast<uint8_t> (Authentic32Mode::Off) == 0);
+    REQUIRE (static_cast<uint8_t> (Authentic32Mode::LegacyAccumulator) == 1);
+    REQUIRE (static_cast<uint8_t> (Authentic32Mode::ProperSRC) == 2);
+
+    const auto roundTrip = static_cast<Authentic32Mode> (static_cast<uint8_t> (Authentic32Mode::ProperSRC));
+    REQUIRE (roundTrip == Authentic32Mode::ProperSRC);
+
+    Authentic32Mode defaultMode {};
+    REQUIRE (defaultMode == Authentic32Mode::Off);
 }
 
 TEST_CASE ("HostRateReverbEngine RT60 within tolerance at size 1.0", "[verb][HostRate][rt60]")
