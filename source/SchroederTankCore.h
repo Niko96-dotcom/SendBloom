@@ -50,6 +50,20 @@ public:
         return processTank (input);
     }
 
+    void reset() noexcept
+    {
+        predelayLine.reset();
+
+        for (auto& apf : seriesApfs)
+            apf.reset();
+
+        for (auto& comb : parallelCombs)
+            comb.reset();
+
+        tankAp.reset();
+        lfoPhase = 0.0f;
+    }
+
 private:
     float scaleDelay (int delayAt32k) const noexcept
     {
