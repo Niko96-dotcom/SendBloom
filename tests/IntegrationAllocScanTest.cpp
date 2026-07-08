@@ -69,26 +69,34 @@ std::string stripComments (std::string s)
 
 std::string extractHeaderProcessBlockBody (const std::string& source)
 {
-    const auto processBlockPos = source.find ("void processBlock");
-    if (processBlockPos == std::string::npos)
-        return {};
-
-    const auto bodyStart = source.find ('{', processBlockPos);
-    if (bodyStart == std::string::npos)
-        return {};
-
-    const auto nextPublic = source.find ("\npublic:", bodyStart);
-    const auto nextPrivate = source.find ("\nprivate:", bodyStart);
-    const auto nextProtected = source.find ("\nprotected:", bodyStart);
-
-    auto bodyEnd = source.size();
-    for (const auto pos : { nextPublic, nextPrivate, nextProtected })
+    const auto tryExtract = [&source] (const char* signature) -> std::string
     {
-        if (pos != std::string::npos)
-            bodyEnd = std::min (bodyEnd, pos);
-    }
+        const auto pos = source.find (signature);
+        if (pos == std::string::npos)
+            return {};
 
-    return source.substr (bodyStart, bodyEnd - bodyStart);
+        const auto bodyStart = source.find ('{', pos);
+        if (bodyStart == std::string::npos)
+            return {};
+
+        const auto nextPublic = source.find ("\npublic:", bodyStart);
+        const auto nextPrivate = source.find ("\nprivate:", bodyStart);
+        const auto nextProtected = source.find ("\nprotected:", bodyStart);
+
+        auto bodyEnd = source.size();
+        for (const auto sectionPos : { nextPublic, nextPrivate, nextProtected })
+        {
+            if (sectionPos != std::string::npos)
+                bodyEnd = std::min (bodyEnd, sectionPos);
+        }
+
+        return source.substr (bodyStart, bodyEnd - bodyStart);
+    };
+
+    if (auto body = tryExtract ("void processBlock"); ! body.empty())
+        return body;
+
+    return tryExtract ("void mixWetBlock");
 }
 
 std::string extractCppProcessBlockBody (const std::string& source)
@@ -142,9 +150,10 @@ void requireNoAllocTokens (const std::string& strippedBody)
 TEST_CASE ("integrated processBlock bodies have no heap allocation tokens",
            "[realtime][TEST-09][static][integration]")
 {
-    constexpr std::array<const char*, 3> kSources {
+    constexpr std::array<const char*, 4> kSources {
         "source/GatedBloomChain.h",
         "source/SchroederTank32.h",
+        "source/EngineCrossfade.h",
         "source/PluginProcessor.cpp",
     };
 
