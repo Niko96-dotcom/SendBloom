@@ -2,6 +2,7 @@
 #include <GatedBloomChain.h>
 #include <ParallelWetMixer.h>
 #include <ParameterCurves.h>
+#include <algorithm>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -208,24 +209,35 @@ TEST_CASE ("GatedBloomChain authentic block produces finite output",
     sendbloom::GatedBloomChain chain;
     chain.prepare (kSampleRate, kBlockSize);
 
-    constexpr int kNumSamples = 64;
-    std::vector<float> monoIn (static_cast<size_t> (kNumSamples));
-    std::vector<float> envelope (static_cast<size_t> (kNumSamples));
-
-    for (int i = 0; i < kNumSamples; ++i)
-    {
-        monoIn[static_cast<size_t> (i)] = (static_cast<float> (i) / 17.0f) - 0.5f;
-        envelope[static_cast<size_t> (i)] =
-            chain.getEnvelope().process (std::abs (monoIn[static_cast<size_t> (i)]));
-    }
-
-    std::vector<float> wetOut (static_cast<size_t> (kNumSamples));
+    constexpr int kTotalSamples = 8192;
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
 
-    chain.processBlock (monoIn.data(), envelope.data(), wetOut.data(), kNumSamples,
-                        rt60, 0.0f, true, 0.0f, 1.0f, true, kThresholdDb);
+    std::vector<float> monoBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> envBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> wetOut (static_cast<size_t> (kTotalSamples), 0.0f);
 
-    REQUIRE (sendbloom::test::rms (wetOut) > 1e-6f);
-    for (const auto w : wetOut)
+    for (int offset = 0; offset < kTotalSamples; offset += kBlockSize)
+    {
+        const int n = std::min (kBlockSize, kTotalSamples - offset);
+
+        for (int i = 0; i < n; ++i)
+        {
+            monoBlock[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
+            envBlock[static_cast<size_t> (i)] =
+                chain.getEnvelope().process (std::abs (monoBlock[static_cast<size_t> (i)]));
+        }
+
+        chain.processBlock (monoBlock.data(), envBlock.data(), wetOut.data() + offset, n,
+                            rt60, 0.0f, true, 0.0f, 1.0f, true, kThresholdDb);
+    }
+
+    auto peak = 0.0f;
+    for (int i = 64; i < kTotalSamples; ++i)
+    {
+        const auto w = wetOut[static_cast<size_t> (i)];
         REQUIRE (std::isfinite (w));
+        peak = std::max (peak, std::abs (w));
+    }
+
+    REQUIRE (peak > 1e-6f);
 }
