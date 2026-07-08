@@ -79,6 +79,37 @@ public:
     {
         if (numSamples > maxBlockSize_)
             return;
+
+        if (! authenticColor)
+        {
+            for (int i = 0; i < numSamples; ++i)
+                wetOut[i] = processSample (monoIn[i], envelope[i], rt60Seconds, darkMix, false,
+                                           distnBlend, sendGain, gatePreSoft, thresholdDb);
+            return;
+        }
+
+        for (int i = 0; i < numSamples; ++i)
+        {
+            auto wet = monoIn[i];
+
+            if (gatePreSoft)
+                wet *= preGate.process (envelope[i], thresholdDb);
+
+            wetSendScratch_[static_cast<size_t> (i)] = PressureSend::process (wet, sendGain);
+        }
+
+        reverb->processBlock (wetSendScratch_.data(), reverbScratch_.data(), numSamples,
+                              rt60Seconds, darkMix, true);
+
+        for (int i = 0; i < numSamples; ++i)
+        {
+            auto wet = overdrive.process (reverbScratch_[static_cast<size_t> (i)], distnBlend);
+
+            if (! gatePreSoft)
+                wet *= postGate.process (envelope[i], thresholdDb);
+
+            wetOut[i] = wet;
+        }
     }
 
 private:
