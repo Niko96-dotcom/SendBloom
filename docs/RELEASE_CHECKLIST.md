@@ -38,6 +38,8 @@
 When **32k Color** (`authentic_color`) is enabled:
 
 - Tank DSP is stepped at **32,768 Hz** and resampled to the host rate (`processAuthentic` accumulator).
+- A host-rate anti-image lowpass follows the authentic upsample path (`kAuthenticAntiImageLpHz`).
+- Bright authentic damping uses `kAuthenticBrightDampingHz` (darker than host-rate bright).
 - Delay lines use the fixed 32,768 Hz table lengths (not host-rate scaled).
 - Per-comb RT60 feedback uses each comb's own delay reference.
 - Damping and RT60 may be quantized to 9-bit steps.

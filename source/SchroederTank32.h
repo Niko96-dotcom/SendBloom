@@ -48,6 +48,15 @@ public:
         inputAccumulator = 0.0;
         outputHold = 0.0f;
         lastInternalOut = 0.0f;
+
+        juce::dsp::ProcessSpec antiImageSpec;
+        antiImageSpec.sampleRate = hostRate;
+        antiImageSpec.maximumBlockSize = 512;
+        antiImageSpec.numChannels = 1;
+        antiImageFilter.prepare (antiImageSpec);
+        antiImageFilter.reset();
+        antiImageFilter.setType (juce::dsp::StateVariableTPTFilterType::lowpass);
+        antiImageFilter.setCutoffFrequency (SchroederTank32DelayTable::kAuthenticAntiImageLpHz);
     }
 
     float processSample (float input,
@@ -114,7 +123,8 @@ private:
         predelayLine.setDelay (predelaySamples);
 
         auto dampingHz = juce::jmap (mix,
-                                     SchroederTank32DelayTable::kBrightDampingHz,
+                                     useAuthenticPath ? SchroederTank32DelayTable::kAuthenticBrightDampingHz
+                                                      : SchroederTank32DelayTable::kBrightDampingHz,
                                      SchroederTank32DelayTable::kDarkDampingHz);
 
         auto rt60 = juce::jmax (rt60Seconds, 0.05f);
@@ -131,8 +141,8 @@ private:
 
         if (useAuthenticPath)
         {
-            dampingHz = quantize9bit (dampingHz / SchroederTank32DelayTable::kBrightDampingHz)
-                        * SchroederTank32DelayTable::kBrightDampingHz;
+            const auto brightRef = SchroederTank32DelayTable::kAuthenticBrightDampingHz;
+            dampingHz = quantize9bit (dampingHz / brightRef) * brightRef;
             const auto rt60Norm = quantize9bit (rt60 / 6.25f) * 6.25f;
             rt60 = juce::jmax (rt60Norm, 0.05f);
         }
@@ -199,9 +209,10 @@ private:
         }
 
         const auto frac = static_cast<float> (inputAccumulator);
-        const auto out = lastInternalOut * (1.0f - frac) + outputHold * frac;
+        const auto held = lastInternalOut * (1.0f - frac) + outputHold * frac;
         outputHold = lastInternalOut;
-        return juce::jlimit (-4.0f, 4.0f, out);
+        const auto filtered = antiImageFilter.processSample (0, held);
+        return juce::jlimit (-4.0f, 4.0f, filtered);
     }
 
     std::array<SchroederAllpass, 4> seriesApfs;
@@ -216,6 +227,7 @@ private:
     double inputAccumulator { 0.0 };
     float outputHold { 0.0f };
     float lastInternalOut { 0.0f };
+    juce::dsp::StateVariableTPTFilter<float> antiImageFilter;
 };
 
 } // namespace sendbloom

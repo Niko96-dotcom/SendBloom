@@ -20,10 +20,14 @@ struct SchroederTank32DelayTable
 
     static constexpr float kDarkPredelaySeconds = 0.055f;
     static constexpr float kBrightDampingHz = 8000.0f;
+    static constexpr float kAuthenticBrightDampingHz = 6500.0f;
     static constexpr float kDarkDampingHz = 3200.0f;
 
     static constexpr float kTankLfoHz = 0.55f;
     static constexpr float kTankLfoDepthSamples = 16.0f;
+
+    // Host-rate SVF lowpass after 32,768 Hz upsample (removes ~16.384 kHz imaging foldback).
+    static constexpr float kAuthenticAntiImageLpHz = 12000.0f;
 };
 
 } // namespace sendbloom
