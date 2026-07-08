@@ -45,6 +45,14 @@ When **32k Color** (`authentic_color`) is enabled:
 - Damping and RT60 may be quantized to 9-bit steps.
 - This is **original software** — not firmware-derived, not bytecode, not hardware cloning.
 
+## RC1 Safety Freeze
+
+- [x] Fresh plugin load ships with `authentic_color` off (APVTS default `false`)
+- [x] All 8 factory presets ship with `authentic_color=0`
+- [x] **Host-rate Schroeder tank** is the production default for RC1
+- When **32k Color** is enabled, the honest `processAuthentic` accumulator path described in **32k Color Truth (VERB-05)** above still applies — this path is **experimental / not production-default** until TEST-11, DIAG-04, LAT-02, and XFADE-01 pass (Phase 18 enablement)
+- ProperSRC is **not shipped** in RC1 — do not document or claim it as available
+
 ## Multi-DAW Smoke (TEST-07) — Human Required, Not Verified
 
 - [ ] **Logic** — AU loads, UI renders, audio processes, presets accessible
