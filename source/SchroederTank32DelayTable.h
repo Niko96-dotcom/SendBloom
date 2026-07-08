@@ -26,7 +26,8 @@ struct SchroederTank32DelayTable
     static constexpr float kTankLfoHz = 0.55f;
     static constexpr float kTankLfoDepthSamples = 16.0f;
 
-    // Host-rate SVF lowpass after 32,768 Hz upsample (removes ~16.384 kHz imaging foldback).
+    // LegacyAccumulatorPath-only: host-rate SVF lowpass after 32,768 Hz upsample
+    // (removes ~16.384 kHz imaging foldback in legacy accumulator tier).
     static constexpr float kAuthenticAntiImageLpHz = 12000.0f;
 };
 

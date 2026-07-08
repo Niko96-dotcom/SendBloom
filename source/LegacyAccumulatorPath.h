@@ -1,5 +1,8 @@
 #pragma once
 
+// Legacy accumulator + anti-image SVF used only for Authentic32Mode::LegacyAccumulator
+// diagnostics and SRC-06 A/B comparison — not the production ProperSRC path.
+
 #include "DampedComb.h"
 #include "SchroederAllpass.h"
 #include "SchroederTank32DelayTable.h"
