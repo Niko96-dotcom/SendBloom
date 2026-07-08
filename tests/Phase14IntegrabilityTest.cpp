@@ -1,3 +1,4 @@
+#include <FactoryPresets.h>
 #include <ParameterIDs.h>
 #include <PluginProcessor.h>
 #include <catch2/catch_approx.hpp>
@@ -106,6 +107,32 @@ std::string extractProcessBlockBodyFromHeader (const std::string& source)
     return {};
 }
 
+void assertFreshLoadAuthenticColorOff (sendbloom::PluginProcessor& plugin)
+{
+    using namespace sendbloom::ParameterIDs;
+
+    const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
+    REQUIRE (authentic != nullptr);
+    REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
+}
+
+void assertAllFactoryPresetsRecallAuthenticColorOff()
+{
+    using namespace sendbloom::ParameterIDs;
+
+    for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
+    {
+        sendbloom::PluginProcessor plugin;
+        plugin.setCurrentProgram (preset);
+
+        INFO ("preset index " << preset);
+
+        const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
+        REQUIRE (authentic != nullptr);
+        REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
+    }
+}
+
 } // namespace
 
 TEST_CASE ("INTEG-04 parameter layout exposes exactly 15 Phase 2 contract IDs",
@@ -195,4 +222,17 @@ TEST_CASE ("INTEG-04 block integration keeps authentic_color as sole authentic A
     REQUIRE (chainBody.find ("Authentic32Mode") == std::string::npos);
 
     REQUIRE (processorSource.find ("getNextAuthenticColorTarget") != std::string::npos);
+}
+
+TEST_CASE ("INTEG-04 fresh plugin load defaults authentic_color off",
+           "[integrability][INTEG-04][safe]")
+{
+    sendbloom::PluginProcessor plugin;
+    assertFreshLoadAuthenticColorOff (plugin);
+}
+
+TEST_CASE ("INTEG-04 all factory presets recall authentic_color off",
+           "[integrability][INTEG-04][safe]")
+{
+    assertAllFactoryPresetsRecallAuthenticColorOff();
 }
