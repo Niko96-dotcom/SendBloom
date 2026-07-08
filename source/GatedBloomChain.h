@@ -42,6 +42,14 @@ public:
         reverb->requestEngineCrossfade (targetAuthentic);
     }
 
+    int getSrcRoundTripLatencySamples() const noexcept
+    {
+        if (auto* tank = dynamic_cast<SchroederTank32*> (reverb.get()))
+            return tank->getSrcRoundTripLatencySamples();
+
+        return 0;
+    }
+
     EnvelopeDetector& getEnvelope() noexcept { return envelope; }
     const EnvelopeDetector& getEnvelope() const noexcept { return envelope; }
 

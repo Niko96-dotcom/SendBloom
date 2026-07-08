@@ -170,6 +170,11 @@ public:
         diagnosticsMode_ = std::nullopt;
     }
 
+    int getSrcRoundTripLatencySamples() const noexcept
+    {
+        return fixedRate_.getRoundTripLatencySamples();
+    }
+
 private:
     static float quantize9bit (float value) noexcept
     {
