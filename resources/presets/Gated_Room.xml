@@ -12,7 +12,7 @@
   <PARAM id="send_connected" value="0"/>
   <PARAM id="send_amount" value="0.7"/>
   <PARAM id="send_feel" value="1"/>
-  <PARAM id="authentic_color" value="1"/>
+  <PARAM id="authentic_color" value="0"/>
   <PARAM id="extended_stereo" value="0"/>
   <PARAM id="dirt_os" value="0"/>
   <PARAM id="bypass" value="0"/>
