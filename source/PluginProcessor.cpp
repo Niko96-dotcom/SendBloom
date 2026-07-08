@@ -28,6 +28,14 @@ PluginProcessor::PluginProcessor()
 
 PluginProcessor::~PluginProcessor() = default;
 
+void PluginProcessor::updateReportedLatency (bool targetAuthenticOn) noexcept
+{
+    if (! targetAuthenticOn)
+        setLatencySamples (0);
+    else
+        setLatencySamples (chain.getSrcRoundTripLatencySamples());
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
     return sendbloom::createParameterLayout();
@@ -126,6 +134,10 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     smoothedBank.snapToTargets();
     lastAuthenticColorSmoothed_ =
         apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f ? 1.0f : 0.0f;
+
+    const auto authenticOn =
+        apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f;
+    updateReportedLatency (authenticOn);
 }
 
 void PluginProcessor::releaseResources()
@@ -292,6 +304,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 || (prevAuthenticSmoothed > 0.5f && authenticColorTarget <= 0.5f)))
         {
             chain.requestEngineCrossfade (authenticColorTarget > 0.5f);
+            updateReportedLatency (authenticColorTarget > 0.5f);
             crossfadeEdgeHandled = true;
         }
 

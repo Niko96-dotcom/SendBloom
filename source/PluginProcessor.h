@@ -72,6 +72,8 @@ private:
     std::vector<float> outputGainScratch_;
     float lastAuthenticColorSmoothed_ { 0.0f };
 
+    void updateReportedLatency (bool targetAuthenticOn) noexcept;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
 
