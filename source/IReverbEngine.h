@@ -25,6 +25,10 @@ public:
         for (int i = 0; i < numSamples; ++i)
             output[i] = processSample (input[i], rt60Seconds, darkMix, authenticColor);
     }
+
+    virtual bool isCrossfading() const noexcept { return false; }
+
+    virtual void requestEngineCrossfade (bool /*targetAuthentic*/) noexcept {}
 };
 
 } // namespace sendbloom

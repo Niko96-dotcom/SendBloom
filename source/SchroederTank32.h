@@ -2,6 +2,7 @@
 
 #include "Authentic32Mode.h"
 #include "DampedComb.h"
+#include "EngineCrossfade.h"
 #include "FixedRateAdapter.h"
 #include "HostRateReverbEngine.h"
 #include "IReverbEngine.h"
@@ -25,6 +26,9 @@ public:
 
         hostEngine.prepare (sampleRate, maxBlockSize);
         fixedRate_.prepare (sampleRate, maxBlockSize);
+        engineCrossfade_.prepare (sampleRate);
+        hostCrossfadeScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
+        fixedCrossfadeScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
 
         const auto maxDelay = static_cast<int> (std::ceil (sampleRate * 1.2));
 
@@ -72,6 +76,13 @@ public:
                          float darkMix,
                          bool authenticColor) noexcept override
     {
+        if (engineCrossfade_.isCrossfading())
+        {
+            float out = 0.0f;
+            processBlock (&input, &out, 1, rt60Seconds, darkMix, authenticColor);
+            return out;
+        }
+
         if (! authenticColor)
             return hostEngine.processSample (input, rt60Seconds, darkMix, false);
 
@@ -91,6 +102,37 @@ public:
         if (numSamples > maxBlockSize_)
             return;
 
+        if (engineCrossfade_.isCrossfading())
+        {
+            const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
+            hostEngine.processBlock (input,
+                                     hostCrossfadeScratch_.data(),
+                                     numSamples,
+                                     rt60Seconds,
+                                     darkMix,
+                                     false);
+            fixedRate_.processBlock (input,
+                                     fixedCrossfadeScratch_.data(),
+                                     numSamples,
+                                     rt60Seconds,
+                                     darkMix,
+                                     mode);
+            engineCrossfade_.mixWetBlock (hostCrossfadeScratch_.data(),
+                                          fixedCrossfadeScratch_.data(),
+                                          output,
+                                          numSamples);
+
+            if (! engineCrossfade_.isCrossfading())
+            {
+                if (engineCrossfade_.targetIsFixedEngine())
+                    hostEngine.reset();
+                else
+                    fixedRate_.reset();
+            }
+
+            return;
+        }
+
         if (! authenticColor)
         {
             IReverbEngine::processBlock (input, output, numSamples, rt60Seconds, darkMix, authenticColor);
@@ -99,6 +141,23 @@ public:
 
         const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
         fixedRate_.processBlock (input, output, numSamples, rt60Seconds, darkMix, mode);
+    }
+
+    bool isCrossfading() const noexcept override
+    {
+        return engineCrossfade_.isCrossfading();
+    }
+
+    void requestEngineCrossfade (bool targetAuthentic) noexcept override
+    {
+        if (engineCrossfade_.isCrossfading()
+            && engineCrossfade_.targetIsFixedEngine() == targetAuthentic)
+            return;
+
+        if (targetAuthentic)
+            engineCrossfade_.beginCrossfadeTowardFixed();
+        else
+            engineCrossfade_.beginCrossfadeTowardHost();
     }
 
     void setAuthentic32ModeForDiagnostics (Authentic32Mode mode) noexcept
@@ -219,6 +278,9 @@ private:
 
     HostRateReverbEngine hostEngine;
     FixedRateAdapter fixedRate_;
+    EngineCrossfade engineCrossfade_;
+    std::vector<float> hostCrossfadeScratch_;
+    std::vector<float> fixedCrossfadeScratch_;
     std::optional<Authentic32Mode> diagnosticsMode_;
 
     std::array<SchroederAllpass, 4> seriesApfs;

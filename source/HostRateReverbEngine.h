@@ -25,6 +25,11 @@ public:
         return juce::jlimit (-4.0f, 4.0f, out);
     }
 
+    void reset() noexcept
+    {
+        core.reset();
+    }
+
 private:
     SchroederTankCore core;
 };
