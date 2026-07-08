@@ -266,30 +266,44 @@ TEST_CASE ("LegacyAccumulatorPath matches SchroederTank32 authentic impulse rend
     sendbloom::SchroederTank32 tank;
     legacy.prepare (48000.0, 512);
     tank.prepare (48000.0, 512);
+    tank.setAuthentic32ModeForDiagnostics (sendbloom::Authentic32Mode::LegacyAccumulator);
 
     constexpr int numSamples = 24000;
+    constexpr int kBlockSize = 512;
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+
+    std::vector<float> inBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> legacyOutBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> tankOutBlock (static_cast<size_t> (kBlockSize), 0.0f);
 
     float maxLegacyTail = 0.0f;
     float maxTankTail = 0.0f;
 
-    for (int i = 0; i < numSamples; ++i)
+    for (int offset = 0; offset < numSamples; offset += kBlockSize)
     {
-        const float in = i == 0 ? 1.0f : 0.0f;
-        const auto tankOut = tank.processSample (in, rt60, 0.0f, true);
+        const int n = std::min (kBlockSize, numSamples - offset);
 
-        float legacyOut = 0.0f;
-        legacy.processBlock (&in, &legacyOut, 1, rt60, 0.0f);
+        for (int i = 0; i < n; ++i)
+            inBlock[static_cast<size_t> (i)] = (offset + i) == 0 ? 1.0f : 0.0f;
 
-        REQUIRE (legacyOut == Catch::Approx (tankOut).margin (1.0e-5f));
+        legacy.processBlock (inBlock.data(), legacyOutBlock.data(), n, rt60, 0.0f);
+        tank.processBlock (inBlock.data(), tankOutBlock.data(), n, rt60, 0.0f, true);
 
-        if (i >= 64)
+        for (int i = 0; i < n; ++i)
         {
-            maxLegacyTail = std::max (maxLegacyTail, std::abs (legacyOut));
-            maxTankTail = std::max (maxTankTail, std::abs (tankOut));
+            const int globalIdx = offset + i;
+            REQUIRE (legacyOutBlock[static_cast<size_t> (i)]
+                     == Catch::Approx (tankOutBlock[static_cast<size_t> (i)]).margin (1.0e-5f));
+
+            if (globalIdx >= 64)
+            {
+                maxLegacyTail = std::max (maxLegacyTail, std::abs (legacyOutBlock[static_cast<size_t> (i)]));
+                maxTankTail = std::max (maxTankTail, std::abs (tankOutBlock[static_cast<size_t> (i)]));
+            }
         }
     }
 
+    tank.clearAuthentic32ModeForDiagnostics();
     REQUIRE (maxLegacyTail == Catch::Approx (maxTankTail).margin (1.0e-6f));
 }
 
@@ -300,26 +314,40 @@ TEST_CASE ("LegacyAccumulatorPath burst input produces tank-matched tail energy"
     sendbloom::SchroederTank32 tank;
     legacy.prepare (48000.0, 512);
     tank.prepare (48000.0, 512);
+    tank.setAuthentic32ModeForDiagnostics (sendbloom::Authentic32Mode::LegacyAccumulator);
 
     constexpr int numSamples = 24000;
+    constexpr int kBlockSize = 512;
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+
+    std::vector<float> inBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> legacyOutBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> tankOutBlock (static_cast<size_t> (kBlockSize), 0.0f);
 
     float maxLegacyTail = 0.0f;
 
-    for (int i = 0; i < numSamples; ++i)
+    for (int offset = 0; offset < numSamples; offset += kBlockSize)
     {
-        const float in = i < 480 ? 1.0f : 0.0f;
-        const auto tankOut = tank.processSample (in, rt60, 0.0f, true);
+        const int n = std::min (kBlockSize, numSamples - offset);
 
-        float legacyOut = 0.0f;
-        legacy.processBlock (&in, &legacyOut, 1, rt60, 0.0f);
+        for (int i = 0; i < n; ++i)
+            inBlock[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
 
-        REQUIRE (legacyOut == Catch::Approx (tankOut).margin (1.0e-5f));
+        legacy.processBlock (inBlock.data(), legacyOutBlock.data(), n, rt60, 0.0f);
+        tank.processBlock (inBlock.data(), tankOutBlock.data(), n, rt60, 0.0f, true);
 
-        if (i >= 64)
-            maxLegacyTail = std::max (maxLegacyTail, std::abs (legacyOut));
+        for (int i = 0; i < n; ++i)
+        {
+            const int globalIdx = offset + i;
+            REQUIRE (legacyOutBlock[static_cast<size_t> (i)]
+                     == Catch::Approx (tankOutBlock[static_cast<size_t> (i)]).margin (1.0e-5f));
+
+            if (globalIdx >= 64)
+                maxLegacyTail = std::max (maxLegacyTail, std::abs (legacyOutBlock[static_cast<size_t> (i)]));
+        }
     }
 
+    tank.clearAuthentic32ModeForDiagnostics();
     REQUIRE (maxLegacyTail > 1.0e-4f);
 }
 
