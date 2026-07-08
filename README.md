@@ -62,6 +62,7 @@ SendBloom is an original software implementation inspired by publicly described 
 - Product metadata uses **SendBloom** / **Niko Audio Labs** branding only
 - Manufacturer code: `NkMo` | Plugin code: `SbLm`
 - Legal metadata audit: `bash scripts/check-legal-metadata.sh`
+- Third-party dependencies (including [r8brain-free-src](https://github.com/avaneev/r8brain-free-src), MIT): [docs/THIRD_PARTY_LICENSES.md](docs/THIRD_PARTY_LICENSES.md)
 
 See [docs/CLEAN_ROOM.md](docs/CLEAN_ROOM.md) and [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for full positioning and release procedures.
 
