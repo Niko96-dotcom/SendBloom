@@ -305,13 +305,16 @@ TEST_CASE ("32k Color docs describe software model not firmware claims", "[relea
     const auto readme = readTextFile (root.getChildFile ("README.md"));
     const auto checklist = readTextFile (root.getChildFile ("docs/RELEASE_CHECKLIST.md"));
     const auto tankSource = readTextFile (root.getChildFile ("source/SchroederTank32.h"));
+    const auto legacySource = readTextFile (root.getChildFile ("source/LegacyAccumulatorPath.h"));
 
     REQUIRE (readme.find ("firmware-derived") != std::string::npos);
     REQUIRE (readme.find ("32,768 Hz") != std::string::npos);
     REQUIRE (readme.find ("EEPROM") == std::string::npos);
     REQUIRE (readme.find ("bytecode") == std::string::npos);
     REQUIRE (checklist.find ("not firmware-derived") != std::string::npos);
-    REQUIRE (tankSource.find ("processAuthentic") != std::string::npos);
+    REQUIRE (tankSource.find ("FixedRateAdapter") != std::string::npos);
+    REQUIRE (tankSource.find ("ProperSRC") != std::string::npos);
+    REQUIRE (legacySource.find ("processAuthentic") != std::string::npos);
     REQUIRE (tankSource.find ("kInternalRate") != std::string::npos);
 }
 
