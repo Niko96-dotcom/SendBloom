@@ -22,11 +22,13 @@ using sendbloom::test::imaging14825Rms;
 using sendbloom::test::kBlockSize;
 using sendbloom::test::kSampleRate;
 using sendbloom::test::measureTail;
+using sendbloom::test::narrowbandDominanceRatio;
 using sendbloom::test::printThreePathCsvHeader;
 using sendbloom::test::printThreePathCsvRow;
 using sendbloom::test::renderTankPath;
 
 constexpr float kImagingBandPeakRmsMax = 0.0022f;
+constexpr float kNarrowbandDominanceMaxRatio = 10.0f;
 
 const char* pathLabel (ReverbPath path) noexcept
 {
@@ -128,4 +130,37 @@ TEST_CASE ("Five fixtures render finite across three-path harness", "[diagnostic
         for (const auto s : wet)
             REQUIRE (std::isfinite (s));
     }
+}
+
+TEST_CASE ("ProperSRC HF metric suite on guitar pluck tail", "[diagnostics][DIAG-03]")
+{
+    const auto fixtures = allFixtures();
+    const auto guitarIt = std::find_if (fixtures.begin(),
+                                        fixtures.end(),
+                                        [] (const auto& p) { return p.first == "guitar_pluck"; });
+    REQUIRE (guitarIt != fixtures.end());
+
+    const auto& input = guitarIt->second;
+
+    const auto properWet = renderFreshTankPath (input, ReverbPath::ProperSRC);
+    const auto legacyWet = renderFreshTankPath (input, ReverbPath::LegacyAccumulator);
+    renderFreshTankPath (input, ReverbPath::HostRate);
+
+    const auto m = measureTail ("ProperSRC", "guitar_pluck", properWet);
+    const auto dominance = narrowbandDominanceRatio (properWet, m.peakFrequency);
+    const auto properImaging = imaging14825Rms (properWet, kSampleRate);
+    const auto legacyImaging = imaging14825Rms (legacyWet, kSampleRate);
+
+    REQUIRE (m.rmsAbove10k > 0.0f);
+    REQUIRE (m.rmsAbove14k >= 0.0f);
+    REQUIRE (m.peakFrequency >= 4000.0f);
+    REQUIRE (m.peakFrequency <= 16000.0f);
+    REQUIRE (m.spectralCentroid > 0.0f);
+    REQUIRE (dominance < kNarrowbandDominanceMaxRatio);
+    REQUIRE (properImaging < kImagingBandPeakRmsMax);
+    REQUIRE (legacyImaging > properImaging);
+
+    INFO ("proper imaging14825 RMS = " << properImaging);
+    INFO ("legacy imaging14825 RMS = " << legacyImaging);
+    INFO ("peak freq = " << m.peakFrequency << " Hz dominance = " << dominance);
 }
