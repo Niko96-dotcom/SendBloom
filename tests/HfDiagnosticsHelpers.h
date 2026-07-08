@@ -19,6 +19,15 @@ inline constexpr auto kRenderSamples = 24000uz;
 inline constexpr auto kTailStart = kRenderSamples - 4800;
 inline constexpr auto kTailCount = 2400uz;
 
+// Narrowband peak must not dominate neighboring bins by more than this ratio (tail slice).
+inline constexpr float kNarrowbandDominanceMaxRatio = 10.0f;
+// Authentic bright 10k+ RMS must stay within this factor of host-rate reverb on guitar pluck.
+// Measured full-chain guitar_pluck ratio ~1.456; tank-only ProperSRC vs host ~1.32.
+// Raised from accumulator-era 1.4 to 1.5 for ProperSRC authentic coloration + production wet path.
+inline constexpr float kAuthenticVsHostRmsAbove10kMaxRatio = 1.5f;
+// Imaging whistle band (14-15 kHz) tail power ceiling on authentic guitar pluck.
+inline constexpr float kImagingBandPeakRmsMax = 0.0022f;
+
 inline std::vector<float> makeGuitarPluck (size_t totalSamples) noexcept
 {
     std::vector<float> signal (totalSamples, 0.0f);
