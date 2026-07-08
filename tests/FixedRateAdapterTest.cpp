@@ -1,8 +1,15 @@
+#include "Authentic32Mode.h"
 #include "ChainTestHelpers.h"
+#include "FixedRateAdapter.h"
+#include "LegacyAccumulatorPath.h"
+#include "ParameterCurves.h"
 #include "RateConverterPair.h"
+#include "SchroederTank32.h"
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <vector>
@@ -140,4 +147,144 @@ TEST_CASE ("RateConverterPair round-trip latency is stable after reset",
     converter.prepare (48000.0, 512);
     const auto latencyAfterReprepare = converter.getRoundTripLatencySamples();
     REQUIRE (latencyAfterReprepare == latencyBefore);
+}
+
+TEST_CASE ("LegacyAccumulatorPath matches SchroederTank32 authentic impulse render",
+           "[verb][FixedRateAdapter][LegacyAccumulator][SRC-05]")
+{
+    sendbloom::LegacyAccumulatorPath legacy;
+    sendbloom::SchroederTank32 tank;
+    legacy.prepare (48000.0, 512);
+    tank.prepare (48000.0, 512);
+
+    constexpr int numSamples = 24000;
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+
+    float maxLegacyTail = 0.0f;
+    float maxTankTail = 0.0f;
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        const float in = i == 0 ? 1.0f : 0.0f;
+        const auto tankOut = tank.processSample (in, rt60, 0.0f, true);
+
+        float legacyOut = 0.0f;
+        legacy.processBlock (&in, &legacyOut, 1, rt60, 0.0f);
+
+        REQUIRE (legacyOut == Catch::Approx (tankOut).margin (1.0e-5f));
+
+        if (i >= 64)
+        {
+            maxLegacyTail = std::max (maxLegacyTail, std::abs (legacyOut));
+            maxTankTail = std::max (maxTankTail, std::abs (tankOut));
+        }
+    }
+
+    REQUIRE (maxLegacyTail == Catch::Approx (maxTankTail).margin (1.0e-6f));
+}
+
+TEST_CASE ("LegacyAccumulatorPath burst input produces tank-matched tail energy",
+           "[verb][FixedRateAdapter][LegacyAccumulator][SRC-05][burst]")
+{
+    sendbloom::LegacyAccumulatorPath legacy;
+    sendbloom::SchroederTank32 tank;
+    legacy.prepare (48000.0, 512);
+    tank.prepare (48000.0, 512);
+
+    constexpr int numSamples = 24000;
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+
+    float maxLegacyTail = 0.0f;
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        const float in = i < 480 ? 1.0f : 0.0f;
+        const auto tankOut = tank.processSample (in, rt60, 0.0f, true);
+
+        float legacyOut = 0.0f;
+        legacy.processBlock (&in, &legacyOut, 1, rt60, 0.0f);
+
+        REQUIRE (legacyOut == Catch::Approx (tankOut).margin (1.0e-5f));
+
+        if (i >= 64)
+            maxLegacyTail = std::max (maxLegacyTail, std::abs (legacyOut));
+    }
+
+    REQUIRE (maxLegacyTail > 1.0e-4f);
+}
+
+TEST_CASE ("FixedRateAdapter routes Authentic32Mode Off vs LegacyAccumulator",
+           "[verb][Authentic32Mode][SRC-04]")
+{
+    sendbloom::FixedRateAdapter adapter;
+    adapter.prepare (48000.0, 512);
+
+    constexpr int numSamples = 8192;
+    constexpr int kBlockSize = 512;
+    std::vector<float> in (static_cast<size_t> (kBlockSize), 0.0f);
+
+    std::vector<float> offOut (static_cast<size_t> (numSamples), -1.0f);
+    std::vector<float> legacyOut (static_cast<size_t> (numSamples), 0.0f);
+    std::vector<float> properOut (static_cast<size_t> (numSamples), -1.0f);
+
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+
+    for (int offset = 0; offset < numSamples; offset += kBlockSize)
+    {
+        const int n = std::min (kBlockSize, numSamples - offset);
+
+        for (int i = 0; i < n; ++i)
+            in[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
+
+        adapter.processBlock (in.data(),
+                              offOut.data() + offset,
+                              n,
+                              rt60,
+                              0.0f,
+                              sendbloom::Authentic32Mode::Off);
+    }
+
+    adapter.reset();
+
+    for (int offset = 0; offset < numSamples; offset += kBlockSize)
+    {
+        const int n = std::min (kBlockSize, numSamples - offset);
+
+        for (int i = 0; i < n; ++i)
+            in[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
+
+        adapter.processBlock (in.data(),
+                              legacyOut.data() + offset,
+                              n,
+                              rt60,
+                              0.0f,
+                              sendbloom::Authentic32Mode::LegacyAccumulator);
+    }
+
+    adapter.reset();
+
+    for (int offset = 0; offset < numSamples; offset += kBlockSize)
+    {
+        const int n = std::min (kBlockSize, numSamples - offset);
+
+        for (int i = 0; i < n; ++i)
+            in[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
+
+        adapter.processBlock (in.data(),
+                              properOut.data() + offset,
+                              n,
+                              rt60,
+                              0.0f,
+                              sendbloom::Authentic32Mode::ProperSRC);
+    }
+
+    REQUIRE (sendbloom::test::rms (offOut) == 0.0f);
+    REQUIRE (sendbloom::test::rms (properOut) == 0.0f);
+
+    float maxLegacy = 0.0f;
+
+    for (int i = 64; i < numSamples; ++i)
+        maxLegacy = std::max (maxLegacy, std::abs (legacyOut[static_cast<size_t> (i)]));
+
+    REQUIRE (maxLegacy > 1.0e-4f);
 }
