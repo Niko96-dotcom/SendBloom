@@ -115,12 +115,20 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     chain.prepare (sampleRate, samplesPerBlock);
     inputStage.prepare (sampleRate);
     dryBuffer.setSize (getTotalNumOutputChannels(), samplesPerBlock);
+    preparedMaxBlock_ = samplesPerBlock;
+    monoScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    envelopeScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    wetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
     smoothedBank.snapToTargets();
 }
 
 void PluginProcessor::releaseResources()
 {
+    preparedMaxBlock_ = 0;
+    monoScratch_.clear();
+    envelopeScratch_.clear();
+    wetScratch_.clear();
 }
 
 bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const

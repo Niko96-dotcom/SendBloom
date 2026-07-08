@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <vector>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ParameterSnapshot.h"
 #include "SmoothedParameterBank.h"
@@ -62,6 +63,10 @@ public:
 private:
     std::atomic<bool> clipHoldFlag { false };
     int currentProgramIndex { 0 };
+    int preparedMaxBlock_ { 0 };
+    std::vector<float> monoScratch_;
+    std::vector<float> envelopeScratch_;
+    std::vector<float> wetScratch_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
