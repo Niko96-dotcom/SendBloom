@@ -109,8 +109,9 @@ public:
         if (upsampler_ == nullptr || downsampler_ == nullptr)
             return 0;
 
-        return static_cast<int> (std::lround (upsampler_->getLatencyFrac()
-                                              + downsampler_->getLatencyFrac()));
+        // CDSPResampler::getLatency() is always zero; priming delay is queryable
+        // via getInLenBeforeOutPos for future Phase 17 PDC integration.
+        return upsampler_->getInLenBeforeOutPos (0) + downsampler_->getInLenBeforeOutPos (0);
     }
 
     double getHostToInternalRatio() const noexcept
