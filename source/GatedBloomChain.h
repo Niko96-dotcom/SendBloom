@@ -37,6 +37,11 @@ public:
         reverb = std::move (engine);
     }
 
+    void requestEngineCrossfade (bool targetAuthentic) noexcept
+    {
+        reverb->requestEngineCrossfade (targetAuthentic);
+    }
+
     EnvelopeDetector& getEnvelope() noexcept { return envelope; }
     const EnvelopeDetector& getEnvelope() const noexcept { return envelope; }
 
@@ -80,7 +85,7 @@ public:
         if (numSamples > maxBlockSize_)
             return;
 
-        if (! authenticColor)
+        if (! authenticColor && ! reverb->isCrossfading())
         {
             for (int i = 0; i < numSamples; ++i)
                 wetOut[i] = processSample (monoIn[i], envelope[i], rt60Seconds, darkMix, false,

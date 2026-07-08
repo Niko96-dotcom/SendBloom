@@ -124,6 +124,8 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     outputGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
     smoothedBank.snapToTargets();
+    lastAuthenticColorSmoothed_ =
+        apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f ? 1.0f : 0.0f;
 }
 
 void PluginProcessor::releaseResources()
@@ -267,6 +269,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     float blockStartDistn = 0.0f;
     float blockStartSend = 0.0f;
     float blockStartThresholdDb = 0.0f;
+    float prevAuthenticSmoothed = lastAuthenticColorSmoothed_;
+    bool crossfadeEdgeHandled = false;
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
@@ -280,7 +284,18 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
         (void) smoothedBank.getNextLevelDryGain();
         const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
-        const auto authenticColor = smoothedBank.getNextAuthenticColorTarget() > 0.5f;
+        const auto authenticColorTarget = smoothedBank.getNextAuthenticColorTarget();
+        const auto authenticColor = authenticColorTarget > 0.5f;
+
+        if (! crossfadeEdgeHandled
+            && ((prevAuthenticSmoothed <= 0.5f && authenticColorTarget > 0.5f)
+                || (prevAuthenticSmoothed > 0.5f && authenticColorTarget <= 0.5f)))
+        {
+            chain.requestEngineCrossfade (authenticColorTarget > 0.5f);
+            crossfadeEdgeHandled = true;
+        }
+
+        prevAuthenticSmoothed = authenticColorTarget;
 
         if (sample == 0)
         {
@@ -302,6 +317,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         envelopeScratch_[static_cast<size_t> (sample)] =
             chain.getEnvelope().process (std::abs (monoScratch_[static_cast<size_t> (sample)]));
     }
+
+    lastAuthenticColorSmoothed_ = prevAuthenticSmoothed;
 
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), numSamples,
                         blockStartRt60, blockStartDark, blockStartAuthentic, blockStartDistn, blockStartSend,

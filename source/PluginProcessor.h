@@ -70,6 +70,7 @@ private:
     std::vector<float> wetGainScratch_;
     std::vector<float> bypassWetScratch_;
     std::vector<float> outputGainScratch_;
+    float lastAuthenticColorSmoothed_ { 0.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
