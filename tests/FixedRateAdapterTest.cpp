@@ -1,4 +1,5 @@
 #include "Authentic32Mode.h"
+#include "CDSPResampler.h"
 #include "ChainTestHelpers.h"
 #include "FixedRateAdapter.h"
 #include "LegacyAccumulatorPath.h"
@@ -7,6 +8,7 @@
 #include "SrcLatencyTable.h"
 #include "ReverbTestHelpers.h"
 #include "SchroederTank32.h"
+#include "SchroederTank32DelayTable.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -250,6 +252,35 @@ TEST_CASE ("RateConverterPair round-trip latency at four host rates",
         sendbloom::RateConverterPair converter;
         converter.prepare (row.hostRateHz, sendbloom::kMaxHostBlock);
         REQUIRE (converter.getRoundTripLatencySamples() == row.roundTripSamples);
+    }
+}
+
+TEST_CASE ("RateConverterPair latency matches getInLenBeforeOutStart cross-check",
+           "[verb][LAT-01]")
+{
+    for (const auto& row : sendbloom::kMeasuredLatencyTable)
+    {
+        sendbloom::RateConverterPair converter;
+        converter.prepare (row.hostRateHz, sendbloom::kMaxHostBlock);
+
+        const auto roundTrip = converter.getRoundTripLatencySamples();
+        const auto primingSum = converter.getUpsamplerPrimingSamples()
+                              + converter.getDownsamplerPrimingSamples();
+
+        REQUIRE (primingSum == roundTrip);
+        REQUIRE (roundTrip == sendbloom::lookupRoundTripLatencySamples (row.hostRateHz));
+
+        r8b::CDSPResampler upsampler (row.hostRateHz,
+                                      sendbloom::SchroederTank32DelayTable::kInternalRate,
+                                      sendbloom::kMaxHostBlock);
+        const auto maxInternalIn = upsampler.getMaxOutLen (sendbloom::kMaxHostBlock);
+        r8b::CDSPResampler downsampler (sendbloom::SchroederTank32DelayTable::kInternalRate,
+                                        row.hostRateHz,
+                                        maxInternalIn);
+
+        const int legacySum = upsampler.getInLenBeforeOutStart (0)
+                            + downsampler.getInLenBeforeOutStart (0);
+        REQUIRE (legacySum == roundTrip);
     }
 }
 

@@ -114,6 +114,16 @@ public:
         return upsampler_->getInLenBeforeOutPos (0) + downsampler_->getInLenBeforeOutPos (0);
     }
 
+    int getUpsamplerPrimingSamples() const noexcept
+    {
+        return upsampler_ != nullptr ? upsampler_->getInLenBeforeOutPos (0) : 0;
+    }
+
+    int getDownsamplerPrimingSamples() const noexcept
+    {
+        return downsampler_ != nullptr ? downsampler_->getInLenBeforeOutPos (0) : 0;
+    }
+
     double getHostToInternalRatio() const noexcept
     {
         return hostToInternalRatio_;
