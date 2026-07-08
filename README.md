@@ -11,7 +11,7 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 ## Features
 
 - Parallel dry/wet routing — dry path never gated or distorted
-- Schroeder tank reverb with optional **32k Color** — steps the tank at 32,768 Hz (resampled to host rate) using fixed delay-table lengths, per-comb feedback calibration, damping, and 9-bit parameter quantization; original software, not firmware-derived. **For RC1, 32k Color is off by default** — the host-rate Schroeder tank is the production path; ProperSRC enablement awaits Phases 13–18 acceptance gates
+- Schroeder tank reverb with optional **32k Color** — when enabled, bandlimited host-rate ↔ 32,768 Hz conversion via r8brain ProperSRC (`FixedRateAdapter`); tank runs at fixed delay-table lengths with per-comb feedback calibration, damping, and optional 9-bit parameter quantization; original software, not firmware-derived. Legacy accumulator stepping exists only for diagnostics regression (`LegacyAccumulatorPath`). **For RC1, 32k Color is off by default** — the host-rate Schroeder tank is the production path
 - Wet-only overdrive blended independently via `distn`
 - Dual gate profiles: Pre (hum suppression) and Post (≤15 ms wet chop)
 - Pressure send pad and MIDI CC1 momentary control

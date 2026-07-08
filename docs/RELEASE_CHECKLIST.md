@@ -37,21 +37,21 @@
 
 When **32k Color** (`authentic_color`) is enabled:
 
-- Tank DSP is stepped at **32,768 Hz** and resampled to the host rate (`processAuthentic` accumulator).
-- A host-rate anti-image lowpass follows the authentic upsample path (`kAuthenticAntiImageLpHz`).
-- Bright authentic damping uses `kAuthenticBrightDampingHz` (darker than host-rate bright).
-- Delay lines use the fixed 32,768 Hz table lengths (not host-rate scaled).
+- **ProperSRC sandwich** per [ADR-003](architecture/ADR-003-proper-32k-src.md): host-rate block → r8brain upsample to **32,768 Hz** → `SchroederTankCore` at fixed delay-table lengths → r8brain downsample to host rate (`FixedRateAdapter`, `Authentic32Mode::ProperSRC`).
 - Per-comb RT60 feedback uses each comb's own delay reference.
+- Bright authentic damping uses `kAuthenticBrightDampingHz` (darker than host-rate bright).
 - Damping and RT60 may be quantized to 9-bit steps.
 - This is **original software** — not firmware-derived, not bytecode, not hardware cloning.
+
+**Legacy diagnostics only:** `Authentic32Mode::LegacyAccumulator` retains the old `processAuthentic` accumulator + host-rate anti-image SVF (`kAuthenticAntiImageLpHz`) for A/B regression — not the production path.
 
 ## RC1 Safety Freeze
 
 - [x] Fresh plugin load ships with `authentic_color` off (APVTS default `false`)
 - [x] All 8 factory presets ship with `authentic_color=0`
 - [x] **Host-rate Schroeder tank** is the production default for RC1
-- When **32k Color** is enabled, the honest `processAuthentic` accumulator path described in **32k Color Truth (VERB-05)** above still applies — this path is **experimental / not production-default** until TEST-11, DIAG-04, LAT-02, and XFADE-01 pass (Phase 18 enablement)
-- ProperSRC is **not shipped** in RC1 — do not document or claim it as available
+- ProperSRC validated via Phase 18 acceptance gates (`bash scripts/enab-acceptance-gates.sh`); **32k Color remains off by default** until product explicitly enables default-on
+- When **32k Color** is enabled, the ProperSRC path described in **32k Color Truth (VERB-05)** above applies — not production-default until default-on is explicitly approved
 
 ## Multi-DAW Smoke (TEST-07) — Human Required, Not Verified
 
