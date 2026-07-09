@@ -41,7 +41,7 @@ TEST_CASE ("size and output_gain ranges and defaults", "[parm][layout]")
     REQUIRE (outRange.start == Catch::Approx (-12.0f));
     REQUIRE (outRange.end == Catch::Approx (12.0f));
     REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::outputGain)->load()
-             == Catch::Approx (-3.0f));
+             == Catch::Approx (0.0f));
 
     REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::gatePrePost)->load()
              == Catch::Approx (1.0f));

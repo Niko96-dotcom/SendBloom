@@ -78,7 +78,8 @@ juce_add_binary_data(SendBloomPresets
         resources/presets/Dark_Bloom.xml
         resources/presets/Firm_Pressure.xml
         resources/presets/Gated_Room.xml
-        resources/presets/Hot_Clip.xml)
+        resources/presets/Hot_Clip.xml
+        resources/ui/reverbx-faceplate.png)
 
 target_link_libraries(SharedCode INTERFACE SendBloomPresets)
 
