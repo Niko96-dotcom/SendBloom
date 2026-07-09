@@ -1,5 +1,5 @@
 #include "PedalFaceplatePaint.h"
-#include "ParameterIDs.h"
+#include "../ParameterIDs.h"
 #include <BinaryData.h>
 
 #include <cmath>
