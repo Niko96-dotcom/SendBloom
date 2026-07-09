@@ -9,8 +9,8 @@ TEST_CASE ("PluginEditor instantiates at pedal dimensions", "[ui][editor]")
     sendbloom::PluginProcessor processor;
     sendbloom::PluginEditor editor (processor);
 
-    REQUIRE (editor.getWidth() == 340);
-    REQUIRE (editor.getHeight() == 520);
+    REQUIRE (editor.getWidth() == 420);
+    REQUIRE (editor.getHeight() == 780);
     REQUIRE (editor.getNumChildComponents() > 5);
 }
 

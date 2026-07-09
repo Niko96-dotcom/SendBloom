@@ -39,7 +39,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
         juce::ParameterID { gatePrePost, 1 }, "Gate Pre/Post",
-        juce::StringArray { "PreSoft", "PostHard" }, 0));
+        juce::StringArray { "PreSoft", "PostHard" }, 1));
 
     layout.add (std::make_unique<juce::AudioParameterBool> (
         juce::ParameterID { sendConnected, 1 }, "Send Connected", false));

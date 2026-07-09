@@ -20,16 +20,44 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        const auto ledBounds = getLocalBounds().removeFromTop (getHeight() - 14).toFloat().reduced (4.0f);
-        g.setColour (active ? juce::Colour (0xffFF3B30) : juce::Colour (0xff4A4A50));
-        g.fillEllipse (ledBounds);
+        auto bounds = getLocalBounds().toFloat();
+        const auto lamp = bounds.removeFromTop (34.0f).reduced (5.0f);
+
+        g.setColour (juce::Colours::black.withAlpha (0.75f));
+        g.fillEllipse (lamp.expanded (3.0f));
+
+        juce::ColourGradient lampFill (active ? juce::Colour (0xffff6b5c) : juce::Colour (0xff7b2f2c),
+                                       lamp.getX(), lamp.getY(),
+                                       active ? juce::Colour (0xffd31316) : juce::Colour (0xff281d1b),
+                                       lamp.getRight(), lamp.getBottom(), false);
+        g.setGradientFill (lampFill);
+        g.fillEllipse (lamp);
+
+        g.setColour (juce::Colours::white.withAlpha (active ? 0.42f : 0.12f));
+        g.fillEllipse (lamp.reduced (8.0f).translated (-3.0f, -4.0f));
+
+        const auto meter = juce::Rectangle<float> (6.0f, 62.0f, 24.0f, 116.0f);
+        juce::ColourGradient meterFill (juce::Colour (0xff273426), meter.getX(), meter.getBottom(),
+                                        juce::Colour (0xff59644a), meter.getX(), meter.getY(), false);
+        g.setGradientFill (meterFill);
+        g.fillRoundedRectangle (meter, 4.0f);
+        g.setColour (juce::Colours::black);
+        g.drawRoundedRectangle (meter, 4.0f, 2.0f);
+
+        g.setColour (active ? juce::Colour (0xffff1212) : juce::Colour (0xffcc1517));
+        g.fillRect (meter.reduced (8.0f, 8.0f).removeFromTop (19.0f));
+        g.setColour (juce::Colour (0xffff6f61));
+        g.fillRect (meter.reduced (8.0f, 38.0f).removeFromTop (11.0f));
+
+        g.setColour (juce::Colours::black);
+        g.setFont (juce::FontOptions (15.0f, juce::Font::bold));
+        g.drawText ("CLIP", 0, 40, getWidth(), 20, juce::Justification::centred);
+        g.drawText ("OVLD", 0, getHeight() - 20, getWidth(), 20, juce::Justification::centred);
     }
 
     void resized() override
     {
-        label.setBounds (getLocalBounds().removeFromBottom (12));
-        label.setColour (juce::Label::textColourId, juce::Colour (0xffE8E6E3));
-        label.setFont (juce::FontOptions (9.0f));
+        label.setVisible (false);
     }
 
 private:

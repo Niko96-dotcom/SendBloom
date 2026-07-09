@@ -11,12 +11,14 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& dirtOsId)
 {
     addChildComponent (gateSensKnob);
-    gateSensKnob.setLabelColour (juce::Colour (0xffE8E6E3));
+    gateSensKnob.setLabelColour (juce::Colour (0xff5fc0d2));
+    gateSensKnob.setRangeText ("", "");
+    gateSensKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
 
-    sendFeelLabel.setText ("Send Feel", juce::dontSendNotification);
+    sendFeelLabel.setText ("SEND FEEL", juce::dontSendNotification);
     sendFeelLabel.setJustificationType (juce::Justification::centred);
-    sendFeelLabel.setColour (juce::Label::textColourId, juce::Colour (0xffE8E6E3));
-    sendFeelLabel.setFont (juce::FontOptions (11.0f));
+    sendFeelLabel.setColour (juce::Label::textColourId, juce::Colour (0xff5fc0d2));
+    sendFeelLabel.setFont (juce::FontOptions (13.0f, juce::Font::bold));
     addChildComponent (sendFeelLabel);
 
     sendFeelBox.addItem ("Firm", 1);
@@ -50,6 +52,29 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
         apvts, dirtOsId, dirtOsToggle);
 }
 
+void AdvancedDrawer::paint (juce::Graphics& g)
+{
+    const auto bounds = getLocalBounds().toFloat();
+
+    juce::Path panel;
+    panel.startNewSubPath (14.0f, 0.0f);
+    panel.lineTo (bounds.getRight() - 3.0f, 0.0f);
+    panel.lineTo (bounds.getRight() - 3.0f, bounds.getBottom() - 28.0f);
+    panel.lineTo (bounds.getRight() - 28.0f, bounds.getBottom() - 3.0f);
+    panel.lineTo (2.0f, bounds.getBottom() - 3.0f);
+    panel.lineTo (2.0f, 14.0f);
+    panel.closeSubPath();
+
+    g.setColour (juce::Colours::black);
+    g.fillPath (panel);
+    g.setColour (juce::Colour (0xff5fc0d2));
+    g.strokePath (panel, juce::PathStrokeType (4.0f));
+
+    g.setColour (juce::Colour (0xff5fc0d2));
+    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
+    g.drawText ("ADVANCED", 18, 8, getWidth() - 36, 24, juce::Justification::centred);
+}
+
 void AdvancedDrawer::setExpanded (bool shouldExpand)
 {
     expanded = shouldExpand;
@@ -68,17 +93,18 @@ void AdvancedDrawer::resized()
     if (! expanded)
         return;
 
-    auto area = getLocalBounds().reduced (8);
-    auto topRow = area.removeFromTop (80);
-    gateSensKnob.setBounds (topRow.removeFromLeft (72));
+    auto area = getLocalBounds().reduced (14);
+    area.removeFromTop (30);
+    auto topRow = area.removeFromTop (88);
+    gateSensKnob.setBounds (topRow.removeFromLeft (88));
 
-    auto feelArea = topRow.removeFromLeft (100);
+    auto feelArea = topRow.removeFromLeft (98).reduced (4, 10);
     sendFeelLabel.setBounds (feelArea.removeFromTop (16));
-    sendFeelBox.setBounds (feelArea.removeFromTop (24));
+    sendFeelBox.setBounds (feelArea.removeFromTop (28));
 
-    colorToggle.setBounds (topRow.removeFromLeft (90).reduced (0, 24));
-    extendedStereoToggle.setBounds (area.removeFromTop (24));
-    dirtOsToggle.setBounds (area.removeFromTop (24));
+    colorToggle.setBounds (topRow.removeFromLeft (98).reduced (8, 24));
+    extendedStereoToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
+    dirtOsToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
 }
 
 } // namespace sendbloom::ui

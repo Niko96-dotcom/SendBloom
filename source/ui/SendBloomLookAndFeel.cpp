@@ -5,21 +5,22 @@ namespace sendbloom::ui
 
 SendBloomLookAndFeel::SendBloomLookAndFeel()
 {
-    chassis = juce::Colour (0xff2A2A2E);
-    facePlate = juce::Colour (0xff3D3D42);
-    accent = juce::Colour (0xffE8A838);
-    labelText = juce::Colour (0xffE8E6E3);
+    chassis = juce::Colour (0xfff7f7f3);
+    facePlate = juce::Colour (0xffffffff);
+    accent = juce::Colour (0xffff8f25);
+    labelText = juce::Colour (0xff050505);
+    cyan = juce::Colour (0xff5fc0d2);
 
     setColour (juce::ResizableWindow::backgroundColourId, chassis);
     setColour (juce::Slider::textBoxTextColourId, labelText);
     setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     setColour (juce::ToggleButton::textColourId, labelText);
     setColour (juce::ToggleButton::tickColourId, accent);
-    setColour (juce::ToggleButton::tickDisabledColourId, juce::Colour (0xff6A6A70));
-    setColour (juce::ComboBox::backgroundColourId, facePlate);
+    setColour (juce::ToggleButton::tickDisabledColourId, juce::Colour (0xff444444));
+    setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xffefefef));
     setColour (juce::ComboBox::textColourId, labelText);
-    setColour (juce::ComboBox::outlineColourId, facePlate.brighter (0.15f));
-    setColour (juce::PopupMenu::backgroundColourId, facePlate);
+    setColour (juce::ComboBox::outlineColourId, juce::Colours::black);
+    setColour (juce::PopupMenu::backgroundColourId, juce::Colours::white);
     setColour (juce::PopupMenu::textColourId, labelText);
 }
 
@@ -38,16 +39,26 @@ void SendBloomLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, in
     const auto centre = bounds.getCentre();
     const auto angle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 
-    g.setColour (facePlate);
+    g.setColour (cyan);
+    g.drawEllipse (bounds.expanded (4.0f), 3.0f);
+
+    juce::ColourGradient outer (juce::Colour (0xff5b5b5b), bounds.getX(), bounds.getY(),
+                                juce::Colour (0xff0e0e0e), bounds.getRight(), bounds.getBottom(), false);
+    g.setGradientFill (outer);
     g.fillEllipse (bounds);
 
-    g.setColour (facePlate.brighter (0.2f));
-    g.drawEllipse (bounds, 1.5f);
+    g.setColour (juce::Colour (0xff070707));
+    g.drawEllipse (bounds.reduced (2.0f), 5.0f);
+
+    juce::ColourGradient cap (juce::Colour (0xff333333), bounds.getX(), bounds.getY(),
+                              juce::Colour (0xff101010), bounds.getRight(), bounds.getBottom(), false);
+    g.setGradientFill (cap);
+    g.fillEllipse (bounds.reduced (9.0f));
 
     juce::Path arc;
     arc.addCentredArc (centre.x, centre.y, radius, radius, 0.0f,
                        rotaryStartAngle, angle, true);
-    g.setColour (accent);
+    g.setColour (cyan.withAlpha (0.82f));
     g.strokePath (arc, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved,
                                               juce::PathStrokeType::rounded));
 
@@ -56,7 +67,7 @@ void SendBloomLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, in
     juce::Path pointer;
     pointer.addRectangle (-pointerThickness * 0.5f, -radius + 6.0f,
                           pointerThickness, pointerLength);
-    g.setColour (labelText);
+    g.setColour (juce::Colour (0xffd7c4b0));
     g.fillPath (pointer, juce::AffineTransform::rotation (angle).translated (centre.x, centre.y));
 }
 
@@ -66,21 +77,104 @@ void SendBloomLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButt
 {
     juce::ignoreUnused (shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
 
+    const auto text = button.getButtonText();
     auto bounds = button.getLocalBounds().toFloat().reduced (2.0f);
-    const auto tickBounds = bounds.removeFromLeft (bounds.getHeight()).reduced (3.0f);
 
-    g.setColour (facePlate);
-    g.fillRoundedRectangle (tickBounds, 4.0f);
-
-    if (button.getToggleState())
+    if (text.startsWithIgnoreCase ("Dark"))
     {
-        g.setColour (accent);
-        g.fillRoundedRectangle (tickBounds.reduced (3.0f), 3.0f);
+        const auto down = button.getToggleState() || shouldDrawButtonAsDown;
+        juce::ColourGradient body (down ? juce::Colour (0xff171b21) : juce::Colour (0xff59616d),
+                                   bounds.getX(), bounds.getY(),
+                                   down ? juce::Colour (0xff59616d) : juce::Colour (0xff1f242b),
+                                   bounds.getRight(), bounds.getBottom(), false);
+        g.setGradientFill (body);
+        g.fillRoundedRectangle (bounds, 7.0f);
+        g.setColour (juce::Colour (0xff111111));
+        g.drawRoundedRectangle (bounds, 7.0f, 4.0f);
+        g.setColour (juce::Colours::white.withAlpha (down ? 0.08f : 0.18f));
+        g.drawRoundedRectangle (bounds.reduced (5.0f), 4.0f, 1.5f);
+        return;
     }
 
-    g.setColour (labelText);
-    g.setFont (juce::FontOptions (11.0f));
-    g.drawText (button.getButtonText(), bounds, juce::Justification::centredLeft, true);
+    const auto isPost = button.getToggleState();
+    g.setColour (juce::Colour (0xff161616));
+    g.fillRoundedRectangle (bounds, 7.0f);
+    g.setColour (juce::Colour (0xff333333));
+    g.drawRoundedRectangle (bounds, 7.0f, 2.0f);
+
+    const auto slot = bounds.reduced (8.0f, 5.0f);
+    const auto knobHeight = slot.getHeight() * 0.46f;
+    auto thumb = slot.withHeight (knobHeight);
+    if (! isPost)
+        thumb.setY (slot.getY());
+    else
+        thumb.setY (slot.getBottom() - knobHeight);
+
+    if (shouldDrawButtonAsDown)
+        thumb = thumb.translated (0.0f, isPost ? -1.5f : 1.5f);
+
+    juce::ColourGradient thumbFill (juce::Colour (0xfff2f2ef), thumb.getX(), thumb.getY(),
+                                    juce::Colour (0xff8d8d8d), thumb.getRight(), thumb.getBottom(), false);
+    g.setGradientFill (thumbFill);
+    g.fillRoundedRectangle (thumb, 7.0f);
+    g.setColour (juce::Colour (0xff5c5c5c));
+    g.drawRoundedRectangle (thumb, 7.0f, 1.5f);
+}
+
+void SendBloomLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& button,
+                                                 const juce::Colour& backgroundColour,
+                                                 bool shouldDrawButtonAsHighlighted,
+                                                 bool shouldDrawButtonAsDown)
+{
+    juce::ignoreUnused (backgroundColour);
+
+    auto bounds = button.getLocalBounds().toFloat().reduced (1.0f);
+    auto colour = juce::Colour (0xff070808);
+    if (shouldDrawButtonAsHighlighted)
+        colour = juce::Colour (0xff111516);
+    if (shouldDrawButtonAsDown)
+        bounds = bounds.reduced (2.0f).translated (1.0f, 1.0f);
+
+    g.setColour (colour);
+    g.fillRoundedRectangle (bounds, 5.0f);
+}
+
+void SendBloomLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& button,
+                                           bool shouldDrawButtonAsHighlighted,
+                                           bool shouldDrawButtonAsDown)
+{
+    juce::ignoreUnused (shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
+
+    g.setColour (cyan);
+    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
+    g.drawFittedText (button.getButtonText(), button.getLocalBounds().reduced (8, 2),
+                      juce::Justification::centred, 1, 0.82f);
+}
+
+void SendBloomLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height, bool isButtonDown,
+                                         int buttonX, int buttonY, int buttonW, int buttonH,
+                                         juce::ComboBox& box)
+{
+    juce::ignoreUnused (buttonX, buttonY, buttonW, buttonH, box);
+
+    const auto bounds = juce::Rectangle<float> (0.0f, 0.0f, static_cast<float> (width), static_cast<float> (height)).reduced (1.0f);
+    g.setColour (juce::Colour (0xffefefef));
+    g.fillRoundedRectangle (bounds, 4.0f);
+    g.setColour (juce::Colours::black);
+    g.drawRoundedRectangle (bounds, 4.0f, 2.0f);
+
+    const auto cx = static_cast<float> (width - 15);
+    const auto cy = static_cast<float> (height) * 0.5f;
+    juce::Path arrows;
+    arrows.addTriangle (cx - 5.0f, cy - 3.0f, cx + 5.0f, cy - 3.0f, cx, cy - 10.0f);
+    arrows.addTriangle (cx - 5.0f, cy + 3.0f, cx + 5.0f, cy + 3.0f, cx, cy + 10.0f);
+    g.setColour (isButtonDown ? cyan : juce::Colours::black);
+    g.fillPath (arrows);
+}
+
+juce::Font SendBloomLookAndFeel::getComboBoxFont (juce::ComboBox&)
+{
+    return juce::FontOptions (18.0f, juce::Font::bold);
 }
 
 } // namespace sendbloom::ui
