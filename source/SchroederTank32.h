@@ -1,11 +1,13 @@
 #pragma once
 
-#include "DampedComb.h"
+#include "Authentic32Mode.h"
+#include "EngineCrossfade.h"
+#include "FixedRateAdapter.h"
+#include "HostRateReverbEngine.h"
 #include "IReverbEngine.h"
-#include "SchroederAllpass.h"
-#include "SchroederTank32DelayTable.h"
-#include <array>
 #include <cmath>
+#include <optional>
+#include <vector>
 
 namespace sendbloom
 {
@@ -13,50 +15,16 @@ namespace sendbloom
 class SchroederTank32 : public IReverbEngine
 {
 public:
-    void prepare (double sampleRate, int /*maxBlockSize*/) noexcept override
+    void prepare (double sampleRate, int maxBlockSize) noexcept override
     {
         hostRate = sampleRate;
-        useAuthenticPath = false;
+        maxBlockSize_ = maxBlockSize;
 
-        const auto maxDelay = static_cast<int> (std::ceil (sampleRate * 1.2));
-
-        predelayLine.setMaximumDelayInSamples (maxDelay);
-        juce::dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
-        spec.maximumBlockSize = 512;
-        spec.numChannels = 1;
-        predelayLine.prepare (spec);
-        predelayLine.reset();
-
-        for (size_t i = 0; i < seriesApfs.size(); ++i)
-        {
-            seriesApfs[i].prepare (sampleRate, maxDelay);
-            seriesApfs[i].setFeedback (SchroederTank32DelayTable::kApfFeedback);
-        }
-
-        for (size_t i = 0; i < parallelCombs.size(); ++i)
-        {
-            parallelCombs[i].prepare (sampleRate, maxDelay);
-        }
-
-        tankAp.prepare (sampleRate, maxDelay);
-        tankAp.setFeedback (SchroederTank32DelayTable::kTankApFeedback);
-
-        resetDelayLengths (false);
-        syncCombProcessingRate();
-        lfoPhase = 0.0f;
-        inputAccumulator = 0.0;
-        outputHold = 0.0f;
-        lastInternalOut = 0.0f;
-
-        juce::dsp::ProcessSpec antiImageSpec;
-        antiImageSpec.sampleRate = hostRate;
-        antiImageSpec.maximumBlockSize = 512;
-        antiImageSpec.numChannels = 1;
-        antiImageFilter.prepare (antiImageSpec);
-        antiImageFilter.reset();
-        antiImageFilter.setType (juce::dsp::StateVariableTPTFilterType::lowpass);
-        antiImageFilter.setCutoffFrequency (SchroederTank32DelayTable::kAuthenticAntiImageLpHz);
+        hostEngine.prepare (sampleRate, maxBlockSize);
+        fixedRate_.prepare (sampleRate, maxBlockSize);
+        engineCrossfade_.prepare (sampleRate);
+        hostCrossfadeScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
+        fixedCrossfadeScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
     }
 
     float processSample (float input,
@@ -64,170 +32,114 @@ public:
                          float darkMix,
                          bool authenticColor) noexcept override
     {
-        if (authenticColor != useAuthenticPath)
+        if (engineCrossfade_.isCrossfading())
         {
-            useAuthenticPath = authenticColor;
-            resetDelayLengths (useAuthenticPath);
-            syncCombProcessingRate();
+            float out = 0.0f;
+            processBlock (&input, &out, 1, rt60Seconds, darkMix, authenticColor);
+            return out;
         }
 
-        updateCoeffs (rt60Seconds, darkMix);
+        if (! authenticColor)
+            return hostEngine.processSample (input, rt60Seconds, darkMix, false);
 
-        if (useAuthenticPath)
-            return processAuthentic (input);
+        const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
+        float out = 0.0f;
+        fixedRate_.processBlock (&input, &out, 1, rt60Seconds, darkMix, mode);
+        return out;
+    }
 
-        return processHostRate (input);
+    void processBlock (const float* input,
+                       float* output,
+                       int numSamples,
+                       float rt60Seconds,
+                       float darkMix,
+                       bool authenticColor) noexcept override
+    {
+        if (numSamples > maxBlockSize_)
+            return;
+
+        if (engineCrossfade_.isCrossfading())
+        {
+            const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
+            hostEngine.processBlock (input,
+                                     hostCrossfadeScratch_.data(),
+                                     numSamples,
+                                     rt60Seconds,
+                                     darkMix,
+                                     false);
+            fixedRate_.processBlock (input,
+                                     fixedCrossfadeScratch_.data(),
+                                     numSamples,
+                                     rt60Seconds,
+                                     darkMix,
+                                     mode);
+            engineCrossfade_.mixWetBlock (hostCrossfadeScratch_.data(),
+                                          fixedCrossfadeScratch_.data(),
+                                          output,
+                                          numSamples);
+
+            if (! engineCrossfade_.isCrossfading())
+            {
+                if (engineCrossfade_.targetIsFixedEngine())
+                    hostEngine.reset();
+                else
+                    fixedRate_.reset();
+            }
+
+            return;
+        }
+
+        if (! authenticColor)
+        {
+            IReverbEngine::processBlock (input, output, numSamples, rt60Seconds, darkMix, authenticColor);
+            return;
+        }
+
+        const auto mode = diagnosticsMode_.value_or (Authentic32Mode::ProperSRC);
+        fixedRate_.processBlock (input, output, numSamples, rt60Seconds, darkMix, mode);
+    }
+
+    bool isCrossfading() const noexcept override
+    {
+        return engineCrossfade_.isCrossfading();
+    }
+
+    void requestEngineCrossfade (bool targetAuthentic) noexcept override
+    {
+        if (engineCrossfade_.isCrossfading()
+            && engineCrossfade_.targetIsFixedEngine() == targetAuthentic)
+            return;
+
+        if (targetAuthentic)
+            engineCrossfade_.beginCrossfadeTowardFixed();
+        else
+            engineCrossfade_.beginCrossfadeTowardHost();
+    }
+
+    void setAuthentic32ModeForDiagnostics (Authentic32Mode mode) noexcept
+    {
+        diagnosticsMode_ = mode;
+    }
+
+    void clearAuthentic32ModeForDiagnostics() noexcept
+    {
+        diagnosticsMode_ = std::nullopt;
+    }
+
+    int getSrcRoundTripLatencySamples() const noexcept
+    {
+        return fixedRate_.getRoundTripLatencySamples();
     }
 
 private:
-    static float quantize9bit (float value) noexcept
-    {
-        constexpr auto steps = 511.0f;
-        return std::round (value * steps) / steps;
-    }
-
-    float scaleDelay (int delayAt32k, bool authentic) const noexcept
-    {
-        if (authentic)
-            return static_cast<float> (delayAt32k);
-
-        return static_cast<float> (delayAt32k) * static_cast<float> (hostRate / SchroederTank32DelayTable::kInternalRate);
-    }
-
-    void resetDelayLengths (bool authentic) noexcept
-    {
-        for (size_t i = 0; i < seriesApfs.size(); ++i)
-            seriesApfs[i].setDelay (scaleDelay (SchroederTank32DelayTable::kSeriesApfDelays[i], authentic));
-
-        for (size_t i = 0; i < parallelCombs.size(); ++i)
-            parallelCombs[i].setDelay (scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i], authentic));
-
-        tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay, authentic));
-    }
-
-    void syncCombProcessingRate() noexcept
-    {
-        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
-
-        for (auto& comb : parallelCombs)
-            comb.setProcessingSampleRate (effectiveRate);
-    }
-
-    void updateCoeffs (float rt60Seconds, float darkMix) noexcept
-    {
-        const auto mix = juce::jlimit (0.0f, 1.0f, darkMix);
-        const auto predelaySec = mix * SchroederTank32DelayTable::kDarkPredelaySeconds;
-        predelaySamples = predelaySec * static_cast<float> (useAuthenticPath
-                                                               ? SchroederTank32DelayTable::kInternalRate
-                                                               : hostRate);
-        predelayLine.setDelay (predelaySamples);
-
-        auto dampingHz = juce::jmap (mix,
-                                     useAuthenticPath ? SchroederTank32DelayTable::kAuthenticBrightDampingHz
-                                                      : SchroederTank32DelayTable::kBrightDampingHz,
-                                     SchroederTank32DelayTable::kDarkDampingHz);
-
-        auto rt60 = juce::jmax (rt60Seconds, 0.05f);
-
-        float maxCombDelay = 0.0f;
-
-        for (const auto d : SchroederTank32DelayTable::kParallelCombDelays)
-        {
-            const auto scaled = scaleDelay (d, useAuthenticPath);
-            maxCombDelay = std::max (maxCombDelay, scaled);
-        }
-
-        juce::ignoreUnused (maxCombDelay);
-
-        if (useAuthenticPath)
-        {
-            const auto brightRef = SchroederTank32DelayTable::kAuthenticBrightDampingHz;
-            dampingHz = quantize9bit (dampingHz / brightRef) * brightRef;
-            const auto rt60Norm = quantize9bit (rt60 / 6.25f) * 6.25f;
-            rt60 = juce::jmax (rt60Norm, 0.05f);
-        }
-
-        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
-        juce::ignoreUnused (effectiveRate);
-
-        for (size_t i = 0; i < parallelCombs.size(); ++i)
-        {
-            const auto combDelay = scaleDelay (SchroederTank32DelayTable::kParallelCombDelays[i],
-                                               useAuthenticPath);
-            parallelCombs[i].setDampingCutoff (dampingHz);
-            parallelCombs[i].setFeedbackForRT60 (rt60, combDelay);
-        }
-    }
-
-    float processTank (float input) noexcept
-    {
-        float x = input;
-
-        if (predelaySamples > 0.5f)
-        {
-            predelayLine.pushSample (0, input);
-            x = predelayLine.popSample (0);
-        }
-
-        for (auto& apf : seriesApfs)
-            x = apf.processSample (x);
-
-        float combSum = 0.0f;
-
-        for (auto& comb : parallelCombs)
-            combSum += comb.processSample (x);
-
-        combSum *= 0.25f;
-
-        const auto effectiveRate = useAuthenticPath ? SchroederTank32DelayTable::kInternalRate : hostRate;
-        lfoPhase += static_cast<float> (2.0 * juce::MathConstants<double>::pi
-                                        * SchroederTank32DelayTable::kTankLfoHz / effectiveRate);
-
-        if (lfoPhase > juce::MathConstants<float>::twoPi)
-            lfoPhase -= juce::MathConstants<float>::twoPi;
-
-        const auto mod = std::sin (lfoPhase) * SchroederTank32DelayTable::kTankLfoDepthSamples;
-        tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay, useAuthenticPath) + mod);
-
-        return tankAp.processSample (combSum) * 0.85f;
-    }
-
-    float processHostRate (float input) noexcept
-    {
-        return juce::jlimit (-4.0f, 4.0f, processTank (input));
-    }
-
-    float processAuthentic (float input) noexcept
-    {
-        const auto ratio = SchroederTank32DelayTable::kInternalRate / hostRate;
-        inputAccumulator += ratio;
-
-        while (inputAccumulator >= 1.0)
-        {
-            inputAccumulator -= 1.0;
-            lastInternalOut = processTank (input);
-        }
-
-        const auto frac = static_cast<float> (inputAccumulator);
-        const auto held = lastInternalOut * (1.0f - frac) + outputHold * frac;
-        outputHold = lastInternalOut;
-        const auto filtered = antiImageFilter.processSample (0, held);
-        return juce::jlimit (-4.0f, 4.0f, filtered);
-    }
-
-    std::array<SchroederAllpass, 4> seriesApfs;
-    std::array<DampedComb, 4> parallelCombs;
-    SchroederAllpass tankAp;
-
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None> predelayLine;
+    HostRateReverbEngine hostEngine;
+    FixedRateAdapter fixedRate_;
+    EngineCrossfade engineCrossfade_;
+    std::vector<float> hostCrossfadeScratch_;
+    std::vector<float> fixedCrossfadeScratch_;
+    std::optional<Authentic32Mode> diagnosticsMode_;
     double hostRate { 48000.0 };
-    bool useAuthenticPath { false };
-    float predelaySamples { 0.0f };
-    float lfoPhase { 0.0f };
-    double inputAccumulator { 0.0 };
-    float outputHold { 0.0f };
-    float lastInternalOut { 0.0f };
-    juce::dsp::StateVariableTPTFilter<float> antiImageFilter;
+    int maxBlockSize_ { 512 };
 };
 
 } // namespace sendbloom

@@ -2,6 +2,7 @@
 #include <GatedBloomChain.h>
 #include <ParallelWetMixer.h>
 #include <ParameterCurves.h>
+#include <algorithm>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
@@ -148,4 +149,95 @@ TEST_CASE ("GatedBloomChain topology smoke with reverb stub", "[chain][routing][
     const auto wet = renderChain (chain, burst, rt60, 0.0f, 1.0f, true);
 
     REQUIRE (sendbloom::test::rms (wet) > 1e-4f);
+}
+
+TEST_CASE ("GatedBloomChain processBlock matches processSample loop",
+           "[chain][GatedBloomChain][INTEG-02][processBlock]")
+{
+    sendbloom::GatedBloomChain chainBlock;
+    sendbloom::GatedBloomChain chainSample;
+    chainBlock.prepare (kSampleRate, kBlockSize);
+    chainSample.prepare (kSampleRate, kBlockSize);
+
+    constexpr int kNumSamples = 128;
+    std::vector<float> monoIn (static_cast<size_t> (kNumSamples));
+    std::vector<float> envelope (static_cast<size_t> (kNumSamples));
+
+    for (int i = 0; i < kNumSamples; ++i)
+    {
+        monoIn[static_cast<size_t> (i)] = 0.35f * std::sin (0.03f * static_cast<float> (i));
+        envelope[static_cast<size_t> (i)] =
+            chainBlock.getEnvelope().process (std::abs (monoIn[static_cast<size_t> (i)]));
+    }
+
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+    constexpr float kDistnBlend = 0.3f;
+    constexpr float kSendGain = 1.0f;
+    constexpr bool kGatePreSoft = true;
+
+    for (int i = 0; i < 2000; ++i)
+    {
+        const auto env = chainBlock.getEnvelope().process (0.5f);
+        chainBlock.processSample (0.5f, env, rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+        chainSample.processSample (0.5f, env, rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+    }
+
+    std::vector<float> blockOut (static_cast<size_t> (kNumSamples));
+    std::vector<float> sampleOut (static_cast<size_t> (kNumSamples));
+
+    chainBlock.processBlock (monoIn.data(), envelope.data(), blockOut.data(), kNumSamples,
+                             rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+
+    for (int i = 0; i < kNumSamples; ++i)
+        sampleOut[static_cast<size_t> (i)] = chainSample.processSample (
+            monoIn[static_cast<size_t> (i)], envelope[static_cast<size_t> (i)],
+            rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+
+    float maxDiff = 0.0f;
+    for (int i = 0; i < kNumSamples; ++i)
+        maxDiff = std::max (maxDiff,
+                            std::abs (blockOut[static_cast<size_t> (i)]
+                                      - sampleOut[static_cast<size_t> (i)]));
+
+    REQUIRE (sendbloom::test::rms (sampleOut) > 1e-6f);
+    REQUIRE (maxDiff < 1e-5f);
+}
+
+TEST_CASE ("GatedBloomChain authentic block produces finite output",
+           "[chain][GatedBloomChain][INTEG-02][authentic-block]")
+{
+    sendbloom::GatedBloomChain chain;
+    chain.prepare (kSampleRate, kBlockSize);
+
+    constexpr int kTotalSamples = 8192;
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+
+    std::vector<float> monoBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> envBlock (static_cast<size_t> (kBlockSize), 0.0f);
+    std::vector<float> wetOut (static_cast<size_t> (kTotalSamples), 0.0f);
+
+    for (int offset = 0; offset < kTotalSamples; offset += kBlockSize)
+    {
+        const int n = std::min (kBlockSize, kTotalSamples - offset);
+
+        for (int i = 0; i < n; ++i)
+        {
+            monoBlock[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
+            envBlock[static_cast<size_t> (i)] =
+                chain.getEnvelope().process (std::abs (monoBlock[static_cast<size_t> (i)]));
+        }
+
+        chain.processBlock (monoBlock.data(), envBlock.data(), wetOut.data() + offset, n,
+                            rt60, 0.0f, true, 0.0f, 1.0f, true, kThresholdDb);
+    }
+
+    auto peak = 0.0f;
+    for (int i = 64; i < kTotalSamples; ++i)
+    {
+        const auto w = wetOut[static_cast<size_t> (i)];
+        REQUIRE (std::isfinite (w));
+        peak = std::max (peak, std::abs (w));
+    }
+
+    REQUIRE (peak > 1e-6f);
 }

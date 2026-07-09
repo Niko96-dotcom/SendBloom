@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-local")
 include(PamplejuceVersion)
 
 include(CPM)
@@ -34,6 +35,8 @@ juce_add_plugin("${PROJECT_NAME}"
 
 add_library(SharedCode INTERFACE)
 
+include(R8brain)
+
 include(SharedCodeDefaults)
 target_compile_features(SharedCode INTERFACE cxx_std_20)
 
@@ -64,6 +67,8 @@ target_link_libraries(SharedCode
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
 
+target_link_libraries(SharedCode INTERFACE r8brain)
+
 juce_add_binary_data(SendBloomPresets
     SOURCES
         resources/presets/Sparkle_Verb.xml
@@ -73,7 +78,8 @@ juce_add_binary_data(SendBloomPresets
         resources/presets/Dark_Bloom.xml
         resources/presets/Firm_Pressure.xml
         resources/presets/Gated_Room.xml
-        resources/presets/Hot_Clip.xml)
+        resources/presets/Hot_Clip.xml
+        resources/ui/reverbx-faceplate.png)
 
 target_link_libraries(SharedCode INTERFACE SendBloomPresets)
 

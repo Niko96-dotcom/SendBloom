@@ -1,11 +1,15 @@
+#include "ChainTestHelpers.h"
 #include <DampedComb.h>
 #include <FactoryPresets.h>
+#include <GatedBloomChain.h>
+#include <ParameterCurves.h>
 #include <ParameterIDs.h>
 #include <PluginProcessor.h>
 #include <SchroederTank32.h>
 #include <BinaryData.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <cmath>
@@ -139,6 +143,129 @@ std::vector<float> renderImpulse (sendbloom::SchroederTank32& tank, bool authent
     return out;
 }
 
+constexpr auto kSafeRenderSamples = 24000uz;
+constexpr auto kSafeTailCount = 2400uz;
+constexpr auto kSafeTailStart = kSafeRenderSamples - kSafeTailCount;
+constexpr auto kSafeBlockSize = 512;
+constexpr float kSafeImagingFreqHz = 14825.0f;
+constexpr float kSafeImagingRmsMax = 0.0022f;
+constexpr float kSafeNarrowbandDominanceMax = 10.0f;
+
+std::vector<float> makeGuitarPluck (size_t totalSamples) noexcept
+{
+    std::vector<float> signal (totalSamples, 0.0f);
+    constexpr auto kBurstLen = 240;
+
+    for (int i = 0; i < kBurstLen; ++i)
+    {
+        const auto t = static_cast<float> (i) / static_cast<float> (kSampleRate);
+        const auto env = std::exp (-t * 18.0f);
+        signal[static_cast<size_t> (i)] = env * (0.6f * std::sin (2.0f * 3.14159265358979323846f * 330.0f * t)
+                                                 + 0.25f * std::sin (2.0f * 3.14159265358979323846f * 660.0f * t)
+                                                 + 0.15f * std::sin (2.0f * 3.14159265358979323846f * 990.0f * t));
+    }
+
+    return signal;
+}
+
+std::vector<float> renderHostRateChain (const std::vector<float>& input) noexcept
+{
+    sendbloom::GatedBloomChain chain;
+    chain.prepare (kSampleRate, kSafeBlockSize);
+
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+    std::vector<float> wet (input.size());
+
+    for (size_t i = 0; i < input.size(); ++i)
+    {
+        const auto env = chain.getEnvelope().process (std::abs (input[i]));
+        wet[i] = chain.processSample (input[i], env, rt60, 0.0f, false,
+                                      0.0f, 1.0f, true, -40.0f);
+    }
+
+    return wet;
+}
+
+float rmsFromGoertzelPower (double power, size_t count) noexcept
+{
+    if (count == 0 || power <= 0.0)
+        return 0.0f;
+
+    return static_cast<float> (std::sqrt (2.0 * power / static_cast<double> (count)));
+}
+
+struct SpectralScan
+{
+    std::vector<double> powers;
+    std::vector<double> freqs;
+};
+
+SpectralScan scanSpectrum (const std::vector<float>& samples,
+                           size_t start,
+                           size_t count,
+                           double fMin,
+                           double fMax,
+                           double stepHz) noexcept
+{
+    SpectralScan scan;
+    const auto nBins = static_cast<size_t> (std::floor ((fMax - fMin) / stepHz)) + 1;
+    scan.freqs.resize (nBins);
+    scan.powers.resize (nBins);
+
+    for (size_t b = 0; b < nBins; ++b)
+    {
+        const auto freq = fMin + static_cast<double> (b) * stepHz;
+        scan.freqs[b] = freq;
+        scan.powers[b] = sendbloom::test::goertzelPower (samples, kSampleRate, freq, start, count);
+    }
+
+    return scan;
+}
+
+float narrowbandDominanceRatio (const std::vector<float>& wet, float peakHz) noexcept
+{
+    const auto scan = scanSpectrum (wet, kSafeTailStart, kSafeTailCount, peakHz - 500.0, peakHz + 500.0, 25.0);
+
+    if (scan.powers.empty())
+        return 0.0f;
+
+    const auto peakPower = *std::max_element (scan.powers.begin(), scan.powers.end());
+    double neighborSum = 0.0;
+    int neighborCount = 0;
+
+    for (size_t i = 0; i < scan.powers.size(); ++i)
+    {
+        const auto df = std::abs (scan.freqs[i] - static_cast<double> (peakHz));
+
+        if (df >= 75.0 && df <= 200.0)
+        {
+            neighborSum += scan.powers[i];
+            ++neighborCount;
+        }
+    }
+
+    const auto neighborMean = neighborCount > 0 ? neighborSum / static_cast<double> (neighborCount) : 1e-12;
+    return static_cast<float> (peakPower / std::max (neighborMean, 1e-12));
+}
+
+float measureTailPeakFrequency (const std::vector<float>& wet) noexcept
+{
+    const auto scan = scanSpectrum (wet, kSafeTailStart, kSafeTailCount, 4000.0, 16000.0, 25.0);
+
+    if (scan.powers.empty())
+        return 0.0f;
+
+    size_t peakIdx = 0;
+
+    for (size_t i = 1; i < scan.powers.size(); ++i)
+    {
+        if (scan.powers[i] > scan.powers[peakIdx])
+            peakIdx = i;
+    }
+
+    return static_cast<float> (scan.freqs[peakIdx]);
+}
+
 } // namespace
 
 TEST_CASE ("legal metadata audit script passes on product-facing files", "[release][legal]")
@@ -160,20 +287,37 @@ TEST_CASE ("processBlock does not call setValueNotifyingHost", "[release][realti
     REQUIRE (body.find ("setValueNotifyingHost") == std::string::npos);
 }
 
+TEST_CASE ("PluginProcessor drives GatedBloomChain at block level",
+           "[chain][PluginProcessor][INTEG-02][processBlock]")
+{
+    const auto sourcePath = findRepoRoot().getChildFile ("source/PluginProcessor.cpp");
+    const auto source = readTextFile (sourcePath);
+    const auto body = extractProcessBlockBody (source);
+
+    REQUIRE_FALSE (body.empty());
+    REQUIRE (body.find ("chain.processBlock") != std::string::npos);
+    REQUIRE (body.find ("chain.processSample") == std::string::npos);
+}
+
 TEST_CASE ("32k Color docs describe software model not firmware claims", "[release][verb][authentic]")
 {
     const auto root = findRepoRoot();
     const auto readme = readTextFile (root.getChildFile ("README.md"));
     const auto checklist = readTextFile (root.getChildFile ("docs/RELEASE_CHECKLIST.md"));
     const auto tankSource = readTextFile (root.getChildFile ("source/SchroederTank32.h"));
+    const auto legacySource = readTextFile (root.getChildFile ("source/LegacyAccumulatorPath.h"));
 
     REQUIRE (readme.find ("firmware-derived") != std::string::npos);
     REQUIRE (readme.find ("32,768 Hz") != std::string::npos);
     REQUIRE (readme.find ("EEPROM") == std::string::npos);
     REQUIRE (readme.find ("bytecode") == std::string::npos);
     REQUIRE (checklist.find ("not firmware-derived") != std::string::npos);
-    REQUIRE (tankSource.find ("processAuthentic") != std::string::npos);
-    REQUIRE (tankSource.find ("kInternalRate") != std::string::npos);
+    REQUIRE (tankSource.find ("FixedRateAdapter") != std::string::npos);
+    REQUIRE (tankSource.find ("ProperSRC") != std::string::npos);
+    REQUIRE (legacySource.find ("processAuthentic") != std::string::npos);
+    const bool hasInternalRate = legacySource.find ("kInternalRate") != std::string::npos
+                              || tankSource.find ("SchroederTank32DelayTable") != std::string::npos;
+    REQUIRE (hasInternalRate);
 }
 
 TEST_CASE ("input_gain colors wet path only; dry tap stays pre-gain", "[release][io][input_gain]")
@@ -341,6 +485,56 @@ TEST_CASE ("setCurrentProgram loads embedded XML preset values", "[release][pres
                      == Catch::Approx (xmlApvts.getRawParameterValue (id)->load()).margin (1e-4f));
         }
     }
+}
+
+TEST_CASE ("fresh plugin load defaults authentic_color off", "[release][safe]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
+
+    REQUIRE (authentic != nullptr);
+    REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
+}
+
+TEST_CASE ("all factory presets recall authentic_color off", "[release][safe]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
+    {
+        sendbloom::PluginProcessor plugin;
+        plugin.setCurrentProgram (preset);
+
+        INFO ("preset index " << preset);
+
+        const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
+        REQUIRE (authentic != nullptr);
+        REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
+    }
+}
+
+TEST_CASE ("host-rate default path no HF imaging at 48 kHz", "[release][safe]")
+{
+    const auto input = makeGuitarPluck (kSafeRenderSamples);
+    const auto wet = renderHostRateChain (input);
+
+    for (const auto sample : wet)
+        REQUIRE (std::isfinite (sample));
+
+    const auto imagingPower = sendbloom::test::goertzelPower (wet, kSampleRate, kSafeImagingFreqHz,
+                                                              kSafeTailStart, kSafeTailCount);
+    const auto imagingRms = rmsFromGoertzelPower (imagingPower, kSafeTailCount);
+
+    INFO ("14825 Hz tail RMS = " << imagingRms);
+    REQUIRE (imagingRms < kSafeImagingRmsMax);
+
+    const auto peakFrequency = measureTailPeakFrequency (wet);
+    const auto dominance = narrowbandDominanceRatio (wet, peakFrequency);
+
+    INFO ("peak freq = " << peakFrequency << " Hz, dominance ratio = " << dominance);
+    REQUIRE (dominance < kSafeNarrowbandDominanceMax);
 }
 
 TEST_CASE ("MIDI CC1 updates send_amount without host notification", "[release][midi][realtime]")

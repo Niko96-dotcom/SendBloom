@@ -20,8 +20,9 @@ public:
     void setExpanded (bool shouldExpand);
     bool isExpanded() const noexcept { return expanded; }
 
-    int getPreferredHeight() const noexcept { return expanded ? 160 : 0; }
+    int getPreferredHeight() const noexcept { return expanded ? 178 : 0; }
 
+    void paint (juce::Graphics& g) override;
     void resized() override;
 
 private:

@@ -52,7 +52,7 @@ while IFS= read -r line; do
   done
 done < CMakeLists.txt
 
-for path in source tests README.md .github/workflows resources/presets resources; do
+for path in source tests docs/THIRD_PARTY_LICENSES.md README.md .github/workflows resources/presets resources; do
   [[ -e "$path" ]] || continue
   if [[ -f "$path" ]]; then
     scan_file "$path"
@@ -61,6 +61,13 @@ for path in source tests README.md .github/workflows resources/presets resources
       scan_file "$file"
     done < <(find "$path" -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" -o -name "*.xml" -o -name "*.txt" \) -print0)
   fi
+done
+
+echo "==> Checking third-party license citations..."
+for file in docs/THIRD_PARTY_LICENSES.md README.md; do
+  [[ -f "$file" ]] || { echo "ERROR: Missing $file" >&2; exit 1; }
+  grep -qi "r8brain" "$file" || { echo "ERROR: r8brain not cited in $file" >&2; exit 1; }
+  grep -qi "MIT" "$file" || { echo "ERROR: MIT license not cited in $file" >&2; exit 1; }
 done
 
 echo "Legal metadata audit passed."

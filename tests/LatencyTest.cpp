@@ -1,18 +1,63 @@
 #include <ParameterCurves.h>
 #include <ParameterIDs.h>
 #include <PluginProcessor.h>
+#include <SrcLatencyTable.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE ("Plugin reports zero latency samples", "[chain][latency]")
+TEST_CASE ("Plugin reports zero latency samples (RC1 default)", "[chain][latency]")
 {
     sendbloom::PluginProcessor plugin;
     REQUIRE (plugin.getLatencySamples() == 0);
 }
 
-TEST_CASE ("Plugin latency unchanged after prepare", "[chain][latency]")
+TEST_CASE ("Plugin latency unchanged after prepare with authentic off", "[chain][latency]")
 {
     sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (48000.0, 512);
+    REQUIRE (plugin.getLatencySamples() == 0);
+}
+
+TEST_CASE ("Plugin reports zero latency when authentic_color on (Path B)", "[chain][latency][LAT-03]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (authenticColor) = 1.0f;
+    plugin.prepareToPlay (48000.0, 512);
+
+    REQUIRE (plugin.getLatencySamples() == 0);
+}
+
+TEST_CASE ("Plugin reported latency stays zero across host rates with authentic on",
+           "[chain][latency][LAT-03]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (authenticColor) = 1.0f;
+
+    for (const auto& row : sendbloom::kMeasuredLatencyTable)
+    {
+        plugin.prepareToPlay (row.hostRateHz, 512);
+        REQUIRE (plugin.getLatencySamples() == 0);
+    }
+}
+
+TEST_CASE ("Plugin latency remains zero when authentic toggled off after prepare",
+           "[chain][latency][LAT-03]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (authenticColor) = 1.0f;
+    plugin.prepareToPlay (48000.0, 512);
+    REQUIRE (plugin.getLatencySamples() == 0);
+
+    *apvts.getRawParameterValue (authenticColor) = 0.0f;
     plugin.prepareToPlay (48000.0, 512);
     REQUIRE (plugin.getLatencySamples() == 0);
 }

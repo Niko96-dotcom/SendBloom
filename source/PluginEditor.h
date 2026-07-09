@@ -11,7 +11,8 @@
 namespace sendbloom
 {
 
-class PluginEditor : public juce::AudioProcessorEditor
+class PluginEditor : public juce::AudioProcessorEditor,
+                     private juce::Timer
 {
 public:
     explicit PluginEditor (PluginProcessor&);
@@ -19,21 +20,27 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    void setAdvancedExpandedForSnapshot (bool shouldExpand);
 
 private:
     void presetChanged();
     void toggleAdvanced();
+    juce::Rectangle<int> getAdvancedBounds() const;
+    void timerCallback() override;
 
     PluginProcessor& processorRef;
     ui::SendBloomLookAndFeel lookAndFeel;
 
     juce::Label titleLabel;
     juce::ComboBox presetBox;
-    ui::PedalKnob inKnob { "In" };
-    ui::PedalKnob sizeKnob { "Size" };
-    ui::PedalKnob lvlKnob { "Lvl" };
-    ui::PedalKnob distnKnob { "Distn" };
-    ui::PedalKnob outKnob { "Out" };
+    juce::TextButton saveButton { "SAVE" };
+    juce::TextButton newButton { "NEW" };
+    juce::TextButton deleteButton { "DELETE" };
+    ui::PedalKnob inKnob { "INPUT (dB)" };
+    ui::PedalKnob sizeKnob { "SIZE" };
+    ui::PedalKnob lvlKnob { "LEVEL" };
+    ui::PedalKnob distnKnob { "DISTORTION" };
+    ui::PedalKnob outKnob { "OUTPUT (dB)" };
     juce::ToggleButton darkToggle { "Dark" };
     juce::ToggleButton gateToggle { "Gate Post" };
     ui::ClipLed clipLed;
