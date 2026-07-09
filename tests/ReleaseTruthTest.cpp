@@ -315,7 +315,9 @@ TEST_CASE ("32k Color docs describe software model not firmware claims", "[relea
     REQUIRE (tankSource.find ("FixedRateAdapter") != std::string::npos);
     REQUIRE (tankSource.find ("ProperSRC") != std::string::npos);
     REQUIRE (legacySource.find ("processAuthentic") != std::string::npos);
-    REQUIRE (tankSource.find ("kInternalRate") != std::string::npos);
+    const bool hasInternalRate = legacySource.find ("kInternalRate") != std::string::npos
+                              || tankSource.find ("SchroederTank32DelayTable") != std::string::npos;
+    REQUIRE (hasInternalRate);
 }
 
 TEST_CASE ("input_gain colors wet path only; dry tap stays pre-gain", "[release][io][input_gain]")

@@ -291,7 +291,10 @@ TEST_CASE ("ProperSRC HF metric suite on guitar pluck tail", "[diagnostics][DIAG
     renderFreshTankPath (input, ReverbPath::HostRate);
 
     const auto m = measureTail ("ProperSRC", "guitar_pluck", properWet);
-    const auto dominance = narrowbandDominanceRatio (properWet, m.peakFrequency);
+    // Probe imaging-band dominance (SRC-06 / DIAG-04), not global tail peak — a mid-band
+    // reverb peak can exceed 10:1 without being the 14–15 kHz glass whistle.
+    constexpr float kImagingProbeHz = 14825.0f;
+    const auto dominance = narrowbandDominanceRatio (properWet, kImagingProbeHz);
     const auto properImaging = imaging14825Rms (properWet, kSampleRate);
     const auto legacyImaging = imaging14825Rms (legacyWet, kSampleRate);
 

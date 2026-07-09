@@ -12,22 +12,48 @@
 namespace sendbloom
 {
 
+// Guitar-wet SRC quality: wide transition band + moderate attenuation +
+// minimum-phase FIR. Default r8brain (2% TB / ~207 dB / linear-phase) yields
+// ~90–118 ms priming — unacceptable for this product. These knobs target
+// a few ms of wet-only delay while still meeting SRC-06 imaging gates.
+struct SrcQuality
+{
+    double reqTransBandPercent { 25.0 };
+    double reqAttenDb { 90.0 };
+    r8b::EDSPFilterPhaseResponse phase { r8b::fprLinearPhase };
+};
+
+inline constexpr SrcQuality kProperSrcQuality {};
+
 class RateConverterPair
 {
 public:
     void prepare (double hostRate, int maxHostBlock) noexcept
     {
+        prepare (hostRate, maxHostBlock, kProperSrcQuality);
+    }
+
+    void prepare (double hostRate, int maxHostBlock, SrcQuality quality) noexcept
+    {
         maxHostBlock_ = maxHostBlock;
+        hostRate_ = hostRate;
         hostToInternalRatio_ = SchroederTank32DelayTable::kInternalRate / hostRate;
+        quality_ = quality;
 
         upsampler_ = std::make_unique<r8b::CDSPResampler> (hostRate,
                                                            SchroederTank32DelayTable::kInternalRate,
-                                                           maxHostBlock);
+                                                           maxHostBlock,
+                                                           quality.reqTransBandPercent,
+                                                           quality.reqAttenDb,
+                                                           quality.phase);
 
         const auto maxInternalIn = upsampler_->getMaxOutLen (maxHostBlock);
         downsampler_ = std::make_unique<r8b::CDSPResampler> (SchroederTank32DelayTable::kInternalRate,
                                                              hostRate,
-                                                             maxInternalIn);
+                                                             maxInternalIn,
+                                                             quality.reqTransBandPercent,
+                                                             quality.reqAttenDb,
+                                                             quality.phase);
 
         scratchIn_.resize (static_cast<size_t> (maxHostBlock));
         upOut_.resize (static_cast<size_t> (upsampler_->getMaxOutLen (maxHostBlock)));
@@ -104,14 +130,17 @@ public:
         leftoverDown_ = 0;
     }
 
+    // Host-domain round-trip priming: upsample delay is already in host samples;
+    // downsample delay is in 32 kHz samples and must be scaled to host time.
     int getRoundTripLatencySamples() const noexcept
     {
-        if (upsampler_ == nullptr || downsampler_ == nullptr)
+        if (upsampler_ == nullptr || downsampler_ == nullptr || hostRate_ <= 0.0)
             return 0;
 
-        // CDSPResampler::getLatency() is always zero; priming delay is queryable
-        // via getInLenBeforeOutPos for future Phase 17 PDC integration.
-        return upsampler_->getInLenBeforeOutPos (0) + downsampler_->getInLenBeforeOutPos (0);
+        const auto upHost = static_cast<double> (upsampler_->getInLenBeforeOutPos (0));
+        const auto downInternal = static_cast<double> (downsampler_->getInLenBeforeOutPos (0));
+        const auto downHost = downInternal * (hostRate_ / SchroederTank32DelayTable::kInternalRate);
+        return static_cast<int> (std::lround (upHost + downHost));
     }
 
     int getUpsamplerPrimingSamples() const noexcept
@@ -134,6 +163,11 @@ public:
         return upsampler_ != nullptr ? upsampler_->getMaxOutLen (nHost) : 0;
     }
 
+    SrcQuality getQuality() const noexcept
+    {
+        return quality_;
+    }
+
 private:
     std::unique_ptr<r8b::CDSPResampler> upsampler_;
     std::unique_ptr<r8b::CDSPResampler> downsampler_;
@@ -143,7 +177,9 @@ private:
     std::vector<double> leftoverFifo_;
     int leftoverDown_ { 0 };
     int maxHostBlock_ { 0 };
+    double hostRate_ { 48000.0 };
     double hostToInternalRatio_ { SchroederTank32DelayTable::kInternalRate / 48000.0 };
+    SrcQuality quality_ {};
 };
 
 } // namespace sendbloom

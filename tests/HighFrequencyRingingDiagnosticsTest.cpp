@@ -126,9 +126,11 @@ TEST_CASE ("HF ringing no narrowband glass whistle on authentic guitar tail",
     const auto input = makeGuitarPluck (kRenderSamples);
     const auto wet = renderChain (input, 0.0f, true, 0.0f);
     const auto m = measureTail ("B_rev_auth_bright", "guitar_pluck", wet);
-    const auto dominance = narrowbandDominanceRatio (wet, m.peakFrequency);
+    // Imaging whistle lives near 14825 Hz; global peak dominance is not the glass-whistle gate.
+    constexpr float kImagingProbeHz = 14825.0f;
+    const auto dominance = narrowbandDominanceRatio (wet, kImagingProbeHz);
 
-    INFO ("peak freq = " << m.peakFrequency << " Hz, dominance ratio = " << dominance);
+    INFO ("peak freq = " << m.peakFrequency << " Hz, imaging-band dominance = " << dominance);
     REQUIRE (dominance < kNarrowbandDominanceMaxRatio);
 }
 

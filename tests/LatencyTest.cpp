@@ -18,7 +18,7 @@ TEST_CASE ("Plugin latency unchanged after prepare with authentic off", "[chain]
     REQUIRE (plugin.getLatencySamples() == 0);
 }
 
-TEST_CASE ("Plugin reports SRC latency when authentic_color on", "[chain][latency][LAT-03]")
+TEST_CASE ("Plugin reports zero latency when authentic_color on (Path B)", "[chain][latency][LAT-03]")
 {
     using namespace sendbloom::ParameterIDs;
 
@@ -27,11 +27,11 @@ TEST_CASE ("Plugin reports SRC latency when authentic_color on", "[chain][latenc
     *apvts.getRawParameterValue (authenticColor) = 1.0f;
     plugin.prepareToPlay (48000.0, 512);
 
-    REQUIRE (plugin.getLatencySamples()
-             == sendbloom::lookupRoundTripLatencySamples (48000.0));
+    REQUIRE (plugin.getLatencySamples() == 0);
 }
 
-TEST_CASE ("Plugin SRC latency tracks host rate with authentic on", "[chain][latency][LAT-03]")
+TEST_CASE ("Plugin reported latency stays zero across host rates with authentic on",
+           "[chain][latency][LAT-03]")
 {
     using namespace sendbloom::ParameterIDs;
 
@@ -42,11 +42,12 @@ TEST_CASE ("Plugin SRC latency tracks host rate with authentic on", "[chain][lat
     for (const auto& row : sendbloom::kMeasuredLatencyTable)
     {
         plugin.prepareToPlay (row.hostRateHz, 512);
-        REQUIRE (plugin.getLatencySamples() == row.roundTripSamples);
+        REQUIRE (plugin.getLatencySamples() == 0);
     }
 }
 
-TEST_CASE ("Plugin latency returns to zero when authentic off after prepare", "[chain][latency][LAT-03]")
+TEST_CASE ("Plugin latency remains zero when authentic toggled off after prepare",
+           "[chain][latency][LAT-03]")
 {
     using namespace sendbloom::ParameterIDs;
 
@@ -54,7 +55,7 @@ TEST_CASE ("Plugin latency returns to zero when authentic off after prepare", "[
     auto& apvts = plugin.getAPVTS();
     *apvts.getRawParameterValue (authenticColor) = 1.0f;
     plugin.prepareToPlay (48000.0, 512);
-    REQUIRE (plugin.getLatencySamples() > 0);
+    REQUIRE (plugin.getLatencySamples() == 0);
 
     *apvts.getRawParameterValue (authenticColor) = 0.0f;
     plugin.prepareToPlay (48000.0, 512);

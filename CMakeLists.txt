@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-local")
 include(PamplejuceVersion)
 
 include(CPM)
@@ -70,7 +71,6 @@ target_link_libraries(SharedCode INTERFACE r8brain)
 
 juce_add_binary_data(SendBloomPresets
     SOURCES
-        resources/ui/reverbx-faceplate.png
         resources/presets/Sparkle_Verb.xml
         resources/presets/Cut_Sample_Gate.xml
         resources/presets/Spacerock_Burn.xml
@@ -83,12 +83,6 @@ juce_add_binary_data(SendBloomPresets
 target_link_libraries(SharedCode INTERFACE SendBloomPresets)
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
-
-add_executable(EditorSnapshot tools/EditorSnapshot.cpp)
-target_compile_features(EditorSnapshot PRIVATE cxx_std_20)
-target_include_directories(EditorSnapshot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
-target_compile_definitions(EditorSnapshot PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
-target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 
 # include(PamplejuceIPP)
 

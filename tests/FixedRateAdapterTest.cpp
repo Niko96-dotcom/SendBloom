@@ -255,7 +255,7 @@ TEST_CASE ("RateConverterPair round-trip latency at four host rates",
     }
 }
 
-TEST_CASE ("RateConverterPair latency matches getInLenBeforeOutStart cross-check",
+TEST_CASE ("RateConverterPair latency matches host-scaled priming cross-check",
            "[verb][LAT-01]")
 {
     for (const auto& row : sendbloom::kMeasuredLatencyTable)
@@ -264,23 +264,37 @@ TEST_CASE ("RateConverterPair latency matches getInLenBeforeOutStart cross-check
         converter.prepare (row.hostRateHz, sendbloom::kMaxHostBlock);
 
         const auto roundTrip = converter.getRoundTripLatencySamples();
-        const auto primingSum = converter.getUpsamplerPrimingSamples()
-                              + converter.getDownsamplerPrimingSamples();
+        const auto upHost = static_cast<double> (converter.getUpsamplerPrimingSamples());
+        const auto downInternal = static_cast<double> (converter.getDownsamplerPrimingSamples());
+        const auto downHost = downInternal
+                            * (row.hostRateHz / sendbloom::SchroederTank32DelayTable::kInternalRate);
+        const auto hostScaled = static_cast<int> (std::lround (upHost + downHost));
 
-        REQUIRE (primingSum == roundTrip);
+        REQUIRE (hostScaled == roundTrip);
         REQUIRE (roundTrip == sendbloom::lookupRoundTripLatencySamples (row.hostRateHz));
+        REQUIRE (roundTrip > 0);
+        REQUIRE (roundTrip < 400); // Path B: wet-only delay stays under ~4 ms @ 96 kHz
 
+        const auto quality = sendbloom::kProperSrcQuality;
         r8b::CDSPResampler upsampler (row.hostRateHz,
                                       sendbloom::SchroederTank32DelayTable::kInternalRate,
-                                      sendbloom::kMaxHostBlock);
+                                      sendbloom::kMaxHostBlock,
+                                      quality.reqTransBandPercent,
+                                      quality.reqAttenDb,
+                                      quality.phase);
         const auto maxInternalIn = upsampler.getMaxOutLen (sendbloom::kMaxHostBlock);
         r8b::CDSPResampler downsampler (sendbloom::SchroederTank32DelayTable::kInternalRate,
                                         row.hostRateHz,
-                                        maxInternalIn);
+                                        maxInternalIn,
+                                        quality.reqTransBandPercent,
+                                        quality.reqAttenDb,
+                                        quality.phase);
 
-        const int legacySum = upsampler.getInLenBeforeOutStart (0)
-                            + downsampler.getInLenBeforeOutStart (0);
-        REQUIRE (legacySum == roundTrip);
+        const auto rawUp = static_cast<double> (upsampler.getInLenBeforeOutPos (0));
+        const auto rawDown = static_cast<double> (downsampler.getInLenBeforeOutPos (0));
+        const auto rawHostScaled = static_cast<int> (std::lround (
+            rawUp + rawDown * (row.hostRateHz / sendbloom::SchroederTank32DelayTable::kInternalRate)));
+        REQUIRE (rawHostScaled == roundTrip);
     }
 }
 

@@ -28,12 +28,11 @@ PluginProcessor::PluginProcessor()
 
 PluginProcessor::~PluginProcessor() = default;
 
-void PluginProcessor::updateReportedLatency (bool targetAuthenticOn) noexcept
+void PluginProcessor::updateReportedLatency (bool /* targetAuthenticOn */) noexcept
 {
-    if (! targetAuthenticOn)
-        setLatencySamples (0);
-    else
-        setLatencySamples (chain.getSrcRoundTripLatencySamples());
+    // Path B / Policy E (ADR-003): kProperSrcQuality keeps wet-only SRC delay
+    // small; CHN-04 requires zero reported PDC regardless of authentic_color.
+    setLatencySamples (0);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()

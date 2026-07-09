@@ -28,11 +28,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { distn, 1 }, "Distn",
-        juce::NormalisableRange<float> { 0.0f, 1.0f }, 0.5f));
+        juce::NormalisableRange<float> { 0.0f, 1.0f }, 0.0f));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { outputGain, 1 }, "Output Gain",
-        juce::NormalisableRange<float> { -12.0f, 12.0f }, -3.0f));
+        juce::NormalisableRange<float> { -12.0f, 12.0f }, 0.0f));
 
     layout.add (std::make_unique<juce::AudioParameterBool> (
         juce::ParameterID { darkMode, 1 }, "Dark Mode", false));
