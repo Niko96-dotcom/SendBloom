@@ -29,6 +29,8 @@ public:
     virtual bool isCrossfading() const noexcept { return false; }
 
     virtual void requestEngineCrossfade (bool /*targetAuthentic*/) noexcept {}
+
+    virtual int getSrcRoundTripLatencySamples() const noexcept { return 0; }
 };
 
 } // namespace sendbloom

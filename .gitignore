@@ -13,6 +13,14 @@ _deps
 Builds/*
 !Builds/.gitkeep
 
+# Alternate / scratch build trees
+build/
+Builds-Compare/
+Builds-deslop-check/
+build-juce-unittests/
+artifacts/
+.deslop/
+
 Install/*
 Testing
 .idea

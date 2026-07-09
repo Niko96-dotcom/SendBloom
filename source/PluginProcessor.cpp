@@ -30,8 +30,8 @@ PluginProcessor::~PluginProcessor() = default;
 
 void PluginProcessor::updateReportedLatency (bool /* targetAuthenticOn */) noexcept
 {
-    // Path B / Policy E (ADR-003): kProperSrcQuality keeps wet-only SRC delay
-    // small; CHN-04 requires zero reported PDC regardless of authentic_color.
+    // ADR-003 Path B: always report zero host PDC (CHN-04). Wet-only ProperSRC
+    // delay (~3.9–4.1 ms) is accepted as musically fine for parallel reverb.
     setLatencySamples (0);
 }
 

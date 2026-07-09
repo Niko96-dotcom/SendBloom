@@ -126,7 +126,7 @@ public:
         diagnosticsMode_ = std::nullopt;
     }
 
-    int getSrcRoundTripLatencySamples() const noexcept
+    int getSrcRoundTripLatencySamples() const noexcept override
     {
         return fixedRate_.getRoundTripLatencySamples();
     }
