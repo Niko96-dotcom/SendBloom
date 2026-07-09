@@ -2,6 +2,7 @@
 
 #include "PluginProcessor.h"
 #include "ui/SendBloomLookAndFeel.h"
+#include "ui/TransparentControls.h"
 #include "ui/PedalKnob.h"
 #include "ui/PressureSendPad.h"
 #include "ui/ClipLed.h"
@@ -30,6 +31,7 @@ private:
 
     PluginProcessor& processorRef;
     ui::SendBloomLookAndFeel lookAndFeel;
+    ui::TransparentControlsLookAndFeel transparentControls;
 
     juce::Label titleLabel;
     juce::ComboBox presetBox;

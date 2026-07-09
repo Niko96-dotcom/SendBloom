@@ -54,43 +54,49 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     presetBox.setSelectedId (processorRef.getCurrentProgram() + 1, juce::dontSendNotification);
     presetBox.onChange = [this] { presetChanged(); };
-    presetBox.setAlpha (0.0f);
+    presetBox.setLookAndFeel (&transparentControls);
+    presetBox.setColour (juce::ComboBox::backgroundColourId, juce::Colours::transparentBlack);
+    presetBox.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
+    presetBox.setColour (juce::ComboBox::textColourId, juce::Colours::transparentBlack);
+    presetBox.setColour (juce::ComboBox::arrowColourId, juce::Colours::transparentBlack);
     addAndMakeVisible (presetBox);
 
     for (auto* button : { &saveButton, &newButton, &deleteButton })
     {
-        button->setAlpha (0.01f);
+        button->setLookAndFeel (&transparentControls);
+        button->setColour (juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+        button->setColour (juce::TextButton::buttonOnColourId, juce::Colours::transparentBlack);
+        button->setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
+        button->setColour (juce::TextButton::textColourOnId, juce::Colours::transparentBlack);
         addAndMakeVisible (*button);
     }
 
     for (auto* knob : { &inKnob, &sizeKnob, &lvlKnob, &distnKnob, &outKnob })
-    {
-        knob->setLabelColour (lookAndFeel.labelColour());
-        knob->setAlpha (0.0f);
         addAndMakeVisible (*knob);
-    }
 
-    lvlKnob.setRangeText ("0", "10");
     lvlKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
-    sizeKnob.setRangeText ("1", "10");
     sizeKnob.setValueFormatter ([] (double value) { return juce::String (1.0 + value * 0.2, 2); });
-    distnKnob.setRangeText ("0", "100");
     distnKnob.setValueFormatter ([] (double value) { return juce::String (value * 100.0, 2); });
     inKnob.setValueFormatter ([] (double value) { return formatSignedDbFromNorm (value); });
     outKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
 
+    darkToggle.setLookAndFeel (&transparentControls);
+    gateToggle.setLookAndFeel (&transparentControls);
     addAndMakeVisible (darkToggle);
     addAndMakeVisible (gateToggle);
+
+    clipLed.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (clipLed);
+    clipLed.setVisible (false);
+
+    pressurePad.setOpaque (false);
     addAndMakeVisible (pressurePad);
-    darkToggle.setAlpha (0.0f);
-    gateToggle.setAlpha (0.0f);
-    clipLed.setAlpha (0.0f);
-    pressurePad.setAlpha (0.0f);
 
     advancedButton.setButtonText ("ADVANCED >");
     advancedButton.onClick = [this] { toggleAdvanced(); };
-    advancedButton.setAlpha (0.0f);
+    advancedButton.setLookAndFeel (&transparentControls);
+    advancedButton.setColour (juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+    advancedButton.setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
     addAndMakeVisible (advancedButton);
     addChildComponent (advancedDrawer);
 
@@ -115,12 +121,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     gateToggle.onClick = [this, &apvts]
     {
         const auto post = gateToggle.getToggleState();
-        gateToggle.setButtonText ("Gate");
         if (auto* param = apvts.getParameter (ParameterIDs::gatePrePost))
             param->setValueNotifyingHost (post ? 1.0f : 0.0f);
+        repaint();
     };
 
-    darkToggle.setButtonText ("Dark");
+    darkToggle.onStateChange = [this] { repaint(); };
 
     setSize (kEditorWidth, kEditorHeight);
     startTimerHz (30);
@@ -128,6 +134,13 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
 PluginEditor::~PluginEditor()
 {
+    presetBox.setLookAndFeel (nullptr);
+    saveButton.setLookAndFeel (nullptr);
+    newButton.setLookAndFeel (nullptr);
+    deleteButton.setLookAndFeel (nullptr);
+    darkToggle.setLookAndFeel (nullptr);
+    gateToggle.setLookAndFeel (nullptr);
+    advancedButton.setLookAndFeel (nullptr);
     setLookAndFeel (nullptr);
 }
 
@@ -139,6 +152,13 @@ void PluginEditor::paint (juce::Graphics& g)
                              processorRef.getAPVTS(),
                              processorRef.isClipHoldActive(),
                              advancedDrawer.isExpanded());
+
+    g.setColour (juce::Colours::black);
+    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
+    g.drawFittedText (presetBox.getText(),
+                      { 72, 150, 200, 26 },
+                      juce::Justification::centredLeft,
+                      1);
 }
 
 void PluginEditor::resized()
@@ -149,19 +169,18 @@ void PluginEditor::resized()
     newButton.setBounds (330, 148, 30, 44);
     deleteButton.setBounds (360, 148, 36, 44);
 
-    clipLed.setBounds (184, 208, 42, 206);
+    // Cropped knob art centres measured from cyan rings on the faceplate asset.
+    lvlKnob.setBounds (265 - 32, 213 - 32, 64, 84);
+    sizeKnob.setBounds (265 - 32, 302 - 32, 64, 84);
+    distnKnob.setBounds (265 - 32, 392 - 32, 64, 84);
+    inKnob.setBounds (265 - 32, 473 - 32, 64, 84);
+    outKnob.setBounds (265 - 32, 556 - 32, 64, 84);
 
-    lvlKnob.setBounds (228, 196, 184, 90);
-    sizeKnob.setBounds (228, 284, 184, 90);
-    distnKnob.setBounds (228, 374, 188, 92);
-    inKnob.setBounds (228, 468, 188, 90);
-    outKnob.setBounds (228, 560, 188, 90);
+    darkToggle.setBounds (64, 568, 50, 50);
+    gateToggle.setBounds (143, 560, 27, 64);
+    pressurePad.setBounds (90, 650, 95, 95);
 
-    darkToggle.setBounds (70, 604, 54, 54);
-    gateToggle.setBounds (166, 598, 34, 70);
-    pressurePad.setBounds (48, 650, 198, 96);
-
-    advancedButton.setBounds (258, 656, 106, 34);
+    advancedButton.setBounds (250, 646, 132, 104);
     advancedDrawer.setBounds (getAdvancedBounds());
 }
 
@@ -179,7 +198,7 @@ void PluginEditor::toggleAdvanced()
 
 juce::Rectangle<int> PluginEditor::getAdvancedBounds() const
 {
-    return { 232, 572, 166, advancedDrawer.getPreferredHeight() };
+    return { 232, 560, 166, advancedDrawer.getPreferredHeight() };
 }
 
 void PluginEditor::setAdvancedExpandedForSnapshot (bool shouldExpand)

@@ -1,7 +1,10 @@
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include "TransparentControls.h"
+
+#include <BinaryData.h>
 #include <functional>
+#include <juce_gui_basics/juce_gui_basics.h>
 
 namespace sendbloom::ui
 {
@@ -17,51 +20,48 @@ public:
         slider.setRotaryParameters (juce::MathConstants<float>::pi * 1.2f,
                                     juce::MathConstants<float>::pi * 2.8f,
                                     true);
+        slider.setLookAndFeel (&transparentLnf);
+        slider.setOpaque (false);
         slider.onValueChange = [this] { repaint(); };
         addAndMakeVisible (slider);
+
+        knobImage = loadKnobImage();
+    }
+
+    ~PedalKnob() override
+    {
+        slider.setLookAndFeel (nullptr);
     }
 
     juce::Slider& getSlider() noexcept { return slider; }
 
     void paint (juce::Graphics& g) override
     {
-        const auto bounds = getLocalBounds().toFloat();
-        const auto labelArea = bounds.withTrimmedLeft (82.0f).withTrimmedTop (20.0f).withHeight (34.0f);
+        paintKnob (g);
 
-        g.setColour (labelColour);
-        g.setFont (juce::FontOptions (19.0f, juce::Font::bold));
-        g.drawFittedText (labelName, labelArea.toNearestInt(), juce::Justification::centredLeft, 2, 0.58f);
-
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-        if (minText.isNotEmpty())
-            g.drawText (minText, 2, 58, 26, 14, juce::Justification::centred);
-        if (maxText.isNotEmpty())
-            g.drawText (maxText, 50, 58, 26, 14, juce::Justification::centred);
-
-        const auto valueBounds = juce::Rectangle<float> (18.0f, 70.0f, 56.0f, 18.0f);
-        g.setColour (juce::Colour (0xff1f2224));
-        g.fillRoundedRectangle (valueBounds, 3.0f);
-        g.setColour (juce::Colours::white.withAlpha (0.9f));
+        const auto valueBounds = juce::Rectangle<int> (2, kKnobSize + 5, 52, 15);
+        g.setColour (juce::Colours::white.withAlpha (0.92f));
         g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
-        g.drawText (getDisplayValue(), valueBounds.toNearestInt(), juce::Justification::centred, false);
+        g.drawText (getDisplayValue(), valueBounds, juce::Justification::centred, false);
+    }
+
+    void paintOverChildren (juce::Graphics& g) override
+    {
+        // Slider child paints after us; redraw the rotating knob on top so it stays visible.
+        paintKnob (g);
     }
 
     void resized() override
     {
-        slider.setBounds (0, 0, 78, 78);
+        slider.setBounds (0, 0, kKnobSize, kKnobSize);
     }
 
-    void setLabelColour (juce::Colour colour)
+    void setLabelColour (juce::Colour)
     {
-        labelColour = colour;
-        repaint();
     }
 
-    void setRangeText (juce::String minValue, juce::String maxValue)
+    void setRangeText (juce::String, juce::String)
     {
-        minText = std::move (minValue);
-        maxText = std::move (maxValue);
-        repaint();
     }
 
     void setValueFormatter (std::function<juce::String (double)> formatter)
@@ -71,6 +71,37 @@ public:
     }
 
 private:
+    static juce::Image loadKnobImage()
+    {
+        auto image = juce::ImageFileFormat::loadFrom (
+            juce::File::getCurrentWorkingDirectory().getChildFile ("resources/ui/knob.png"));
+        if (! image.isValid())
+            image = juce::ImageFileFormat::loadFrom (BinaryData::knob_png,
+                                                     static_cast<size_t> (BinaryData::knob_pngSize));
+        return image;
+    }
+
+    void paintKnob (juce::Graphics& g)
+    {
+        if (! knobImage.isValid())
+            return;
+
+        const auto centre = juce::Point<float> (static_cast<float> (kKnobSize) * 0.5f,
+                                                static_cast<float> (kKnobSize) * 0.5f);
+        const auto params = slider.getRotaryParameters();
+        const auto t = static_cast<float> (slider.valueToProportionOfLength (slider.getValue()));
+        const auto angle = params.startAngleRadians
+                         + t * (params.endAngleRadians - params.startAngleRadians);
+        // Keep art inside the faceplate cyan ring (~48px body inside a 64px hit target).
+        const auto dest = juce::Rectangle<float> (static_cast<float> (kKnobArtSize),
+                                                  static_cast<float> (kKnobArtSize))
+                              .withCentre (centre);
+
+        juce::Graphics::ScopedSaveState state (g);
+        g.addTransform (juce::AffineTransform::rotation (angle, centre.x, centre.y));
+        g.drawImage (knobImage, dest);
+    }
+
     juce::String getDisplayValue() const
     {
         if (valueFormatter != nullptr)
@@ -79,12 +110,16 @@ private:
         return juce::String (slider.getValue(), 2);
     }
 
+    static constexpr int kKnobSize = 64;
+    static constexpr int kKnobArtSize = 48;
+
     juce::String labelName;
-    juce::String minText;
-    juce::String maxText;
-    juce::Colour labelColour { juce::Colours::black };
     std::function<juce::String (double)> valueFormatter;
+    TransparentControlsLookAndFeel transparentLnf;
     juce::Slider slider;
+    juce::Image knobImage;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PedalKnob)
 };
 
 } // namespace sendbloom::ui
