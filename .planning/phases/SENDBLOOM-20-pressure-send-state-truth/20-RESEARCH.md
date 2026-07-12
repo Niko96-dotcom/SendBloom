@@ -430,6 +430,7 @@ Discretion items resolved below as **recommended defaults** (user auto-accepted 
    - What we know: `numSamples > preparedMaxBlock_` forces wet=0 `[VERIFIED]`.
    - Recommendation: Assert pressure semantics for blocks ≤ prepared max (e.g. 64/128/256/512). Document temporary SEND-14 caveat for oversized hosts until Phase 21. Do not implement span engine here.
    - **Plan lock:** 20-03 Task 2 + `20-VALIDATION.md` intentional-red table.
+   - **Execution lock (20-03):** In-range coverage lives under `[send][SEND-14]` (PressureController chunk sweep + processor rest/press/release). Temporary caveat remains: oversized host blocks still dry-fallback until Phase 21 span/no-alloc — `[v1][contract][oversized-block]` must stay red; do not claim full host-block invariance including oversized.
 
 2. **New SEND tests vs only flip V1Contract — RESOLVED**
    - Recommendation: Flip `[pressure-release]` by production fix **and** add focused greens for preset resting matrix, attack/release timing, Advanced toggle, overlay predicate. Do not delete Phase 19 contracts.
