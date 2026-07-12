@@ -240,3 +240,66 @@ TEST_CASE ("processBlock stress with authentic color toggling",
         REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
     }
 }
+
+TEST_CASE ("10k stress with authentic, bypass, and oversized blocks stays finite (RT-14)",
+           "[realtime][integration][stress][RT-14]")
+{
+    // RT-14 / D-10: churn authentic + bypass while occasionally exceeding preparedMaxBlock_.
+    using namespace sendbloom::ParameterIDs;
+
+    constexpr int kPrepared = 512;
+    constexpr std::array<int, 10> kMixedSizes {
+        32, 64, 128, 256, 512, 1024, 2048, 256, 128, 1024
+    };
+
+    sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (48000.0, kPrepared);
+
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (inputGain) = 1.0f;
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    *apvts.getRawParameterValue (authenticColor) = 0.0f;
+    *apvts.getRawParameterValue (level) = 0.6f;
+    *apvts.getRawParameterValue (distn) = 0.35f;
+    *apvts.getRawParameterValue (size) = 0.55f;
+    *apvts.getRawParameterValue (sendConnected) = 1.0f;
+    *apvts.getRawParameterValue (sendAmount) = 0.8f;
+    *apvts.getRawParameterValue (gatePrePost) = 0.0f;
+
+    juce::MidiBuffer midi;
+    float peak = 0.0f;
+    int oversizedBlocks = 0;
+
+    for (int block = 0; block < 10000; ++block)
+    {
+        const auto blockSize = kMixedSizes[static_cast<size_t> (block) % kMixedSizes.size()];
+        if (blockSize > kPrepared)
+            ++oversizedBlocks;
+
+        juce::AudioBuffer<float> buffer (2, blockSize);
+        fillNoise (buffer, block);
+
+        if (block % 40 == 0)
+            *apvts.getRawParameterValue (authenticColor) = (block / 40) % 2 == 0 ? 1.0f : 0.0f;
+
+        if (block % 60 == 0)
+            *apvts.getRawParameterValue (bypass) = (block / 60) % 2 == 0 ? 1.0f : 0.0f;
+
+        REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
+
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        {
+            for (int i = 0; i < buffer.getNumSamples(); ++i)
+            {
+                const auto s = buffer.getSample (ch, i);
+                REQUIRE (std::isfinite (s));
+                peak = std::max (peak, std::abs (s));
+            }
+        }
+    }
+
+    REQUIRE (oversizedBlocks > 0);
+    REQUIRE (peak > 0.0f);
+    REQUIRE (peak < 4.0f);
+}
