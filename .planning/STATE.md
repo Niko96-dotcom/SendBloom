@@ -6,7 +6,7 @@ current_phase: 20
 current_phase_name: Pressure Send State Truth
 status: executing
 stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-07-12T15:55:15.449Z"
+last_updated: "2026-07-12T15:55:19.597Z"
 last_activity: 2026-07-12
 last_activity_desc: Completed 20-01 PressureController plan
 progress:
@@ -84,6 +84,10 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 20]: PressureController owns live send gain; bank sendGain smoother removed
 - [Phase 20]: prepareToPlay uses snapToTarget so DryPath/reference tanks stay aligned
 - [Phase 20]: MIDI pressure target forced 0 in Phase 20 (Phase 22 wires realtime)
+- [Phase 20]: mouseUp never writes send_connected false; zeros amount with gesture bracketing
+- [Phase 20]: Overlay uses pad isPressed/displayAmount plus APVTS amount epsilon — not connection
+- [Phase 20]: PRESSURE MODE label avoids third-party controller product names
+- [Phase 20]: Settle ~20 blocks after release before energy assert (ADR-V1-04 / SEND-10)
 
 ### Pending Todos
 
