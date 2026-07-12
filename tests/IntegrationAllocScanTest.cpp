@@ -143,6 +143,9 @@ void requireNoAllocTokens (const std::string& strippedBody)
     REQUIRE (strippedBody.find (".resize(") == std::string::npos);
     REQUIRE (strippedBody.find ("push_back") == std::string::npos);
     REQUIRE (strippedBody.find ("emplace_back") == std::string::npos);
+    // AudioBuffer capacity grow — banned on the audio thread (RT-01 / D-01).
+    // Match ".setSize" so both ".setSize(" and ".setSize (" are rejected.
+    REQUIRE (strippedBody.find (".setSize") == std::string::npos);
 }
 
 } // namespace
