@@ -24,7 +24,16 @@ struct SchroederTank32DelayTable
     static constexpr float kDarkDampingHz = 3200.0f;
 
     static constexpr float kTankLfoHz = 0.55f;
-    static constexpr float kTankLfoDepthSamples = 16.0f;
+
+    // ADR-V1-13: time-invariant modulation depth (16 samples @ 32.768 kHz).
+    static constexpr double kTankLfoDepthSeconds = 16.0 / 32768.0;
+    static constexpr float kTankLfoDepthSamples =
+        static_cast<float> (kTankLfoDepthSeconds * kInternalRate);
+
+    static float tankLfoDepthSamplesForRate (double rate) noexcept
+    {
+        return static_cast<float> (kTankLfoDepthSeconds * rate);
+    }
 
     // LegacyAccumulatorPath-only: host-rate SVF lowpass after 32,768 Hz upsample
     // (removes ~16.384 kHz imaging foldback in legacy accumulator tier).

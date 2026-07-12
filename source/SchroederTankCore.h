@@ -129,7 +129,8 @@ private:
         if (lfoPhase > juce::MathConstants<float>::twoPi)
             lfoPhase -= juce::MathConstants<float>::twoPi;
 
-        const auto mod = std::sin (lfoPhase) * SchroederTank32DelayTable::kTankLfoDepthSamples;
+        const auto mod = std::sin (lfoPhase)
+                       * SchroederTank32DelayTable::tankLfoDepthSamplesForRate (processingRate_);
         tankAp.setDelay (scaleDelay (SchroederTank32DelayTable::kTankApDelay) + mod);
 
         return tankAp.processSample (combSum) * 0.85f;
