@@ -4,63 +4,88 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-BANNED_TERMS=(
-  "Rainger"
-  "Reverb-X"
-  "Igor"
-  "Pamplejuce"
-  "Pamp"
-  "P001"
-)
+normalize() {
+  tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]'
+}
 
-REQUIRED_TERMS=(
-  "SendBloom"
-  "NkMo"
-  "SbLm"
-  "Niko Audio Labs"
-)
+BANNED_TOKENS=(reverbx rainger igor pamplejuce pamp p001)
+REQUIRED_TOKENS=(sendbloom nkmo sblm nikoaudiolabs)
 
 echo "==> Checking required SendBloom metadata..."
-for term in "${REQUIRED_TERMS[@]}"; do
-  if ! grep -q "$term" CMakeLists.txt; then
-    echo "ERROR: Required term '$term' not found in CMakeLists.txt" >&2
+cmake_norm="$(normalize < CMakeLists.txt)"
+for token in "${REQUIRED_TOKENS[@]}"; do
+  if [[ "$cmake_norm" != *"$token"* ]]; then
+    echo "ERROR: Required normalized token '$token' not found in CMakeLists.txt" >&2
     exit 1
   fi
 done
 
-echo "==> Scanning product metadata and sources for banned identifiers..."
+is_template_token_allowed() {
+  local token="$1"
+  local relpath="$2"
+  [[ "$token" == "pamplejuce" || "$token" == "pamp" || "$token" == "p001" ]] || return 1
+  [[ "$relpath" == cmake/* || "$relpath" == cmake-local/* ]]
+}
 
-scan_file() {
-  local file="$1"
-  for term in "${BANNED_TERMS[@]}"; do
-    if grep -qi "$term" "$file"; then
-      echo "ERROR: Banned term '$term' found in $file" >&2
-      grep -ni "$term" "$file" || true
+scan_normalized() {
+  local normalized="$1"
+  local relpath="$2"
+  local kind="$3"
+  local token
+
+  for token in "${BANNED_TOKENS[@]}"; do
+    if is_template_token_allowed "$token" "$relpath"; then
+      continue
+    fi
+    if [[ "$normalized" == *"$token"* ]]; then
+      echo "ERROR: Banned normalized token '$token' found in $kind: $relpath" >&2
       exit 1
     fi
   done
 }
 
-# CMake product metadata (exclude upstream include(Pamplejuce*) module names)
-while IFS= read -r line; do
-  [[ "$line" =~ include\(Pamplejuce ]] && continue
-  for term in "${BANNED_TERMS[@]}"; do
-    if echo "$line" | grep -qi "$term"; then
-      echo "ERROR: Banned term '$term' in CMake metadata: $line" >&2
-      exit 1
-    fi
-  done
-done < CMakeLists.txt
+scan_content() {
+  local relpath="$1"
+  local content_norm
 
-for path in source tests docs/THIRD_PARTY_LICENSES.md README.md .github/workflows resources/presets resources; do
-  [[ -e "$path" ]] || continue
-  if [[ -f "$path" ]]; then
-    scan_file "$path"
+  # Binary assets are covered by their normalized repo-relative filenames.
+  [[ "$relpath" == *.png ]] && return 0
+
+  if [[ "$relpath" == "CMakeLists.txt" ]]; then
+    content_norm="$({ while IFS= read -r line; do
+      line_norm="$(printf '%s' "$line" | normalize)"
+      [[ "$line_norm" == includepamplejuce* ]] && continue
+      printf '%s\n' "$line"
+    done < "$relpath"; } | normalize)"
   else
-    while IFS= read -r -d '' file; do
-      scan_file "$file"
-    done < <(find "$path" -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" -o -name "*.xml" -o -name "*.txt" \) -print0)
+    content_norm="$(normalize < "$relpath")"
   fi
+
+  scan_normalized "$content_norm" "$relpath" "content"
+}
+
+scan_filename() {
+  local relpath="$1"
+  local path_norm
+  path_norm="$(printf '%s' "$relpath" | normalize)"
+  scan_normalized "$path_norm" "$relpath" "filename"
+}
+
+echo "==> Scanning product-facing contents and filenames for banned identifiers..."
+scan_roots=(source tests README.md CMakeLists.txt cmake cmake-local .github/workflows resources/presets resources/ui)
+for root in "${scan_roots[@]}"; do
+  [[ -e "$root" ]] || continue
+  if [[ -f "$root" ]]; then
+    scan_content "$root"
+    scan_filename "$root"
+    continue
+  fi
+
+  while IFS= read -r -d '' file; do
+    relpath="${file#./}"
+    scan_content "$relpath"
+    scan_filename "$relpath"
+  done < <(find "$root" -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.sh' -o -name '*.xml' -o -name '*.txt' -o -name '*.cmake' -o -name '*.png' \) -print0)
 done
 
 echo "==> Checking third-party license citations..."

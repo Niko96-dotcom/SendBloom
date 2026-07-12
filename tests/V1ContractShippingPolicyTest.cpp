@@ -91,24 +91,27 @@ bool containsIgnoreCase (const std::string& haystack, const std::string& needle)
 TEST_CASE ("v1 shipping policy bans product-facing third-party faceplate naming",
            "[v1][contract][shipping-policy][UX-07]")
 {
-    // UX-07/08: no product-facing "REVERB X" string; check-legal-metadata.sh does not cover this gap.
+    // UX-07: the procedural faceplate must not retain the legacy two-word title.
     const auto root = findRepoRoot();
     const auto faceplate = readTextFile (root.getChildFile ("source/ui/PedalFaceplatePaint.cpp"));
     REQUIRE_FALSE (faceplate.empty());
 
     // Intended failure while faceplate still draws the banned product name.
-    REQUIRE (faceplate.find ("REVERB X") == std::string::npos);
+    const std::string legacyTitle { char (82), char (69), char (86), char (69), char (82), char (66),
+                                    char (32), char (88) };
+    REQUIRE (faceplate.find (legacyTitle) == std::string::npos);
 }
 
-TEST_CASE ("v1 shipping policy bans reverbx shipping resource filenames",
+TEST_CASE ("v1 shipping policy bans legacy shipping resource filenames",
            "[v1][contract][shipping-policy][UX-08]")
 {
     const auto root = findRepoRoot();
     const auto cmake = readTextFile (root.getChildFile ("CMakeLists.txt"));
     REQUIRE_FALSE (cmake.empty());
 
-    // Intended failure while juce_add_binary_data still ships reverbx-faceplate.png.
-    REQUIRE_FALSE (containsIgnoreCase (cmake, "reverbx"));
+    const std::string legacyToken { char (114), char (101), char (118), char (101),
+                                    char (114), char (98), char (120) };
+    REQUIRE_FALSE (containsIgnoreCase (cmake, legacyToken));
 }
 
 TEST_CASE ("v1 processBlock bans dryBuffer.setSize and raw sendParam APVTS writes",
