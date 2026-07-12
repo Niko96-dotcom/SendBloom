@@ -311,13 +311,13 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
                         spanRt60, spanDark, spanAuthentic, spanDistn,
                         sendGainScratch_.data(), gatePreSoft, spanThresholdDb);
 
+    // ADR-V1-10: build output-gained engaged path first, then crossfade against
+    // original per-channel dry. Never apply OutputStage after the bypass mix.
     for (int sample = 0; sample < span; ++sample)
     {
         const auto wetGain = wetGainScratch_[static_cast<size_t> (sample)];
-        const auto bypassWet = bypassWetScratch_[static_cast<size_t> (sample)];
+        const auto engagedMix = bypassWetScratch_[static_cast<size_t> (sample)];
         const auto outputGain = outputGainScratch_[static_cast<size_t> (sample)];
-
-        const auto dryMix = 1.0f - bypassWet;
         const auto wet = wetScratch_[static_cast<size_t> (sample)];
         const auto outIndex = offset + sample;
 
@@ -327,12 +327,14 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
             {
                 const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
                 const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
-                const auto preOutput = dryTap * dryMix + mixed * bypassWet;
-                buffer.getWritePointer (channel)[outIndex] = OutputStage::processSample (preOutput, outputGain);
+                const auto engaged = OutputStage::processSample (mixed, outputGain);
+                buffer.getWritePointer (channel)[outIndex] =
+                    BypassCrossfade::mixSample (dryTap, engaged, engagedMix);
             }
         }
         else
         {
+            // Engaged path stays mono-first dual-mono (CORE-18); bypass dry is per-channel.
             float monoSum = 0.0f;
 
             for (int channel = 0; channel < numChannels; ++channel)
@@ -340,11 +342,14 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
 
             monoSum /= static_cast<float> (juce::jmax (1, numChannels));
             const auto mixed = ParallelWetMixer::mix (monoSum, wet, wetGain);
-            const auto preOutput = monoSum * dryMix + mixed * bypassWet;
-            const auto out = OutputStage::processSample (preOutput, outputGain);
+            const auto engaged = OutputStage::processSample (mixed, outputGain);
 
             for (int channel = 0; channel < numChannels; ++channel)
-                buffer.getWritePointer (channel)[outIndex] = out;
+            {
+                const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
+                buffer.getWritePointer (channel)[outIndex] =
+                    BypassCrossfade::mixSample (dryTap, engaged, engagedMix);
+            }
         }
     }
 }

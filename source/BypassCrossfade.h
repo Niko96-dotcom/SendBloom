@@ -7,6 +7,13 @@ namespace sendbloom
 
 struct BypassCrossfade
 {
+    // ADR-V1-10: final = originalDry * (1 - engagedMix) + processed * engagedMix.
+    // engagedMix=0 → dry only; engagedMix=1 → fully engaged (output-gained) path.
+    static float mixSample (float originalDry, float processed, float engagedMix) noexcept
+    {
+        return originalDry * (1.0f - engagedMix) + processed * engagedMix;
+    }
+
     static void processBlock (juce::AudioBuffer<float>& buffer,
                               const juce::AudioBuffer<float>& dryCopy,
                               juce::SmoothedValue<float>& wetMix) noexcept
@@ -16,14 +23,13 @@ struct BypassCrossfade
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            const auto wet = wetMix.getNextValue();
-            const auto dry = 1.0f - wet;
+            const auto engagedMix = wetMix.getNextValue();
 
             for (int channel = 0; channel < numChannels; ++channel)
             {
                 const auto drySample = dryCopy.getReadPointer (channel)[sample];
                 auto& wetSample = buffer.getWritePointer (channel)[sample];
-                wetSample = drySample * dry + wetSample * wet;
+                wetSample = mixSample (drySample, wetSample, engagedMix);
             }
         }
     }
