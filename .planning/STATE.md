@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
-current_phase: 26
-current_phase_name: Reference Capture & Sonic Classification
+current_phase: 27
+current_phase_name: RC Verification, Licensing & Distribution
 current_plan: Not started
 status: planning
-stopped_at: Phase 25 complete; ready to discuss Phase 26
-last_updated: "2026-07-12T19:12:16.411Z"
+stopped_at: Phase 26 Outcome B complete; ready to discuss Phase 27
+last_updated: "2026-07-12T19:17:55.806Z"
 last_activity: 2026-07-12
-last_activity_desc: Phase 25 complete, transitioned to Phase 26
+last_activity_desc: Phase 26 complete, transitioned to Phase 27
 progress:
-  total_phases: 7
-  completed_phases: 6
-  total_plans: 21
-  completed_plans: 21
+  total_phases: 8
+  completed_phases: 7
+  total_plans: 25
+  completed_plans: 24
 ---
 
 # Project State
@@ -24,15 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 26 reference capture tooling and honest sonic classification
+**Current focus:** Phase 27 RC verification, licensing, and distribution truth
 
 ## Current Position
 
-Phase: 26 of 27 (Reference Capture & Sonic Classification)
+Phase: 27 of 27 (RC Verification, Licensing & Distribution)
 Current Plan: Not started
 Total Plans in Phase: 3
 Status: Ready to plan
-Last activity: 2026-07-12 — Phase 25 complete, transitioned to Phase 26
+Last activity: 2026-07-12 — Phase 26 complete, transitioned to Phase 27
 
 Progress: [███████░░░] 67%
 
@@ -40,7 +40,7 @@ Progress: [███████░░░] 67%
 
 **Velocity:**
 
-- Total plans completed: 21
+- Total plans completed: 23
 - Average duration: ~10 min
 - Total execution time: ~0.6 hours
 
@@ -55,6 +55,7 @@ Progress: [███████░░░] 67%
 | 23 | 3 | - | - |
 | 24 | 3 | - | - |
 | 25 | 3 | - | - |
+| 26 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -90,18 +91,19 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 27 blocked until Phases 19–25 automated requirements are green
+- Phase 27 begins with a known full-suite RED: 254/259 pass; five pre-existing source-structure/JUCE hardening failures require resolution before RC promotion
 - Several REL/REF/UX gates require human evidence (`human_needed`)
 - Phase 25 automated shipping-policy, legal, preset, release-safety, UI geometry, snapshot-build, and Phase 19–24 regression gates are green
 - Phase 25 visual/host alignment and editorial gates were approved by Niko; Path A remains explicitly deferred post-RC0
+- Phase 26 Outcome B passed with sole status `original-inspired`; hardware grids and Niko listening remain `human_needed`
 
 ## Session Continuity
 
 **Last session:** 2026-07-12T17:12:55.783Z
-**Stopped At:** Phase 25 complete; ready to discuss Phase 26
+**Stopped At:** Phase 26 Outcome B complete; ready to discuss Phase 27
 **Resume File:** None
 
-**Next action:** Discuss and plan Phase 26
+**Next action:** Discuss and plan Phase 27; treat the five canonical-suite failures as release blockers
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`

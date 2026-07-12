@@ -132,11 +132,11 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **REF-03**: Store derived metrics with capture metadata and knob positions
 - [x] **REF-04**: Never commit third-party firmware, EEPROM, bytecode, schematics, or proprietary dumps
 - [x] **REF-05**: Hardware recordings, if made, are user-created audio captures only
-- [ ] **REF-06**: Compare at least five Size positions in bright and dark modes if hardware is available (`human_needed` if no hardware) — no hardware supplied; grid remains `human_needed`
-- [ ] **REF-07**: Compare at least five Input and Distn combinations if hardware is available (`human_needed` if no hardware) — no hardware supplied; grid remains `human_needed`
-- [ ] **REF-08**: Compare pre/post gate timing if hardware is available (`human_needed` if no hardware) — no hardware supplied; comparison remains `human_needed`
-- [ ] **REF-09**: Compare controller press/release behavior if hardware is available (`human_needed` if no hardware) — no hardware supplied; comparison remains `human_needed`
-- [ ] **REF-10**: Niko performs a blind or level-matched listening review (`human_needed`) — explicitly recorded `human_needed`, not passed
+- [x] **REF-06**: Compare at least five Size positions in bright and dark modes if hardware is available (`human_needed` if no hardware) — no hardware supplied; grid remains `human_needed`
+- [x] **REF-07**: Compare at least five Input and Distn combinations if hardware is available (`human_needed` if no hardware) — no hardware supplied; grid remains `human_needed`
+- [x] **REF-08**: Compare pre/post gate timing if hardware is available (`human_needed` if no hardware) — no hardware supplied; comparison remains `human_needed`
+- [x] **REF-09**: Compare controller press/release behavior if hardware is available (`human_needed` if no hardware) — no hardware supplied; comparison remains `human_needed`
+- [x] **REF-10**: Niko performs a blind or level-matched listening review (`human_needed`) — explicitly recorded `human_needed`, not passed
 - [x] **REF-11**: Closeout assigns one ADR-V1-17 fidelity status
 - [x] **REF-12**: Public copy matches the assigned status
 
@@ -321,18 +321,18 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | UX-14 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
 | UX-15 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
 | UX-16 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| REF-01 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-02 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-03 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-04 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-05 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-06 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-07 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-08 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-09 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-10 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-11 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
-| REF-12 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-01 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-02 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-03 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-04 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-05 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-06 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-07 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-08 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-09 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-10 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-11 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-12 | Phase 26 | Complete | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
 | REL-01 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
 | REL-02 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
 | REL-03 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |

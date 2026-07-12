@@ -1,7 +1,19 @@
+---
+phase: 26-reference-capture-sonic-classification
+verified: 2026-07-12
+verifier: Codex
+status: passed
+claim_status: original-inspired
+outcome: B
+requirements_automated: [REF-01, REF-02, REF-03, REF-04, REF-05, REF-11, REF-12]
+requirements_human_needed: [REF-06, REF-07, REF-08, REF-09, REF-10]
+---
+
 # Phase 26 Verification
 
 **Date:** 2026-07-12  
-**Status:** passed (Outcome B; phase-scoped automated criteria)  
+**Status:** passed  
+**Scope:** Outcome B; phase-scoped automated criteria  
 **Claim status:** `original-inspired`
 
 ## Success criteria

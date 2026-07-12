@@ -24,7 +24,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 - [x] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click (completed 2026-07-12)
 - [x] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC (completed 2026-07-12)
 - [x] **Phase 25: Presets, UI, Branding & Release Truth** - Original SendBloom branding, clean-room scan, truthful docs (automated execution complete; human visual/editorial sign-off needed) (completed 2026-07-12)
-- [ ] **Phase 26: Reference Capture & Sonic Classification** - Capture protocol, metrics tooling, ADR-V1-17 claim status
+- [x] **Phase 26: Reference Capture & Sonic Classification** - Capture protocol, metrics tooling, ADR-V1-17 claim status (completed 2026-07-12)
 - [ ] **Phase 27: RC Verification, Licensing & Distribution** - `v1.0.0-rc0` automated + human release gates
 
 ## Phase Details
@@ -245,7 +245,7 @@ Plans:
 | 23. Input, Level & Gate Truth | 3/3 | Complete    | 2026-07-12 |
 | 24. Reverb State & Wet-Dirt Integrity | 3/3 | Complete    | 2026-07-12 |
 | 25. Presets, UI, Branding & Release Truth | 3/3 | Complete    | 2026-07-12 |
-| 26. Reference Capture & Sonic Classification | 0/TBD | Not started | - |
+| 26. Reference Capture & Sonic Classification | 2/2 | Complete    | 2026-07-12 |
 | 27. RC Verification, Licensing & Distribution | 0/TBD | Not started | - |
 
 ---
