@@ -19,6 +19,7 @@ ditto "$VST3" "$OUT_DIR/stage/VST3/SendBloom.vst3"
 ditto "$AU" "$OUT_DIR/stage/Components/SendBloom.component"
 cp "$ROOT/LICENSE" "$OUT_DIR/stage/LICENSE"
 cp "$ROOT/docs/THIRD_PARTY_LICENSES.md" "$OUT_DIR/stage/THIRD_PARTY_LICENSES.txt"
+cp "$ROOT/RELEASE_NOTES.md" "$OUT_DIR/stage/RELEASE_NOTES.md"
 
 ARCH="$(uname -m)"
 ARCHIVE="$OUT_DIR/SendBloom-${VERSION}-rc0-macOS-${ARCH}.zip"
