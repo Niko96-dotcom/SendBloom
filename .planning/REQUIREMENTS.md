@@ -221,28 +221,147 @@ These constrain implementation; full text lives in the master milestone spec:
 
 ## Traceability
 
-Which phases cover which requirements. Filled during roadmap creation.
+Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no duplicates.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BASE-01 … BASE-08 | Phase 19 | Pending |
-| SEND-01 … SEND-14 | Phase 20 | Pending |
-| UX-01 … UX-05 (state/preset resting) | Phase 20 | Pending |
-| RT-01 … RT-15 (span/bypass foundation) | Phase 21 | Pending |
-| CORE-14 … CORE-18 (true bypass) | Phase 21 | Pending |
-| MIDI-01 … MIDI-10 | Phase 22 | Pending |
-| RT-04 … RT-07 (per-sample delivery / MIDI spans) | Phase 22 | Pending |
-| CORE-01 … CORE-13 | Phase 23 | Pending |
-| DSP-01 … DSP-15 | Phase 24 | Pending |
-| UX-06 … UX-16 | Phase 25 | Pending |
-| REF-01 … REF-12 | Phase 26 | Pending |
-| REL-01 … REL-20 | Phase 27 | Pending |
+| BASE-01 | Phase 19 | Pending |
+| BASE-02 | Phase 19 | Pending |
+| BASE-03 | Phase 19 | Pending |
+| BASE-04 | Phase 19 | Pending |
+| BASE-05 | Phase 19 | Pending |
+| BASE-06 | Phase 19 | Pending |
+| BASE-07 | Phase 19 | Pending |
+| BASE-08 | Phase 19 | Pending |
+| SEND-01 | Phase 20 | Pending |
+| SEND-02 | Phase 20 | Pending |
+| SEND-03 | Phase 20 | Pending |
+| SEND-04 | Phase 20 | Pending |
+| SEND-05 | Phase 20 | Pending |
+| SEND-06 | Phase 20 | Pending |
+| SEND-07 | Phase 20 | Pending |
+| SEND-08 | Phase 20 | Pending |
+| SEND-09 | Phase 20 | Pending |
+| SEND-10 | Phase 20 | Pending |
+| SEND-11 | Phase 20 | Pending |
+| SEND-12 | Phase 20 | Pending |
+| SEND-13 | Phase 20 | Pending |
+| SEND-14 | Phase 20 | Pending |
+| UX-01 | Phase 20 | Pending |
+| UX-02 | Phase 20 | Pending |
+| UX-03 | Phase 20 | Pending |
+| UX-04 | Phase 20 | Pending |
+| UX-05 | Phase 20 | Pending |
+| RT-01 | Phase 21 | Pending |
+| RT-02 | Phase 21 | Pending |
+| RT-03 | Phase 21 | Pending |
+| RT-05 | Phase 21 | Pending |
+| RT-08 | Phase 21 | Pending |
+| RT-09 | Phase 21 | Pending |
+| RT-10 | Phase 21 | Pending |
+| RT-11 | Phase 21 | Pending |
+| RT-12 | Phase 21 | Pending |
+| RT-13 | Phase 21 | Pending |
+| RT-14 | Phase 21 | Pending |
+| RT-15 | Phase 21 | Pending |
+| CORE-14 | Phase 21 | Pending |
+| CORE-15 | Phase 21 | Pending |
+| CORE-16 | Phase 21 | Pending |
+| CORE-17 | Phase 21 | Pending |
+| CORE-18 | Phase 21 | Pending |
+| MIDI-01 | Phase 22 | Pending |
+| MIDI-02 | Phase 22 | Pending |
+| MIDI-03 | Phase 22 | Pending |
+| MIDI-04 | Phase 22 | Pending |
+| MIDI-05 | Phase 22 | Pending |
+| MIDI-06 | Phase 22 | Pending |
+| MIDI-07 | Phase 22 | Pending |
+| MIDI-08 | Phase 22 | Pending |
+| MIDI-09 | Phase 22 | Pending |
+| MIDI-10 | Phase 22 | Pending |
+| RT-04 | Phase 22 | Pending |
+| RT-06 | Phase 22 | Pending |
+| RT-07 | Phase 22 | Pending |
+| CORE-01 | Phase 23 | Pending |
+| CORE-02 | Phase 23 | Pending |
+| CORE-03 | Phase 23 | Pending |
+| CORE-04 | Phase 23 | Pending |
+| CORE-05 | Phase 23 | Pending |
+| CORE-06 | Phase 23 | Pending |
+| CORE-07 | Phase 23 | Pending |
+| CORE-08 | Phase 23 | Pending |
+| CORE-09 | Phase 23 | Pending |
+| CORE-10 | Phase 23 | Pending |
+| CORE-11 | Phase 23 | Pending |
+| CORE-12 | Phase 23 | Pending |
+| CORE-13 | Phase 23 | Pending |
+| DSP-01 | Phase 24 | Pending |
+| DSP-02 | Phase 24 | Pending |
+| DSP-03 | Phase 24 | Pending |
+| DSP-04 | Phase 24 | Pending |
+| DSP-05 | Phase 24 | Pending |
+| DSP-06 | Phase 24 | Pending |
+| DSP-07 | Phase 24 | Pending |
+| DSP-08 | Phase 24 | Pending |
+| DSP-09 | Phase 24 | Pending |
+| DSP-10 | Phase 24 | Pending |
+| DSP-11 | Phase 24 | Pending |
+| DSP-12 | Phase 24 | Pending |
+| DSP-13 | Phase 24 | Pending |
+| DSP-14 | Phase 24 | Pending |
+| DSP-15 | Phase 24 | Pending |
+| UX-06 | Phase 25 | Pending |
+| UX-07 | Phase 25 | Pending |
+| UX-08 | Phase 25 | Pending |
+| UX-09 | Phase 25 | Pending |
+| UX-10 | Phase 25 | Pending |
+| UX-11 | Phase 25 | Pending |
+| UX-12 | Phase 25 | Pending |
+| UX-13 | Phase 25 | Pending |
+| UX-14 | Phase 25 | Pending |
+| UX-15 | Phase 25 | Pending |
+| UX-16 | Phase 25 | Pending |
+| REF-01 | Phase 26 | Pending |
+| REF-02 | Phase 26 | Pending |
+| REF-03 | Phase 26 | Pending |
+| REF-04 | Phase 26 | Pending |
+| REF-05 | Phase 26 | Pending |
+| REF-06 | Phase 26 | Pending |
+| REF-07 | Phase 26 | Pending |
+| REF-08 | Phase 26 | Pending |
+| REF-09 | Phase 26 | Pending |
+| REF-10 | Phase 26 | Pending |
+| REF-11 | Phase 26 | Pending |
+| REF-12 | Phase 26 | Pending |
+| REL-01 | Phase 27 | Pending |
+| REL-02 | Phase 27 | Pending |
+| REL-03 | Phase 27 | Pending |
+| REL-04 | Phase 27 | Pending |
+| REL-05 | Phase 27 | Pending |
+| REL-06 | Phase 27 | Pending |
+| REL-07 | Phase 27 | Pending |
+| REL-08 | Phase 27 | Pending |
+| REL-09 | Phase 27 | Pending |
+| REL-10 | Phase 27 | Pending |
+| REL-11 | Phase 27 | Pending |
+| REL-12 | Phase 27 | Pending |
+| REL-13 | Phase 27 | Pending |
+| REL-14 | Phase 27 | Pending |
+| REL-15 | Phase 27 | Pending |
+| REL-16 | Phase 27 | Pending |
+| REL-17 | Phase 27 | Pending |
+| REL-18 | Phase 27 | Pending |
+| REL-19 | Phase 27 | Pending |
+| REL-20 | Phase 27 | Pending |
 
 **Coverage:**
 - v1 requirements: 128 total (BASE 8 + SEND 14 + MIDI 10 + RT 15 + CORE 18 + DSP 15 + UX 16 + REF 12 + REL 20)
-- Mapped to phases: 128 (provisional master map; roadmapper must validate 100%)
+- Mapped to phases: 128/128 ✓
 - Unmapped: 0
+- Duplicates: 0
+
+**RT split (resolved):** Phase 21 owns `RT-01..03`, `RT-05`, `RT-08..15` + `CORE-14..18`. Phase 22 owns `MIDI-01..10` + `RT-04`, `RT-06`, `RT-07`.
 
 ---
 *Requirements defined: 2026-07-12*  
-*Last updated: 2026-07-12 after milestone v1.0 requirements import*
+*Last updated: 2026-07-12 after roadmap creation (exact 1:1 traceability)*
