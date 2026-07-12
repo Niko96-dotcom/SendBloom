@@ -19,13 +19,13 @@ void triggerClip (sendbloom::PluginProcessor& processor)
     using namespace sendbloom::ParameterIDs;
 
     if (auto* input = processor.getAPVTS().getRawParameterValue (inputGain))
-        input->store (0.0f);
+        input->store (1.0f);
 
     processor.prepareToPlay (48000.0, 64);
     juce::AudioBuffer<float> buffer (2, 64);
     buffer.clear();
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-        buffer.setSample (channel, 0, 1.0f);
+        buffer.setSample (channel, 0, 8.0f);
 
     juce::MidiBuffer midi;
     processor.processBlock (buffer, midi);
@@ -70,7 +70,10 @@ int main (int argc, char* argv[])
     if (gatePre)
         setParam (processor, gatePrePost, 0.0f);
     if (sendPressed)
+    {
         setParam (processor, sendConnected, 1.0f);
+        setParam (processor, sendAmount, 0.75f);
+    }
     if (clipActive)
         triggerClip (processor);
 
@@ -80,6 +83,10 @@ int main (int argc, char* argv[])
 
     if (openAdvanced)
         editor.setAdvancedExpandedForSnapshot (true);
+
+    // Allow attachments, component visibility, and image-backed child paints to settle
+    // before capturing. Immediate construction-frame snapshots can omit child layers.
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (30);
 
     juce::Image image (juce::Image::ARGB, editor.getWidth(), editor.getHeight(), true);
     juce::Graphics g (image);

@@ -1,6 +1,7 @@
 #include <PluginEditor.h>
 #include <PluginProcessor.h>
 #include <ParameterIDs.h>
+#include <ui/PedalFaceplatePaint.h>
 #include <catch2/catch_test_macros.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -23,9 +24,11 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     editor.setVisible (true);
     editor.resized();
 
-    const juce::Point<int> levelCentre { 265, 213 };
-    const juce::Point<int> darkCentre { 84, 582 };
-    const juce::Point<int> advancedCentre { 316, 698 };
+    // Probe the shared faceplate layout rectangles the editor parks its hotspots on.
+    using namespace sendbloom::ui::facelayout;
+    const auto levelCentre = kLevelKnob.withHeight (kKnobLarge).getCentre();
+    const auto darkCentre = kDarkButton.getCentre();
+    const auto advancedCentre = kAdvancedHitBox.getCentre();
 
     auto* levelHit = editor.getComponentAt (levelCentre);
     auto* darkHit = editor.getComponentAt (darkCentre);

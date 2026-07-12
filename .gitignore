@@ -41,3 +41,6 @@ repomix-output.md
 
 # Vendored third-party repo samples (local research only)
 .planning/repo-samples/
+
+# Serena MCP project cache
+.serena/

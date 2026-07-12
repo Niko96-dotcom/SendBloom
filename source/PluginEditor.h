@@ -20,6 +20,7 @@ public:
     ~PluginEditor() override;
 
     void paint (juce::Graphics&) override;
+    void paintOverChildren (juce::Graphics&) override;
     void resized() override;
     void setAdvancedExpandedForSnapshot (bool shouldExpand);
 
@@ -35,17 +36,22 @@ private:
 
     juce::Label titleLabel;
     juce::ComboBox presetBox;
-    ui::PedalKnob inKnob { "INPUT (dB)" };
-    ui::PedalKnob sizeKnob { "SIZE" };
-    ui::PedalKnob lvlKnob { "LEVEL" };
-    ui::PedalKnob distnKnob { "DISTORTION" };
-    ui::PedalKnob outKnob { "OUTPUT (dB)" };
+    // One knob style across the plate: the graphite cap with the bright steel
+    // pointer is the most legible of the photographed set once it rotates.
+    ui::PedalKnob inKnob { "INPUT", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
+    ui::PedalKnob sizeKnob { "SIZE", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
+    ui::PedalKnob lvlKnob { "LEVEL", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
+    ui::PedalKnob distnKnob { "DISTORTION", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
+    ui::PedalKnob outKnob { "OUTPUT", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
     juce::ToggleButton darkToggle { "Dark" };
     juce::ToggleButton gateToggle { "Gate Post" };
     ui::ClipLed clipLed;
     ui::PressureSendPad pressurePad;
-    juce::TextButton advancedButton { "Advanced \u25be" };
+    ui::TransparentHitButton advancedButton { "Advanced" };
+    juce::TextButton loadPresetButton;
+    juce::TextButton savePresetButton;
     ui::AdvancedDrawer advancedDrawer;
+    std::unique_ptr<juce::FileChooser> presetFileChooser;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> sizeAttachment;
@@ -54,6 +60,9 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> darkAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> gateAttachment;
+
+    void loadPresetFromDisk();
+    void savePresetToDisk();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
 };

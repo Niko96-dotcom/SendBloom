@@ -5,6 +5,15 @@
 namespace sendbloom::ui
 {
 
+/** Clickable hotspot that is guaranteed to contribute no pixels. */
+class TransparentHitButton : public juce::Button
+{
+public:
+    explicit TransparentHitButton (const juce::String& name) : juce::Button (name) {}
+
+    void paintButton (juce::Graphics&, bool, bool) override {}
+};
+
 /** Invisible chrome for hotspots sitting on faceplate art. */
 class TransparentControlsLookAndFeel : public juce::LookAndFeel_V4
 {

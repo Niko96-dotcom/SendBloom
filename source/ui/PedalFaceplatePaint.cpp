@@ -10,101 +10,336 @@ namespace sendbloom::ui
 namespace
 {
 
-void drawLogo (juce::Graphics& g, juce::Rectangle<float> logo)
+juce::Image loadImage (const void* data, size_t size)
 {
-    juce::Path orange;
-    orange.startNewSubPath (logo.getX() + 18.0f, logo.getY());
-    orange.lineTo (logo.getRight() - 12.0f, logo.getY());
-    orange.lineTo (logo.getRight() - 30.0f, logo.getBottom());
-    orange.lineTo (logo.getX(), logo.getBottom());
-    orange.closeSubPath();
-
-    g.setColour (juce::Colours::black);
-    g.fillRoundedRectangle (logo.expanded (7.0f), 7.0f);
-    g.setColour (juce::Colour (0xffff8f25));
-    g.fillPath (orange);
-
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (55.0f, juce::Font::bold));
-    g.drawFittedText ("Niko", logo.withTrimmedLeft (18.0f).withWidth (206.0f).toNearestInt(),
-                      juce::Justification::centredLeft, 1, 0.82f);
-
-    g.setColour (juce::Colour (0xffff8f25));
-    g.fillRect (logo.withTrimmedLeft (224.0f).withTrimmedRight (18.0f));
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (58.0f, juce::Font::bold));
-    g.drawFittedText ("FX", logo.withTrimmedLeft (218.0f).toNearestInt(),
-                      juce::Justification::centred, 1, 0.8f);
+    return juce::ImageFileFormat::loadFrom (data, size);
 }
 
-void drawCyanFrame (juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour cyan)
+struct PedalArtwork
 {
-    juce::Path frame;
-    frame.startNewSubPath (bounds.getX() + 16.0f, bounds.getY());
-    frame.lineTo (bounds.getX(), bounds.getY() + 16.0f);
-    frame.lineTo (bounds.getX(), bounds.getBottom() - 28.0f);
-    frame.lineTo (bounds.getX() + 20.0f, bounds.getBottom());
-    frame.lineTo (bounds.getRight() - 42.0f, bounds.getBottom());
-    frame.lineTo (bounds.getRight(), bounds.getBottom() - 42.0f);
-    frame.lineTo (bounds.getRight(), bounds.getY() + 16.0f);
-    frame.lineTo (bounds.getRight() - 18.0f, bounds.getY());
+    juce::Image background { loadImage (BinaryData::pedal_background_png, BinaryData::pedal_background_pngSize) };
+    juce::Image logo { loadImage (BinaryData::brand_logo_png, BinaryData::brand_logo_pngSize) };
+    juce::Image preset { loadImage (BinaryData::preset_field_png, BinaryData::preset_field_pngSize) };
+    juce::Image load { loadImage (BinaryData::preset_load_png, BinaryData::preset_load_pngSize) };
+    juce::Image save { loadImage (BinaryData::preset_save_png, BinaryData::preset_save_pngSize) };
+    juce::Image darkOff { loadImage (BinaryData::dark_off_png, BinaryData::dark_off_pngSize) };
+    juce::Image darkOn { loadImage (BinaryData::dark_on_png, BinaryData::dark_on_pngSize) };
+    juce::Image gatePre { loadImage (BinaryData::gate_pre_png, BinaryData::gate_pre_pngSize) };
+    juce::Image gatePost { loadImage (BinaryData::gate_post_png, BinaryData::gate_post_pngSize) };
+    juce::Image footUp { loadImage (BinaryData::footswitch_up_png, BinaryData::footswitch_up_pngSize) };
+    juce::Image footDown { loadImage (BinaryData::footswitch_down_png, BinaryData::footswitch_down_pngSize) };
+    juce::Image clipOff { loadImage (BinaryData::clip_off_png, BinaryData::clip_off_pngSize) };
+    juce::Image clipOn { loadImage (BinaryData::clip_on_png, BinaryData::clip_on_pngSize) };
+};
 
-    g.setColour (cyan);
-    g.strokePath (frame, juce::PathStrokeType (5.0f, juce::PathStrokeType::mitered));
+const PedalArtwork& artwork()
+{
+    static const PedalArtwork images;
+    return images;
 }
 
-void drawChevronRail (juce::Graphics& g, float x, float y, int count, juce::Colour cyan)
+const auto kInk = juce::Colour (0xff161413);
+const auto kOrange = juce::Colour (0xffe66c0b);
+
+void drawImage (juce::Graphics& g, const juce::Image& image, juce::Rectangle<float> bounds,
+                juce::RectanglePlacement placement = juce::RectanglePlacement::centred)
 {
-    g.setColour (cyan);
-    for (int i = 0; i < count; ++i)
+    if (! image.isValid())
+        return;
+
+    // Images composite with the current colour's opacity; never inherit a label alpha.
+    g.setOpacity (1.0f);
+    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+    g.drawImage (image, bounds, placement, false);
+}
+
+// The scene photograph keeps the pedal small inside a moody workbench shot. Crop the
+// draw to a hero framing: the chassis fills the editor with only a sliver of scene
+// around it, so every control on the plate gets real estate.
+void drawBackground (juce::Graphics& g, const juce::Image& image, juce::Rectangle<float> bounds)
+{
+    if (! image.isValid())
+        return;
+
+    constexpr int srcX = 90, srcY = 70, srcW = 612, srcH = 1136;
+    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+    g.drawImage (image,
+                 juce::roundToInt (bounds.getX()), juce::roundToInt (bounds.getY()),
+                 juce::roundToInt (bounds.getWidth()), juce::roundToInt (bounds.getHeight()),
+                 srcX, srcY, srcW, srcH);
+}
+
+// ---- depth pass -------------------------------------------------------------
+// The extraction mattes strip the studio contact shadows off every part, so the
+// composited plate reads flat. Rebuild the depth photographically: one soft key
+// light from above (sheen + vignette on the plate) and a contact shadow under
+// each raised part. Everything here is static, so it renders once into a layer.
+
+void addPathShadow (juce::Graphics& g, const juce::Path& path,
+                    float alpha, int radius, juce::Point<int> offset)
+{
+    juce::DropShadow (juce::Colours::black.withAlpha (alpha), radius, offset).drawForPath (g, path);
+}
+
+void addEllipseShadow (juce::Graphics& g, juce::Rectangle<float> area,
+                       float alpha, int radius, juce::Point<int> offset)
+{
+    juce::Path path;
+    path.addEllipse (area);
+    addPathShadow (g, path, alpha, radius, offset);
+}
+
+void addRoundedShadow (juce::Graphics& g, juce::Rectangle<float> area, float corner,
+                       float alpha, int radius, juce::Point<int> offset)
+{
+    juce::Path path;
+    path.addRoundedRectangle (area, corner);
+    addPathShadow (g, path, alpha, radius, offset);
+}
+
+void drawPlateLighting (juce::Graphics& g)
+{
+    using namespace facelayout;
+    juce::Graphics::ScopedSaveState state (g);
+
+    juce::Path plate;
+    plate.addRoundedRectangle (kPlate, kPlateCornerRadius);
+    g.reduceClipRegion (plate);
+
+    // Key light catches the top of the plate...
+    juce::ColourGradient sheen (juce::Colours::white.withAlpha (0.08f),
+                                kPlate.getCentreX(), kPlate.getY(),
+                                juce::Colours::transparentWhite,
+                                kPlate.getCentreX(), kPlate.getY() + 190.0f, false);
+    g.setGradientFill (sheen);
+    g.fillRect (kPlate.withHeight (190.0f));
+
+    // ...and falls away toward the edges and the stomp end.
+    juce::ColourGradient vignette (juce::Colours::transparentBlack,
+                                   kPlate.getCentreX(), kPlate.getCentreY() - 60.0f,
+                                   juce::Colours::black.withAlpha (0.17f),
+                                   kPlate.getX(), kPlate.getY(), true);
+    vignette.addColour (0.70, juce::Colours::transparentBlack);
+    g.setGradientFill (vignette);
+    g.fillRect (kPlate);
+
+    // The scene's neon rig sits camera-right; let a whisper of it spill onto the enamel.
+    juce::ColourGradient spill (juce::Colour (0xffff4d5e).withAlpha (0.07f),
+                                kPlate.getRight(), kPlate.getCentreY(),
+                                juce::Colours::transparentBlack,
+                                kPlate.getRight() - 90.0f, kPlate.getCentreY(), false);
+    g.setGradientFill (spill);
+    g.fillRect (kPlate.withLeft (kPlate.getRight() - 90.0f));
+}
+
+// Cross-head screws seat the plate into the chassis. Procedural, but at 14 px the
+// radial shading and per-screw slot angles read photographic.
+void drawScrew (juce::Graphics& g, juce::Point<float> centre, float radius, float slotAngle)
+{
+    const juce::Rectangle<float> head (centre.x - radius, centre.y - radius,
+                                       radius * 2.0f, radius * 2.0f);
+
+    addEllipseShadow (g, head.reduced (1.0f), 0.32f, 3, { 1, 2 });
+
+    juce::ColourGradient metal (juce::Colour (0xffdedbd4),
+                                centre.x - radius * 0.5f, centre.y - radius * 0.6f,
+                                juce::Colour (0xff716d66),
+                                centre.x + radius * 0.6f, centre.y + radius * 0.8f, true);
+    g.setGradientFill (metal);
+    g.fillEllipse (head);
+
+    g.setColour (juce::Colours::black.withAlpha (0.45f));
+    g.drawEllipse (head.reduced (0.4f), 0.9f);
+
+    const auto slot = juce::Point<float> (std::cos (slotAngle), std::sin (slotAngle)) * (radius * 0.72f);
+    g.setColour (juce::Colours::black.withAlpha (0.62f));
+    g.drawLine ({ centre - slot, centre + slot }, 1.6f);
+    g.setColour (juce::Colours::white.withAlpha (0.30f));
+    g.drawLine ({ centre - slot + juce::Point<float> (0.0f, 1.2f),
+                  centre + slot + juce::Point<float> (0.0f, 1.2f) }, 0.8f);
+}
+
+void drawPlateScrews (juce::Graphics& g)
+{
+    using namespace facelayout;
+    const auto inset = 20.0f;
+    drawScrew (g, { kPlate.getX() + inset, kPlate.getY() + inset }, 7.0f, 0.6f);
+    drawScrew (g, { kPlate.getRight() - inset, kPlate.getY() + inset }, 7.0f, 2.2f);
+    drawScrew (g, { kPlate.getX() + inset, kPlate.getBottom() - inset }, 7.0f, 1.1f);
+    drawScrew (g, { kPlate.getRight() - inset, kPlate.getBottom() - inset }, 7.0f, 2.9f);
+}
+
+// A film-grain wash knits the separately photographed parts into one exposure.
+void drawGrain (juce::Graphics& g, int width, int height)
+{
+    juce::Image noise (juce::Image::ARGB, width / 2, height / 2, true);
+    juce::Random random (0x5eedb100);
+
+    for (int y = 0; y < noise.getHeight(); ++y)
+        for (int x = 0; x < noise.getWidth(); ++x)
+        {
+            const auto v = random.nextFloat() * 2.0f - 1.0f;
+            const auto tone = v > 0.0f ? juce::Colours::white : juce::Colours::black;
+            noise.setPixelAt (x, y, tone.withAlpha (std::abs (v) * 0.055f));
+        }
+
+    g.setOpacity (1.0f);
+    g.setImageResamplingQuality (juce::Graphics::mediumResamplingQuality);
+    g.drawImage (noise, { 0.0f, 0.0f, static_cast<float> (width), static_cast<float> (height) },
+                 juce::RectanglePlacement::stretchToFit, false);
+}
+
+void drawContactShadows (juce::Graphics& g)
+{
+    using namespace facelayout;
+    const juce::Point<int> lightOffset { 2, 5 };
+
+    addRoundedShadow (g, kLogo.toFloat().reduced (3.0f), 9.0f, 0.30f, 5, { 1, 3 });
+    addRoundedShadow (g, kPresetField.toFloat().reduced (1.0f), 7.0f, 0.26f, 4, { 1, 3 });
+    addRoundedShadow (g, kPresetLoad.toFloat().reduced (1.0f), 7.0f, 0.30f, 4, { 1, 3 });
+    addRoundedShadow (g, kPresetSave.toFloat().reduced (1.0f), 7.0f, 0.30f, 4, { 1, 3 });
+
+    for (const auto& knob : { kDistortionKnob, kSizeKnob, kLevelKnob })
+        addEllipseShadow (g, knob.withHeight (kKnobLarge).toFloat().reduced (5.0f), 0.38f, 9, { 2, 6 });
+
+    for (const auto& knob : { kInputKnob, kOutputKnob })
+        addEllipseShadow (g, knob.withHeight (kKnobSmall).toFloat().reduced (4.0f), 0.36f, 8, lightOffset);
+
+    addRoundedShadow (g, kClipLens.toFloat().reduced (2.0f), 8.0f, 0.32f, 4, { 1, 3 });
+    addRoundedShadow (g, kDarkButton.toFloat().reduced (5.0f), 16.0f, 0.36f, 8, lightOffset);
+
+    // The toggle's weight sits in its hex nut, low in the switch rect.
+    addEllipseShadow (g,
+                      { kGateSwitch.toFloat().getCentreX() - 25.0f,
+                        kGateSwitch.toFloat().getY() + 24.0f, 50.0f, 36.0f },
+                      0.34f, 7, lightOffset);
+
+    // Footswitch shadow is dynamic (it tightens when stomped) — drawn per frame.
+}
+
+constexpr int kFootShadowMargin = 28;
+
+// Pre-render both footswitch shadows: raised (tall, soft) and stomped (tight,
+// hugging the plate). The per-frame paint just swaps the blit.
+const juce::Image& footShadowImage (bool pressed)
+{
+    static const auto render = [] (float alpha, int radius, juce::Point<int> offset)
     {
-        const auto top = y + static_cast<float> (i) * 34.0f;
-        juce::Path chevron;
-        chevron.startNewSubPath (x, top);
-        chevron.lineTo (x + 14.0f, top + 16.0f);
-        chevron.lineTo (x + 28.0f, top);
-        chevron.lineTo (x + 28.0f, top + 12.0f);
-        chevron.lineTo (x + 14.0f, top + 28.0f);
-        chevron.lineTo (x, top + 12.0f);
-        chevron.closeSubPath();
-        g.fillPath (chevron);
-    }
+        constexpr int margin = kFootShadowMargin;
+        const auto foot = facelayout::kFootswitch;
+        juce::Image image (juce::Image::ARGB,
+                           foot.getWidth() + margin * 2, foot.getHeight() + margin * 2, true);
+        juce::Graphics g (image);
+        addEllipseShadow (g,
+                          juce::Rectangle<float> (static_cast<float> (margin), static_cast<float> (margin),
+                                                  static_cast<float> (foot.getWidth()),
+                                                  static_cast<float> (foot.getHeight()))
+                              .reduced (8.0f),
+                          alpha, radius, offset);
+        return image;
+    };
+
+    static const juce::Image raised = render (0.44f, 12, { 3, 8 });
+    static const juce::Image stomped = render (0.52f, 6, { 1, 3 });
+    return pressed ? stomped : raised;
 }
 
-void fillTriangle (juce::Graphics& g, float x1, float y1, float x2, float y2, float x3, float y3)
+constexpr int kDrawerShadowMargin = 26;
+
+// The open drawer floats above the plate; its silhouette (matching
+// AdvancedDrawer::paint) casts onto whatever sits underneath.
+const juce::Image& drawerShadowImage()
 {
-    juce::Path triangle;
-    triangle.addTriangle (x1, y1, x2, y2, x3, y3);
-    g.fillPath (triangle);
+    static const juce::Image image = []
+    {
+        constexpr int margin = kDrawerShadowMargin;
+        const auto b = facelayout::kAdvancedDrawer;
+        const auto w = static_cast<float> (b.getWidth());
+        const auto h = static_cast<float> (b.getHeight());
+        juce::Image img (juce::Image::ARGB, b.getWidth() + margin * 2, b.getHeight() + margin * 2, true);
+        juce::Graphics g (img);
+
+        juce::Path panel;
+        const auto m = static_cast<float> (margin);
+        panel.startNewSubPath (m + 14.0f, m);
+        panel.lineTo (m + w - 3.0f, m);
+        panel.lineTo (m + w - 3.0f, m + h - 28.0f);
+        panel.lineTo (m + w - 28.0f, m + h - 3.0f);
+        panel.lineTo (m + 2.0f, m + h - 3.0f);
+        panel.lineTo (m + 2.0f, m + 14.0f);
+        panel.closeSubPath();
+
+        juce::DropShadow (juce::Colours::black.withAlpha (0.50f), 15, { 5, 8 }).drawForPath (g, panel);
+        return img;
+    }();
+
+    return image;
 }
 
-void drawAdvancedFanout (juce::Graphics& g, juce::Colour cyan)
+void drawPresetInnerShadow (juce::Graphics& g)
 {
-    juce::Path openPanel;
-    openPanel.startNewSubPath (236.0f, 560.0f);
-    openPanel.lineTo (398.0f, 560.0f);
-    openPanel.lineTo (398.0f, 725.0f);
-    openPanel.lineTo (370.0f, 754.0f);
-    openPanel.lineTo (230.0f, 754.0f);
-    openPanel.lineTo (230.0f, 578.0f);
-    openPanel.closeSubPath();
-    g.setColour (juce::Colours::black);
-    g.fillPath (openPanel);
-    g.setColour (cyan);
-    g.strokePath (openPanel, juce::PathStrokeType (4.0f));
+    using namespace facelayout;
+    juce::Graphics::ScopedSaveState state (g);
 
-    g.setFont (juce::FontOptions (17.0f, juce::Font::bold));
-    g.drawText ("ADVANCED", 242, 570, 132, 24, juce::Justification::centred);
-    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-    g.drawText ("GATE SENS", 244, 606, 76, 18, juce::Justification::centred);
-    g.drawText ("SEND FEEL", 320, 606, 70, 18, juce::Justification::centred);
-    g.drawRoundedRectangle ({ 258.0f, 632.0f, 42.0f, 42.0f }, 21.0f, 3.0f);
-    g.drawRoundedRectangle ({ 324.0f, 633.0f, 54.0f, 24.0f }, 3.0f, 2.0f);
-    g.drawText ("FIRM", 324, 633, 54, 24, juce::Justification::centred);
-    g.drawText ("32K COLOR", 250, 684, 130, 20, juce::Justification::centred);
-    g.drawText ("EXTENDED STEREO", 248, 708, 134, 20, juce::Justification::centred);
-    g.drawText ("DIRT OS", 248, 732, 134, 20, juce::Justification::centred);
+    const auto field = kPresetField.toFloat().reduced (3.0f);
+    juce::Path inner;
+    inner.addRoundedRectangle (field, 6.0f);
+    g.reduceClipRegion (inner);
+
+    // Recessed window: the bezel shades the top of the field.
+    juce::ColourGradient shade (juce::Colours::black.withAlpha (0.18f),
+                                field.getCentreX(), field.getY(),
+                                juce::Colours::transparentBlack,
+                                field.getCentreX(), field.getY() + 8.0f, false);
+    g.setGradientFill (shade);
+    g.fillRect (field.withHeight (8.0f));
+
+    g.setColour (juce::Colours::white.withAlpha (0.28f));
+    g.fillRect (field.withTop (field.getBottom() - 1.5f));
 }
+
+// Screened labels sit in the plate's texture: a hairline highlight under the
+// glyphs sells the relief.
+void drawEngravedText (juce::Graphics& g, const juce::String& text,
+                       juce::Rectangle<int> area, float fontHeight, juce::Colour ink,
+                       juce::Justification justification = juce::Justification::centred)
+{
+    g.setFont (juce::FontOptions (fontHeight, juce::Font::bold));
+    g.setColour (juce::Colours::white.withAlpha (0.30f));
+    g.drawText (text, area.translated (0, 1), justification, false);
+    g.setColour (ink);
+    g.drawText (text, area, justification, false);
+}
+
+const juce::Image& staticFaceLayer()
+{
+    static const juce::Image layer = []
+    {
+        const auto& art = artwork();
+        juce::Image image (juce::Image::ARGB, 420, 780, true);
+        juce::Graphics g (image);
+
+        g.fillAll (juce::Colours::black);
+        drawBackground (g, art.background, { 0.0f, 0.0f, 420.0f, 780.0f });
+        drawPlateLighting (g);
+        drawPlateScrews (g);
+        drawContactShadows (g);
+
+        drawImage (g, art.logo, facelayout::kLogo.toFloat());
+        drawImage (g, art.preset, facelayout::kPresetField.toFloat(),
+                   juce::RectanglePlacement::stretchToFit);
+        drawPresetInnerShadow (g);
+        drawImage (g, art.load, facelayout::kPresetLoad.toFloat());
+        drawImage (g, art.save, facelayout::kPresetSave.toFloat());
+
+        drawGrain (g, 420, 780);
+        return image;
+    }();
+
+    return layer;
+}
+
+// -----------------------------------------------------------------------------
 
 bool isParamOn (juce::AudioProcessorValueTreeState& apvts, const char* id)
 {
@@ -130,241 +365,31 @@ int getChoiceIndex (juce::AudioProcessorValueTreeState& apvts, const char* id)
     return 0;
 }
 
-void drawDarkPressedOverlay (juce::Graphics& g)
+void drawGateMarkings (juce::Graphics& g, bool postGate)
 {
-    // Exact cover of the faceplate Dark Mode button — no offset ghost.
-    const auto body = juce::Rectangle<float> (64.0f, 562.0f, 40.0f, 40.0f);
-    juce::ColourGradient fill (juce::Colour (0xff15191f), body.getX(), body.getY(),
-                               juce::Colour (0xff4a515a), body.getRight(), body.getBottom(), false);
-    g.setGradientFill (fill);
-    g.fillRoundedRectangle (body, 5.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.85f));
-    g.drawRoundedRectangle (body.reduced (1.0f), 5.0f, 3.0f);
-    g.setColour (juce::Colours::white.withAlpha (0.08f));
-    g.drawRoundedRectangle (body.reduced (7.0f), 3.0f, 1.2f);
+    using namespace facelayout;
+
+    drawEngravedText (g, "GATE", kGateTitle, 12.0f, kInk.withAlpha (0.94f));
+    drawEngravedText (g, "PRE", kGatePre, 10.5f, postGate ? kInk.withAlpha (0.38f) : kOrange);
+    drawEngravedText (g, "POST", kGatePost, 10.5f, postGate ? kOrange : kInk.withAlpha (0.38f));
 }
 
-void drawGatePositionOverlay (juce::Graphics& g, bool post)
+void drawClipLamp (juce::Graphics& g, const PedalArtwork& art, bool active, bool darkRoom)
 {
-    // Faceplate default art is POST; only redraw when PRE.
-    if (post)
-        return;
+    using namespace facelayout;
+    const auto lens = kClipLens.toFloat();
 
-    const auto slot = juce::Rectangle<float> (148.0f, 568.0f, 22.0f, 52.0f);
-    g.setColour (juce::Colour (0xff151515));
-    g.fillRoundedRectangle (slot, 7.0f);
-    g.setColour (juce::Colour (0xff444444));
-    g.drawRoundedRectangle (slot, 7.0f, 1.5f);
-
-    auto thumb = juce::Rectangle<float> (151.0f, 571.0f, 16.0f, 22.0f);
-    juce::ColourGradient fill (juce::Colour (0xfff3f3ee), thumb.getX(), thumb.getY(),
-                               juce::Colour (0xff7c7c7c), thumb.getRight(), thumb.getBottom(), false);
-    g.setGradientFill (fill);
-    g.fillRoundedRectangle (thumb, 7.0f);
-    g.setColour (juce::Colour (0xff5a5a5a));
-    g.drawRoundedRectangle (thumb, 7.0f, 1.2f);
-}
-
-void drawFootswitchPressedOverlay (juce::Graphics& g)
-{
-    const auto centre = juce::Point<float> (137.0f, 696.0f);
-    const auto ring = juce::Rectangle<float> (centre.x - 46.0f, centre.y - 39.0f, 92.0f, 88.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.56f));
-    g.fillEllipse (ring.translated (0.0f, 9.0f));
-
-    for (int i = 0; i < 4; ++i)
+    if (active)
     {
-        const auto f = static_cast<float> (i);
-        const auto r = ring.reduced (f * 7.0f).translated (0.0f, 5.0f);
-        juce::ColourGradient fill (juce::Colour (0xffc9c9c6).darker (0.08f * f), r.getX(), r.getY(),
-                                   juce::Colour (0xff575757).darker (0.08f * f), r.getRight(), r.getBottom(), false);
-        g.setGradientFill (fill);
-        g.fillEllipse (r);
-        g.setColour (juce::Colour (0xff2c2c2c));
-        g.drawEllipse (r, 1.4f);
+        // An LED reads brighter in a dimmed room.
+        const auto boost = darkRoom ? 1.6f : 1.0f;
+        g.setColour (juce::Colour (0xffff2a20).withAlpha (juce::jmin (0.9f, 0.28f * boost)));
+        g.fillEllipse (lens.expanded (5.0f));
+        g.setColour (juce::Colour (0xffff5a43).withAlpha (juce::jmin (0.6f, 0.10f * boost)));
+        g.fillEllipse (lens.expanded (darkRoom ? 18.0f : 12.0f));
     }
 
-    const auto cap = ring.reduced (29.0f).translated (0.0f, 9.0f);
-    juce::ColourGradient capFill (juce::Colour (0xffb9b9b5), cap.getX(), cap.getY(),
-                                  juce::Colour (0xff828282), cap.getRight(), cap.getBottom(), false);
-    g.setGradientFill (capFill);
-    g.fillEllipse (cap);
-    g.setColour (juce::Colour (0xff444444));
-    g.drawEllipse (cap, 2.0f);
-}
-
-void drawClipReadOverlay (juce::Graphics& g, bool active)
-{
-    if (! active)
-        return;
-
-    const auto lamp = juce::Rectangle<float> (174.0f, 191.0f, 19.0f, 19.0f);
-    juce::ColourGradient glow (juce::Colour (0xffff7a62).withAlpha (0.62f), lamp.getCentreX(), lamp.getCentreY(),
-                               juce::Colours::transparentBlack, lamp.getCentreX(), lamp.getCentreY() + 24.0f, true);
-    g.setGradientFill (glow);
-    g.fillEllipse (lamp.expanded (18.0f));
-    g.setColour (juce::Colour (0xffff2a20));
-    g.fillEllipse (lamp.reduced (2.0f));
-    g.setColour (juce::Colour (0xffff1e1e));
-    g.fillRect (169, 234, 15, 23);
-    g.setColour (juce::Colour (0xffff7267));
-    g.fillRect (169, 266, 15, 13);
-}
-
-void drawStateOverlays (juce::Graphics& g,
-                        juce::AudioProcessorValueTreeState& apvts,
-                        bool clipActive,
-                        bool advancedExpanded,
-                        bool padPressed,
-                        float padDisplayAmount)
-{
-    const auto dark = isParamOn (apvts, ParameterIDs::darkMode);
-    const auto postGate = getChoiceIndex (apvts, ParameterIDs::gatePrePost) == 1;
-    const auto sendAmount = getParamNorm (apvts, ParameterIDs::sendAmount);
-
-    if (dark)
-        drawDarkPressedOverlay (g);
-
-    drawGatePositionOverlay (g, postGate);
-
-    // SEND-06: pressed overlay follows press/amount — not send_connected alone.
-    if (shouldDrawFootswitchPressedOverlay (padPressed, padDisplayAmount, sendAmount))
-        drawFootswitchPressedOverlay (g);
-
-    drawClipReadOverlay (g, clipActive);
-
-    if (advancedExpanded)
-        drawAdvancedFanout (g, juce::Colour (0xff5fc0d2));
-}
-
-void paintProceduralChassis (juce::Graphics& g,
-                             juce::Rectangle<float> bounds,
-                             juce::Colour cyan,
-                             bool advancedExpanded)
-{
-    g.fillAll (juce::Colour (0xff0a0a0a));
-
-    juce::ColourGradient chassis (juce::Colours::white, bounds.getX(), bounds.getY(),
-                                  juce::Colour (0xffeeeeeb), bounds.getRight(), bounds.getBottom(), false);
-    g.setGradientFill (chassis);
-    g.fillRoundedRectangle (bounds.reduced (6.0f), 14.0f);
-    g.setColour (juce::Colour (0xff253035));
-    g.drawRoundedRectangle (bounds.reduced (6.0f), 14.0f, 2.0f);
-    g.setColour (juce::Colours::white.withAlpha (0.5f));
-    g.drawRoundedRectangle (bounds.reduced (9.0f), 11.0f, 2.0f);
-
-    drawLogo (g, { 60.0f, 24.0f, 300.0f, 54.0f });
-
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (34.0f, juce::Font::bold));
-    g.drawFittedText ("SENDBLOOM", 104, 90, 218, 42, juce::Justification::centred, 1, 0.86f);
-    g.setColour (cyan);
-    g.drawLine (48.0f, 113.0f, 112.0f, 113.0f, 5.0f);
-    g.drawLine (312.0f, 113.0f, 372.0f, 113.0f, 5.0f);
-
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-    g.drawText ("INITIAL PATCH", 70, 148, 200, 14, juce::Justification::centredLeft);
-
-    drawCyanFrame (g, { 40.0f, 128.0f, 340.0f, 600.0f }, cyan);
-    drawChevronRail (g, 24.0f, 270.0f, 4, cyan);
-    drawChevronRail (g, 24.0f, 610.0f, 6, cyan);
-    const auto leftPanel = juce::Rectangle<float> (58.0f, 195.0f, 154.0f, 219.0f);
-    g.setColour (cyan);
-    g.drawRect (leftPanel, 4.0f);
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (14.0f, juce::Font::bold));
-    g.drawText ("OVERLOAD / CLIP", leftPanel.withHeight (42.0f).toNearestInt(), juce::Justification::centred);
-
-    // Original SendBloom abstract geometry (UX-07): nested rounded-rect frames
-    // over a soft white gradient, with a central chevron rail. No letterforms —
-    // confined to leftPanel (58,195,154,219). Locked palette only (cyan/white).
-    {
-        const auto art = juce::Rectangle<float> (66.0f, 240.0f, 138.0f, 162.0f);
-        juce::Graphics::ScopedSaveState ss (g);
-        g.reduceClipRegion (art.expanded (2.0f).toNearestInt());
-        juce::ColourGradient fill (juce::Colours::white.withAlpha (0.85f), art.getX(), art.getY(),
-                                   juce::Colours::white.withAlpha (0.22f), art.getRight(), art.getBottom(), false);
-        g.setGradientFill (fill);
-        g.fillRoundedRectangle (art, 8.0f);
-        g.setColour (cyan);
-        for (int i = 0; i < 4; ++i)
-        {
-            const auto f = static_cast<float> (i);
-            g.drawRoundedRectangle (art.reduced (4.0f + f * 8.0f), 6.0f, 2.0f);
-        }
-        drawChevronRail (g, art.getCentreX() - 14.0f, art.getY() + 18.0f, 3, cyan);
-    }
-
-    g.setColour (cyan);
-    g.fillRect (58, 415, 92, 26);
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-    g.drawText ("OVERLOAD", 61, 415, 86, 26, juce::Justification::centred);
-    juce::Path redArrow;
-    redArrow.addTriangle (158.0f, 413.0f, 195.0f, 428.0f, 158.0f, 443.0f);
-    g.setColour (juce::Colour (0xffa52829));
-    g.fillPath (redArrow);
-    g.setColour (cyan);
-    g.strokePath (redArrow, juce::PathStrokeType (3.0f));
-
-    const auto diagonal = juce::Rectangle<float> (58.0f, 442.0f, 154.0f, 128.0f);
-    g.setColour (cyan);
-    g.drawRect (diagonal, 4.0f);
-    {
-        juce::Graphics::ScopedSaveState clipped (g);
-        g.reduceClipRegion (diagonal.toNearestInt());
-        for (int i = -2; i < 5; ++i)
-        {
-            const auto f = static_cast<float> (i);
-            g.drawLine (diagonal.getX() + f * 36.0f, diagonal.getBottom(),
-                        diagonal.getX() + 64.0f + f * 36.0f, diagonal.getY(), 4.0f);
-        }
-    }
-    fillTriangle (g, 94.0f, 522.0f, 112.0f, 516.0f, 105.0f, 536.0f);
-    fillTriangle (g, 112.0f, 508.0f, 127.0f, 502.0f, 121.0f, 518.0f);
-    fillTriangle (g, 148.0f, 470.0f, 159.0f, 482.0f, 140.0f, 486.0f);
-    fillTriangle (g, 166.0f, 452.0f, 179.0f, 464.0f, 158.0f, 468.0f);
-
-    const auto green = juce::Rectangle<float> (94.0f, 486.0f, 58.0f, 58.0f);
-    g.setColour (juce::Colour (0xff295a34));
-    g.fillEllipse (green.expanded (6.0f));
-    juce::ColourGradient greenFill (juce::Colour (0xff98ff56), green.getX(), green.getY(),
-                                    juce::Colour (0xff2f9b39), green.getRight(), green.getBottom(), false);
-    g.setGradientFill (greenFill);
-    g.fillEllipse (green);
-
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (14.0f, juce::Font::bold));
-    g.drawText ("DARK MODE", 58, 574, 96, 22, juce::Justification::centredLeft);
-    g.drawText ("GATE", 156, 574, 56, 22, juce::Justification::centred);
-    g.setFont (juce::FontOptions (16.0f, juce::Font::bold));
-    g.drawText ("PRE", 204, 594, 44, 24, juce::Justification::centredLeft);
-    g.drawText ("POST", 204, 620, 50, 24, juce::Justification::centredLeft);
-    fillTriangle (g, 213.0f, 566.0f, 222.0f, 558.0f, 231.0f, 566.0f);
-    fillTriangle (g, 213.0f, 652.0f, 222.0f, 660.0f, 231.0f, 652.0f);
-
-    const auto bottomBlock = juce::Rectangle<float> (48.0f, 650.0f, 198.0f, 96.0f);
-    g.setColour (juce::Colour (0xff111111));
-    g.fillRoundedRectangle (bottomBlock, 6.0f);
-    g.setColour (cyan);
-    g.fillRect (bottomBlock.withTrimmedTop (50.0f));
-
-    juce::Path advancedClosed;
-    advancedClosed.startNewSubPath (258.0f, 646.0f);
-    advancedClosed.lineTo (382.0f, 646.0f);
-    advancedClosed.lineTo (382.0f, 726.0f);
-    advancedClosed.lineTo (356.0f, 750.0f);
-    advancedClosed.lineTo (250.0f, 750.0f);
-    advancedClosed.lineTo (250.0f, 664.0f);
-    advancedClosed.closeSubPath();
-    g.setColour (juce::Colours::black);
-    g.fillPath (advancedClosed);
-    g.setColour (cyan);
-    g.strokePath (advancedClosed, juce::PathStrokeType (4.0f));
-
-    if (advancedExpanded)
-        drawAdvancedFanout (g, cyan);
+    drawImage (g, active ? art.clipOn : art.clipOff, lens);
 }
 
 } // namespace
@@ -377,15 +402,71 @@ bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, f
 
 void paintPedalFaceplate (juce::Graphics& g,
                           juce::Rectangle<float> bounds,
-                          juce::Colour cyan,
+                          juce::Colour accent,
                           juce::AudioProcessorValueTreeState& apvts,
                           bool clipActive,
                           bool advancedExpanded,
                           bool padPressed,
                           float padDisplayAmount)
 {
-    paintProceduralChassis (g, bounds, cyan, advancedExpanded);
-    drawStateOverlays (g, apvts, clipActive, advancedExpanded, padPressed, padDisplayAmount);
+    juce::ignoreUnused (accent);
+    using namespace facelayout;
+    const auto& art = artwork();
+
+    // Scene, plate lighting, contact shadows, and static assets render once.
+    g.setOpacity (1.0f);
+    g.drawImage (staticFaceLayer(), bounds, juce::RectanglePlacement::stretchToFit, false);
+
+    const auto dark = isParamOn (apvts, ParameterIDs::darkMode);
+    const auto postGate = getChoiceIndex (apvts, ParameterIDs::gatePrePost) == 1;
+    const auto sendAmount = getParamNorm (apvts, ParameterIDs::sendAmount);
+    const auto footPressed = shouldDrawFootswitchPressedOverlay (
+        padPressed, padDisplayAmount, sendAmount);
+
+    drawImage (g, dark ? art.darkOn : art.darkOff, kDarkButton.toFloat());
+    drawImage (g, postGate ? art.gatePost : art.gatePre, kGateSwitch.toFloat());
+
+    // Stomping seats the switch closer to the plate: its shadow tightens and the
+    // cap drops a couple of pixels.
+    g.setOpacity (1.0f);
+    g.drawImageAt (footShadowImage (footPressed),
+                   kFootswitch.getX() - kFootShadowMargin,
+                   kFootswitch.getY() - kFootShadowMargin);
+    drawImage (g, footPressed ? art.footDown : art.footUp,
+               kFootswitch.toFloat().translated (0.0f, footPressed ? 2.0f : 0.0f));
+
+    drawGateMarkings (g, postGate);
+    drawEngravedText (g, "CLIP", kClipLabel, 10.0f, kInk.withAlpha (0.94f));
+    drawEngravedText (g, "PRESSURE SEND", kPressureLabel, 11.5f, kOrange);
+
+    if (advancedExpanded)
+    {
+        g.setOpacity (1.0f);
+        g.drawImageAt (drawerShadowImage(),
+                       kAdvancedDrawer.getX() - kDrawerShadowMargin,
+                       kAdvancedDrawer.getY() - kDrawerShadowMargin);
+    }
+    else
+    {
+        drawEngravedText (g, "ADVANCED >", kAdvancedLabel, 11.5f, kOrange,
+                          juce::Justification::centredRight);
+    }
+}
+
+void paintPedalOverlay (juce::Graphics& g,
+                        juce::Rectangle<float> bounds,
+                        bool darkMode,
+                        bool clipActive)
+{
+    if (darkMode)
+    {
+        // Dark mode kills the room lights: everything on the bench dims and cools,
+        // and only emissive parts (the clip LED) punch through.
+        g.setColour (juce::Colour (0xff0a0f18).withAlpha (0.34f));
+        g.fillRect (bounds);
+    }
+
+    drawClipLamp (g, artwork(), clipActive, darkMode);
 }
 
 } // namespace sendbloom::ui

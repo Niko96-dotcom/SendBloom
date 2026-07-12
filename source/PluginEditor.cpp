@@ -96,10 +96,18 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     advancedButton.setButtonText ("ADVANCED >");
     advancedButton.onClick = [this] { toggleAdvanced(); };
-    advancedButton.setLookAndFeel (&transparentControls);
-    advancedButton.setColour (juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
-    advancedButton.setColour (juce::TextButton::textColourOffId, juce::Colours::transparentBlack);
     addAndMakeVisible (advancedButton);
+
+    for (auto* button : { &loadPresetButton, &savePresetButton })
+    {
+        button->setLookAndFeel (&transparentControls);
+        button->setButtonText ({ });
+        addAndMakeVisible (*button);
+    }
+    loadPresetButton.setTooltip ("Load a SendBloom preset file");
+    savePresetButton.setTooltip ("Save the current SendBloom state");
+    loadPresetButton.onClick = [this] { loadPresetFromDisk(); };
+    savePresetButton.onClick = [this] { savePresetToDisk(); };
     addChildComponent (advancedDrawer);
 
     auto& apvts = processorRef.getAPVTS();
@@ -132,7 +140,8 @@ PluginEditor::~PluginEditor()
     presetBox.setLookAndFeel (nullptr);
     darkToggle.setLookAndFeel (nullptr);
     gateToggle.setLookAndFeel (nullptr);
-    advancedButton.setLookAndFeel (nullptr);
+    loadPresetButton.setLookAndFeel (nullptr);
+    savePresetButton.setLookAndFeel (nullptr);
     setLookAndFeel (nullptr);
 }
 
@@ -147,49 +156,51 @@ void PluginEditor::paint (juce::Graphics& g)
                              pressurePad.isPressed(),
                              pressurePad.getDisplayAmount());
 
-    // The procedural chassis paints the default "INITIAL PATCH" label; redraw only overrides.
-    if (presetBox.getSelectedId() != 1)
-    {
-        g.setColour (juce::Colours::white);
-        g.fillRect (70, 148, 200, 14);
-        g.setColour (juce::Colours::black);
-        g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-        g.drawText (presetBox.getText(),
-                    76, 148, 184, 10,
-                    juce::Justification::centredLeft,
-                    false);
-    }
+    // The photographed face owns the preset field; the editor supplies its live text.
+    const auto presetName = presetBox.getSelectedId() != 1 ? presetBox.getText()
+                                                           : juce::String ("INITIAL PATCH");
+    g.setColour (juce::Colours::black);
+    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
+    g.drawText (presetName, ui::facelayout::kPresetText,
+                juce::Justification::centredLeft, false);
+}
+
+void PluginEditor::paintOverChildren (juce::Graphics& g)
+{
+    const auto* darkParam = processorRef.getAPVTS().getRawParameterValue (ParameterIDs::darkMode);
+    const auto darkOn = darkParam != nullptr && darkParam->load() > 0.5f;
+
+    ui::paintPedalOverlay (g,
+                           getLocalBounds().toFloat(),
+                           darkOn,
+                           processorRef.isClipHoldActive());
 }
 
 void PluginEditor::resized()
 {
+    using namespace ui::facelayout;
+
     titleLabel.setBounds (0, 0, 0, 0);
-    // Invisible hit target over the faceplate preset field (name is painted by the editor).
-    presetBox.setBounds (64, 148, 210, 16);
+    // Invisible hit targets parked on the shared faceplate layout rectangles.
+    presetBox.setBounds (kPresetField);
+    loadPresetButton.setBounds (kPresetLoad);
+    savePresetButton.setBounds (kPresetSave);
 
-    // Exact dark-disk centres measured from the faceplate asset (50×50 art).
-    constexpr int k = 50;
-    constexpr int half = k / 2;
+    distnKnob.setBounds (kDistortionKnob);
+    sizeKnob.setBounds (kSizeKnob);
+    lvlKnob.setBounds (kLevelKnob);
+    inKnob.setBounds (kInputKnob);
+    outKnob.setBounds (kOutputKnob);
 
-    lvlKnob.setBounds (265 - half, 213 - half, k, 76);
-    sizeKnob.setBounds (265 - half, 303 - half, k, 76);
-    distnKnob.setBounds (265 - half, 393 - half, k, 76); // dark-disk centre
-    inKnob.setBounds (265 - half, 479 - half, k, 76);
-    outKnob.setBounds (265 - half, 564 - half, k, 76);
+    darkToggle.setBounds (kDarkButton);
+    gateToggle.setBounds (kGateHitBox);
+    pressurePad.setBounds (kFootswitch);
 
-    lvlKnob.setValueBounds ({ 0, 60, 51, 15 });
-    sizeKnob.setValueBounds ({ 0, 60, 51, 15 });
-    distnKnob.setValueBounds ({ -1, 60, 52, 15 });
-    inKnob.setValueBounds ({ -1, 58, 53, 15 });
-    outKnob.setValueBounds ({ -1, 58, 53, 15 });
-
-    // Dark button on faceplate: ~64,562 .. 103,598
-    darkToggle.setBounds (64, 562, 40, 40);
-    gateToggle.setBounds (148, 568, 22, 52);
-    pressurePad.setBounds (90, 655, 95, 90);
-
-    advancedButton.setBounds (250, 646, 132, 104);
     advancedDrawer.setBounds (getAdvancedBounds());
+    // When the drawer is open its title strip becomes the close target.
+    advancedButton.setBounds (advancedDrawer.isExpanded()
+                                  ? getAdvancedBounds().removeFromTop (36)
+                                  : kAdvancedHitBox);
 }
 
 void PluginEditor::presetChanged()
@@ -199,6 +210,58 @@ void PluginEditor::presetChanged()
         processorRef.setCurrentProgram (index);
 }
 
+void PluginEditor::loadPresetFromDisk()
+{
+    presetFileChooser = std::make_unique<juce::FileChooser> (
+        "Load SendBloom preset", juce::File(), "*.sendbloom");
+    juce::Component::SafePointer<PluginEditor> safeThis (this);
+    presetFileChooser->launchAsync (juce::FileBrowserComponent::openMode
+                                      | juce::FileBrowserComponent::canSelectFiles,
+                                    [safeThis] (const juce::FileChooser& chooser)
+    {
+        if (safeThis == nullptr)
+            return;
+
+        const auto file = chooser.getResult();
+        juce::MemoryBlock state;
+        if (file.existsAsFile() && file.loadFileAsData (state))
+        {
+            safeThis->processorRef.setStateInformation (state.getData(), static_cast<int> (state.getSize()));
+            safeThis->repaint();
+        }
+        safeThis->presetFileChooser.reset();
+    });
+}
+
+void PluginEditor::savePresetToDisk()
+{
+    presetFileChooser = std::make_unique<juce::FileChooser> (
+        "Save SendBloom preset", juce::File::getSpecialLocation (juce::File::userDocumentsDirectory)
+                                     .getChildFile ("SendBloom.sendbloom"),
+        "*.sendbloom");
+    juce::Component::SafePointer<PluginEditor> safeThis (this);
+    presetFileChooser->launchAsync (juce::FileBrowserComponent::saveMode
+                                      | juce::FileBrowserComponent::canSelectFiles
+                                      | juce::FileBrowserComponent::warnAboutOverwriting,
+                                    [safeThis] (const juce::FileChooser& chooser)
+    {
+        if (safeThis == nullptr)
+            return;
+
+        auto file = chooser.getResult();
+        if (file != juce::File())
+        {
+            if (! file.hasFileExtension ("sendbloom"))
+                file = file.withFileExtension ("sendbloom");
+
+            juce::MemoryBlock state;
+            safeThis->processorRef.getStateInformation (state);
+            file.replaceWithData (state.getData(), state.getSize());
+        }
+        safeThis->presetFileChooser.reset();
+    });
+}
+
 void PluginEditor::toggleAdvanced()
 {
     setAdvancedExpandedForSnapshot (! advancedDrawer.isExpanded());
@@ -206,17 +269,19 @@ void PluginEditor::toggleAdvanced()
 
 juce::Rectangle<int> PluginEditor::getAdvancedBounds() const
 {
-    return { 232, 560, 166, advancedDrawer.getPreferredHeight() };
+    return ui::facelayout::kAdvancedDrawer.withHeight (advancedDrawer.getPreferredHeight());
 }
 
 void PluginEditor::setAdvancedExpandedForSnapshot (bool shouldExpand)
 {
     advancedDrawer.setExpanded (shouldExpand);
     advancedButton.setButtonText (shouldExpand ? "ADVANCED <" : "ADVANCED >");
-    advancedButton.setVisible (! shouldExpand);
     resized();
     if (shouldExpand)
+    {
         advancedDrawer.toFront (false);
+        advancedButton.toFront (false); // keep the close target clickable above the drawer
+    }
     repaint();
 }
 

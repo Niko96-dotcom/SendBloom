@@ -82,7 +82,25 @@ juce_add_binary_data(SendBloomPresets
         resources/presets/Firm_Pressure.xml
         resources/presets/Gated_Room.xml
         resources/presets/Hot_Clip.xml
-        resources/ui/knob.png)
+        resources/ui/knob.png
+        resources/ui/pedal_background.png
+        resources/ui/brand_logo.png
+        resources/ui/preset_field.png
+        resources/ui/preset_load.png
+        resources/ui/preset_save.png
+        resources/ui/knob_input.png
+        resources/ui/knob_size.png
+        resources/ui/knob_level.png
+        resources/ui/knob_distortion.png
+        resources/ui/knob_output.png
+        resources/ui/dark_off.png
+        resources/ui/dark_on.png
+        resources/ui/gate_pre.png
+        resources/ui/gate_post.png
+        resources/ui/footswitch_up.png
+        resources/ui/footswitch_down.png
+        resources/ui/clip_off.png
+        resources/ui/clip_on.png)
 
 target_link_libraries(SharedCode INTERFACE SendBloomPresets)
 
@@ -91,7 +109,9 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 add_executable(EditorSnapshot tools/EditorSnapshot.cpp)
 target_compile_features(EditorSnapshot PRIVATE cxx_std_20)
 target_include_directories(EditorSnapshot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
-target_compile_definitions(EditorSnapshot PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_compile_definitions(EditorSnapshot PRIVATE
+    $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>
+    JUCE_MODAL_LOOPS_PERMITTED=1)
 target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 
 # include(PamplejuceIPP)

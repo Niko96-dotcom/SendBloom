@@ -9,7 +9,7 @@ SendBloomLookAndFeel::SendBloomLookAndFeel()
     facePlate = juce::Colour (0xffffffff);
     accent = juce::Colour (0xffff8f25);
     labelText = juce::Colour (0xff050505);
-    cyan = juce::Colour (0xff5fc0d2);
+    cyan = juce::Colour (0xffe66c0b);
 
     setColour (juce::ResizableWindow::backgroundColourId, chassis);
     setColour (juce::Slider::textBoxTextColourId, labelText);
@@ -155,12 +155,22 @@ void SendBloomLookAndFeel::drawComboBox (juce::Graphics& g, int width, int heigh
                                          int buttonX, int buttonY, int buttonW, int buttonH,
                                          juce::ComboBox& box)
 {
-    juce::ignoreUnused (buttonX, buttonY, buttonW, buttonH, box);
+    juce::ignoreUnused (buttonX, buttonY, buttonW, buttonH);
 
     const auto bounds = juce::Rectangle<float> (0.0f, 0.0f, static_cast<float> (width), static_cast<float> (height)).reduced (1.0f);
-    g.setColour (juce::Colour (0xffefefef));
+    // Respect per-box theming (the advanced drawer runs a dark panel scheme).
+    const auto background = box.isColourSpecified (juce::ComboBox::backgroundColourId)
+                                ? box.findColour (juce::ComboBox::backgroundColourId)
+                                : juce::Colour (0xffefefef);
+    const auto outline = box.isColourSpecified (juce::ComboBox::outlineColourId)
+                             ? box.findColour (juce::ComboBox::outlineColourId)
+                             : juce::Colours::black;
+    const auto arrowColour = box.isColourSpecified (juce::ComboBox::arrowColourId)
+                                 ? box.findColour (juce::ComboBox::arrowColourId)
+                                 : juce::Colours::black;
+    g.setColour (background);
     g.fillRoundedRectangle (bounds, 4.0f);
-    g.setColour (juce::Colours::black);
+    g.setColour (outline);
     g.drawRoundedRectangle (bounds, 4.0f, 2.0f);
 
     const auto cx = static_cast<float> (width - 15);
@@ -168,13 +178,13 @@ void SendBloomLookAndFeel::drawComboBox (juce::Graphics& g, int width, int heigh
     juce::Path arrows;
     arrows.addTriangle (cx - 5.0f, cy - 3.0f, cx + 5.0f, cy - 3.0f, cx, cy - 10.0f);
     arrows.addTriangle (cx - 5.0f, cy + 3.0f, cx + 5.0f, cy + 3.0f, cx, cy + 10.0f);
-    g.setColour (isButtonDown ? cyan : juce::Colours::black);
+    g.setColour (isButtonDown ? cyan : arrowColour);
     g.fillPath (arrows);
 }
 
 juce::Font SendBloomLookAndFeel::getComboBoxFont (juce::ComboBox&)
 {
-    return juce::FontOptions (18.0f, juce::Font::bold);
+    return juce::FontOptions (11.0f, juce::Font::bold);
 }
 
 } // namespace sendbloom::ui

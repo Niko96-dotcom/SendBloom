@@ -27,7 +27,8 @@ public:
 
 private:
     bool expanded { false };
-    PedalKnob gateSensKnob { "Gate Sens" };
+    PedalKnob gateSensKnob { "Gate Sens", BinaryData::knob_distortion_png,
+                             static_cast<size_t> (BinaryData::knob_distortion_pngSize) };
     juce::ComboBox sendFeelBox;
     juce::Label sendFeelLabel;
     juce::ToggleButton pressureModeToggle { "PRESSURE MODE" };
