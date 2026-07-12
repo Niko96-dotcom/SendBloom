@@ -13,7 +13,7 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **BASE-01**: Record current commit, branch, build configuration, test count, CI state, and known manual gaps before modifications
 - [x] **BASE-02**: Create `.planning/REQUIREMENTS.md` entries for every requirement in the master milestone spec
 - [x] **BASE-03**: Map each requirement to exactly one phase and at least one verification artifact
-- [ ] **BASE-04**: Preserve all existing passing ProperSRC, HF, dry-integrity, and release-truth tests unless a requirement explicitly updates their contract
+- [x] **BASE-04**: Preserve all existing passing ProperSRC, HF, dry-integrity, and release-truth tests unless a requirement explicitly updates their contract
 - [ ] **BASE-05**: Add a durable v1 verifier script that runs the complete automated gate set
 - [ ] **BASE-06**: Do not hard-code the expected total number of tests in documentation or scripts
 - [x] **BASE-07**: Record baseline audio metrics for representative factory presets before changing DSP
@@ -228,7 +228,7 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | BASE-01 | Phase 19 | Complete | .planning/phases/SENDBLOOM-19-baseline-contracts-failure-harness/19-BASELINE.md |
 | BASE-02 | Phase 19 | Complete | .planning/REQUIREMENTS.md |
 | BASE-03 | Phase 19 | Complete | tests/RequirementsTraceabilityTest.cpp#[traceability][BASE-03] |
-| BASE-04 | Phase 19 | Pending | tests/ReleaseTruthTest.cpp; tests/DryPathIntegrityTest.cpp |
+| BASE-04 | Phase 19 | Complete | tests/ReleaseTruthTest.cpp; tests/DryPathIntegrityTest.cpp |
 | BASE-05 | Phase 19 | Pending | scripts/verify-v1.sh (Plan 03) |
 | BASE-06 | Phase 19 | Pending | scripts/verify-v1.sh; 19-BASELINE.md discovered-at-capture |
 | BASE-07 | Phase 19 | Complete | tests/BaselinePresetMetricsTest.cpp#[baseline][metrics]; 19-BASELINE-METRICS.md |

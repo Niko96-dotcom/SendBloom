@@ -42,11 +42,11 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
   4. `scripts/verify-v1.sh` runs the full automated gate set and truthfully reports current red gates without hard-coded test totals
   5. Human-only gates are marked `human_needed` and never silently treated as pass
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 Plans:
 
 - [x] 19-01-PLAN.md — Restore cmake submodule, freeze 19-BASELINE.md + metrics, complete requirement→artifact traceability (BASE-01/02/03/07)
-- [ ] 19-02-PLAN.md — Add seven failing [v1][contract] suites; prove green ProperSRC/HF/DryPath/release remain green (BASE-04)
+- [x] 19-02-PLAN.md — Add seven failing [v1][contract] suites; prove green ProperSRC/HF/DryPath/release remain green (BASE-04)
 - [ ] 19-03-PLAN.md — Ship scripts/verify-v1.sh with human_needed gates and no hard-coded totals (BASE-05/06/08)
 
 **ADRs**: ADR-V1-01…17 referenced as locked constraints for later phases
@@ -197,7 +197,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 19. Baseline, Contracts & Failure Harness | 1/3 | In Progress|  |
+| 19. Baseline, Contracts & Failure Harness | 2/3 | In Progress|  |
 | 20. Pressure Send State Truth | 0/TBD | Not started | - |
 | 21. Realtime Span Engine & True Bypass | 0/TBD | Not started | - |
 | 22. MIDI & Per-Sample Control Delivery | 0/TBD | Not started | - |
