@@ -148,7 +148,13 @@ Plans:
   2. LFO modulation depth is invariant in seconds across sample rates; ProperSRC output is pre-cleared and unwritten samples remain zero; existing ProperSRC imaging/HF gates stay green
   3. Wet dirt implements 100 Hz pre-clip HP and 20 Hz post-clip DC blocker; long-run DC stays below gate; dry path unaffected; `dirt_os` stays disabled; `authentic_color` remains off by default and in all factory presets
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+
+- [ ] 24-01-PLAN.md — Continuous fixed 55 ms predelay tap (DSP-01…04)
+- [ ] 24-02-PLAN.md — Mod time-invariant + ProperSRC underfill (DSP-05…08)
+- [ ] 24-03-PLAN.md — Wet dirt HP/DC + safety defaults (DSP-09…15)
+
 **ADRs**: ADR-V1-12, ADR-V1-13, ADR-V1-14, ADR-V1-15
 
 ### Phase 25: Presets, UI, Branding & Release Truth
@@ -226,7 +232,7 @@ Plans:
 | 21. Realtime Span Engine & True Bypass | 3/3 | Complete    | 2026-07-12 |
 | 22. MIDI & Per-Sample Control Delivery | 3/3 | Complete    | 2026-07-12 |
 | 23. Input, Level & Gate Truth | 3/3 | Complete    | 2026-07-12 |
-| 24. Reverb State & Wet-Dirt Integrity | 0/TBD | Not started | - |
+| 24. Reverb State & Wet-Dirt Integrity | 0/3 | Not started | - |
 | 25. Presets, UI, Branding & Release Truth | 0/TBD | Not started | - |
 | 26. Reference Capture & Sonic Classification | 0/TBD | Not started | - |
 | 27. RC Verification, Licensing & Distribution | 0/TBD | Not started | - |
