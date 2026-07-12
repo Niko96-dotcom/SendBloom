@@ -10,7 +10,7 @@
   <PARAM id="dark_mode" value="1"/>
   <PARAM id="gate_pre_post" value="1"/>
   <PARAM id="send_connected" value="0"/>
-  <PARAM id="send_amount" value="0.9"/>
+  <PARAM id="send_amount" value="0"/>
   <PARAM id="send_feel" value="0"/>
   <PARAM id="authentic_color" value="0"/>
   <PARAM id="extended_stereo" value="0"/>
