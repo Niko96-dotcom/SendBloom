@@ -1,7 +1,7 @@
 ---
 phase: 25-presets-ui-branding-release-truth
 verified: 2026-07-12
-status: human_needed
+status: passed
 score: 4/4-roadmap-criteria-supported
 requirements: [UX-06, UX-07, UX-08, UX-09, UX-10, UX-11, UX-12, UX-13, UX-14, UX-15, UX-16]
 ---
@@ -10,7 +10,7 @@ requirements: [UX-06, UX-07, UX-08, UX-09, UX-10, UX-11, UX-12, UX-13, UX-14, UX
 
 ## Verdict
 
-**`human_needed`** — all Phase 25 automated gates pass and the implementation supports all four ROADMAP success criteria. The phase is not represented as an unconditional visual/editorial pass: final pixel-level approval of the procedural faceplate, final hit-target/overlay confirmation in a real rendered host surface, and final copy approval remain human judgments.
+**`passed`** — all Phase 25 automated gates pass and the implementation supports all four ROADMAP success criteria. On 2026-07-12, Niko explicitly approved the procedural faceplate and host alignment, the Pressure Mode and 32k Color wording, and the decision to defer any Path A asset until post-RC0.
 
 ## Goal Verification
 
@@ -88,11 +88,10 @@ Built `Tests` successfully at verification HEAD, then reran the complete Phase 2
 - `[authentic]`: PASS — 48,063 / 6.
 - `[wet-dirt]`: PASS — 4,111 / 7.
 
-## Remaining Human Gates
+## Human Gate Resolution
 
-1. Niko approval of any future Path A original faceplate asset (post-RC0).
-2. Final pixel-level visual sign-off of the procedural production faceplate in a rendered plugin/host surface.
-3. Final human confirmation that hotspots and overlays are visually aligned and comfortable to operate in the rendered surface.
-4. Final editorial sign-off for Pressure Mode and 32k Color copy.
+1. Procedural production faceplate and rendered host alignment: **approved by Niko on 2026-07-12**.
+2. Pressure Mode and 32k Color copy: **approved by Niko on 2026-07-12**.
+3. Path A original faceplate asset: **explicitly deferred until post-RC0 by Niko on 2026-07-12**.
 
-No automated failure or implementation gap was found. These human gates must remain explicit and must not be silently promoted to automated success.
+No automated failure or implementation gap was found. The previously explicit human gates were resolved by the user's approval and are recorded here rather than inferred from automated evidence.
