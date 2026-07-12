@@ -116,7 +116,7 @@ Each task was committed atomically:
 2. **Task 1 (GREEN): ADR-V1-10 engaged-then-bypass mix** - `d5de0da` (feat)
 3. **Task 2: mixSample + mid-stream click bound** - `062f48c` (test)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `c96ef2b` (docs: complete plan)
 
 ## Files Created/Modified
 
