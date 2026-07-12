@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -153,10 +154,12 @@ TEST_CASE ("Factory preset baseline peak/RMS metrics are finite and documented",
 
         REQUIRE (metricsText.find (metrics.name.toStdString()) != std::string::npos);
 
-        UNSCOPED_INFO ("preset=" << metrics.name
-                                 << " peakL=" << metrics.peakL
-                                 << " peakR=" << metrics.peakR
-                                 << " rmsL=" << metrics.rmsL
-                                 << " rmsR=" << metrics.rmsR);
+        // Always print so 19-BASELINE-METRICS.md can be regenerated from the same path.
+        std::cout << "BASELINE_METRICS\t" << metrics.name
+                  << "\tpeakL=" << metrics.peakL
+                  << "\tpeakR=" << metrics.peakR
+                  << "\trmsL=" << metrics.rmsL
+                  << "\trmsR=" << metrics.rmsR
+                  << '\n';
     }
 }
