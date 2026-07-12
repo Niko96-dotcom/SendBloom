@@ -39,7 +39,6 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                             "Steps the tank at 32,768 Hz with fixed delay-table lengths, "
                             "per-comb feedback, damping, and 9-bit quantization. "
                             "Original software — not firmware-derived. "
-                            "May exhibit HF artifacts at some host rates; "
                             "host-rate reverb is the production default.");
     addChildComponent (colorToggle);
     addChildComponent (extendedStereoToggle);
