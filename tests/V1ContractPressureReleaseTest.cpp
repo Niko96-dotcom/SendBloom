@@ -160,6 +160,10 @@ TEST_CASE ("v1 pressure release stays connected-at-rest with amount 0 and no new
     REQUIRE (sendbloom::PressureSend::computeGain (amountAfter, connectedAfter > 0.5f, true)
              == Catch::Approx (0.0f).margin (1.0e-6f));
 
+    // ADR-V1-04 / SEND-10: PressureController releases raw pressure over ~25 ms.
+    // Settle before proving wet feed is dry (one 512-sample block is only ~10.7 ms).
+    processToneBlocks (plugin, 20);
+
     energy->resetEnergy();
     juce::AudioBuffer<float> dryProbe (2, kBlockSize);
     juce::MidiBuffer midi;

@@ -18,10 +18,15 @@ public:
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
 
+    bool isPressed() const noexcept { return pressed; }
+    float getDisplayAmount() const noexcept { return displayAmount; }
+
 private:
     void timerCallback() override;
     void setConnected (bool connected);
     void setAmountFromY (float y);
+    void beginAmountGesture();
+    void endAmountGesture();
     void startBloomFade();
     void stopBloomFade();
 
@@ -30,7 +35,8 @@ private:
     juce::RangedAudioParameter* connectedParam { nullptr };
     juce::RangedAudioParameter* amountParam { nullptr };
     juce::Point<float> touchPoint;
-    bool isPressed { false };
+    bool pressed { false };
+    bool amountGestureActive { false };
     float displayAmount { 0.0f };
     float fadeStartAmount { 0.0f };
     double fadeStartTimeMs { 0.0 };

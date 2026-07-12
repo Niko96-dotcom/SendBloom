@@ -20,9 +20,10 @@ void PressureSendPad::paint (juce::Graphics&)
 void PressureSendPad::mouseDown (const juce::MouseEvent& e)
 {
     stopBloomFade();
-    isPressed = true;
+    pressed = true;
     touchPoint = e.position;
     setConnected (true);
+    beginAmountGesture();
     setAmountFromY (e.position.y);
     if (auto* parent = getParentComponent())
         parent->repaint();
@@ -38,8 +39,19 @@ void PressureSendPad::mouseDrag (const juce::MouseEvent& e)
 
 void PressureSendPad::mouseUp (const juce::MouseEvent&)
 {
-    isPressed = false;
-    setConnected (false);
+    // SEND-05 / ADR-V1-02: release zeros amount and leaves send_connected true.
+    pressed = false;
+
+    if (amountParam != nullptr)
+    {
+        if (! amountGestureActive)
+            beginAmountGesture();
+
+        amountParam->setValueNotifyingHost (0.0f);
+        endAmountGesture();
+    }
+
+    // Bloom fade is display-only (not DSP release); start from last visual amount.
     startBloomFade();
     if (auto* parent = getParentComponent())
         parent->repaint();
@@ -73,6 +85,24 @@ void PressureSendPad::setAmountFromY (float y)
     const auto norm = juce::jlimit (0.0f, 1.0f, 1.0f - (y - bounds.getY()) / bounds.getHeight());
     amountParam->setValueNotifyingHost (norm);
     displayAmount = norm;
+}
+
+void PressureSendPad::beginAmountGesture()
+{
+    if (amountParam == nullptr || amountGestureActive)
+        return;
+
+    amountParam->beginChangeGesture();
+    amountGestureActive = true;
+}
+
+void PressureSendPad::endAmountGesture()
+{
+    if (amountParam == nullptr || ! amountGestureActive)
+        return;
+
+    amountParam->endChangeGesture();
+    amountGestureActive = false;
 }
 
 void PressureSendPad::startBloomFade()
