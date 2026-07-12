@@ -25,10 +25,10 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **SEND-02**: `send_connected=true` and pressure 0 produces no new wet input
 - [x] **SEND-03**: Pressure >0 sends input into the wet path
 - [x] **SEND-04**: Releasing pressure stops new wet input but preserves existing tail state
-- [ ] **SEND-05**: UI mouse release sets `send_amount=0` and leaves `send_connected=true`
-- [ ] **SEND-06**: UI pressed overlay follows pressure/pressed state, not connection state
-- [ ] **SEND-07**: Advanced UI exposes persistent pressure-mode connection
-- [ ] **SEND-08**: Pressing the on-screen pad may auto-connect pressure mode without disconnecting on release
+- [x] **SEND-05**: UI mouse release sets `send_amount=0` and leaves `send_connected=true`
+- [x] **SEND-06**: UI pressed overlay follows pressure/pressed state, not connection state
+- [x] **SEND-07**: Advanced UI exposes persistent pressure-mode connection
+- [x] **SEND-08**: Pressing the on-screen pad may auto-connect pressure mode without disconnecting on release
 - [x] **SEND-09**: Firm and Soft curves remain audibly and numerically distinct
 - [x] **SEND-10**: Pressure attack is 3 ms and release is 25 ms
 - [ ] **SEND-11**: Factory pressure presets load at rest with `send_amount=0`
@@ -237,10 +237,10 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | SEND-02 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-03 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-04 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-05 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-06 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-07 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-08 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-05 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-06 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-07 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-08 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-09 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-10 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-11 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
