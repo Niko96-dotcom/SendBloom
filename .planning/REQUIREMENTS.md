@@ -98,13 +98,13 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **DSP-06**: ProperSRC output is pre-cleared
 - [x] **DSP-07**: ProperSRC unwritten samples remain zero
 - [x] **DSP-08**: Existing ProperSRC imaging/HF gates remain green
-- [ ] **DSP-09**: Wet dirt implements the 100 Hz pre-clip high-pass
-- [ ] **DSP-10**: Wet dirt implements a 20 Hz post-clip DC blocker
-- [ ] **DSP-11**: Wet dirt long-run DC offset is below the defined gate
-- [ ] **DSP-12**: Dry path remains unaffected by all wet filtering
-- [ ] **DSP-13**: `dirt_os` stays disabled and unimplemented
-- [ ] **DSP-14**: `authentic_color` remains off by default
-- [ ] **DSP-15**: All factory presets keep `authentic_color=0`
+- [x] **DSP-09**: Wet dirt implements the 100 Hz pre-clip high-pass
+- [x] **DSP-10**: Wet dirt implements a 20 Hz post-clip DC blocker
+- [x] **DSP-11**: Wet dirt long-run DC offset is below the defined gate
+- [x] **DSP-12**: Dry path remains unaffected by all wet filtering
+- [x] **DSP-13**: `dirt_os` stays disabled and unimplemented
+- [x] **DSP-14**: `authentic_color` remains off by default
+- [x] **DSP-15**: All factory presets keep `authentic_color=0`
 
 ### State, Presets, UI, and Branding (`UX`)
 
@@ -303,13 +303,13 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | DSP-06 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-07 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-08 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-09 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-10 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-11 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-12 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-13 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-14 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-15 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-09 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-10 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-11 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-12 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-13 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-14 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-15 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | UX-06 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
 | UX-07 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
 | UX-08 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |

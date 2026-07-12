@@ -22,7 +22,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 - [x] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass (3 plans) (completed 2026-07-12)
 - [x] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption (completed 2026-07-12)
 - [x] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click (completed 2026-07-12)
-- [ ] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC
+- [x] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC (completed 2026-07-12)
 - [ ] **Phase 25: Presets, UI, Branding & Release Truth** - Original SendBloom branding, clean-room scan, truthful docs
 - [ ] **Phase 26: Reference Capture & Sonic Classification** - Capture protocol, metrics tooling, ADR-V1-17 claim status
 - [ ] **Phase 27: RC Verification, Licensing & Distribution** - `v1.0.0-rc0` automated + human release gates
@@ -153,7 +153,7 @@ Plans:
 
 - [x] 24-01-PLAN.md — Continuous fixed 55 ms predelay tap (DSP-01…04)
 - [x] 24-02-PLAN.md — Mod time-invariant + ProperSRC underfill (DSP-05…08)
-- [ ] 24-03-PLAN.md — Wet dirt HP/DC + safety defaults (DSP-09…15)
+- [x] 24-03-PLAN.md — Wet dirt HP/DC + safety defaults (DSP-09…15)
 
 **ADRs**: ADR-V1-12, ADR-V1-13, ADR-V1-14, ADR-V1-15
 
@@ -232,7 +232,7 @@ Plans:
 | 21. Realtime Span Engine & True Bypass | 3/3 | Complete    | 2026-07-12 |
 | 22. MIDI & Per-Sample Control Delivery | 3/3 | Complete    | 2026-07-12 |
 | 23. Input, Level & Gate Truth | 3/3 | Complete    | 2026-07-12 |
-| 24. Reverb State & Wet-Dirt Integrity | 2/3 | In Progress|  |
+| 24. Reverb State & Wet-Dirt Integrity | 3/3 | Complete    | 2026-07-12 |
 | 25. Presets, UI, Branding & Release Truth | 0/TBD | Not started | - |
 | 26. Reference Capture & Sonic Classification | 0/TBD | Not started | - |
 | 27. RC Verification, Licensing & Distribution | 0/TBD | Not started | - |
