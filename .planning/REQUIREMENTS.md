@@ -113,17 +113,17 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **UX-03**: Factory preset XML and `FactoryPresets.cpp` remain identical in recalled state
 - [x] **UX-04**: Pressure presets use connected mode and zero resting pressure
 - [x] **UX-05**: Always-on presets use disconnected mode
-- [ ] **UX-06**: UI explains Pressure Mode without third-party controller naming
-- [ ] **UX-07**: No product-facing source string contains third-party product/brand/controller names
-- [ ] **UX-08**: No shipping resource filename contains those names
-- [ ] **UX-09**: Procedural fallback says `SENDBLOOM`, not the referenced product name
-- [ ] **UX-10**: Exact reference faceplate asset is removed from the shipping binary unless written permission and a separate legal decision are recorded
-- [ ] **UX-11**: A Niko-approved original SendBloom faceplate is the production asset, or the original procedural faceplate ships (`human_needed` for asset approval)
-- [ ] **UX-12**: Legal metadata scan normalizes punctuation/spacing/case and scans filenames
-- [ ] **UX-13**: `design-qa.md` contains portable repository-relative paths and current evidence
-- [ ] **UX-14**: Editor hotspots and state overlays remain hittable and correctly aligned after asset replacement
-- [ ] **UX-15**: Existing preset sessions are explicitly classified as pre-v1 development state; no hidden migration promise is invented
-- [ ] **UX-16**: README and clean-room docs describe only verified behavior
+- [x] **UX-06**: UI explains Pressure Mode without third-party controller naming
+- [x] **UX-07**: No product-facing source string contains third-party product/brand/controller names
+- [x] **UX-08**: No shipping resource filename contains those names
+- [x] **UX-09**: Procedural fallback says `SENDBLOOM`, not the referenced product name
+- [x] **UX-10**: Exact reference faceplate asset is removed from the shipping binary unless written permission and a separate legal decision are recorded
+- [x] **UX-11**: A Niko-approved original SendBloom faceplate is the production asset, or the original procedural faceplate ships (`human_needed` for asset approval)
+- [x] **UX-12**: Legal metadata scan normalizes punctuation/spacing/case and scans filenames
+- [x] **UX-13**: `design-qa.md` contains portable repository-relative paths and current evidence
+- [x] **UX-14**: Editor hotspots and state overlays remain hittable and correctly aligned after asset replacement
+- [x] **UX-15**: Existing preset sessions are explicitly classified as pre-v1 development state; no hidden migration promise is invented
+- [x] **UX-16**: README and clean-room docs describe only verified behavior
 
 ### Reference and Claim Evidence (`REF`)
 
@@ -310,17 +310,17 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | DSP-13 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-14 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-15 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| UX-06 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-07 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-08 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-09 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-10 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-11 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-12 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-13 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-14 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-15 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
-| UX-16 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-06 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-07 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-08 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-09 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-10 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-11 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-12 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-13 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-14 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-15 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-16 | Phase 25 | Complete | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
 | REF-01 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
 | REF-02 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
 | REF-03 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
