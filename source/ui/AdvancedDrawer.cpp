@@ -1,4 +1,5 @@
 #include "AdvancedDrawer.h"
+#include "ParameterCurves.h"
 
 namespace sendbloom::ui
 {
@@ -14,7 +15,11 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
     addChildComponent (gateSensKnob);
     gateSensKnob.setLabelColour (juce::Colour (0xff5fc0d2));
     gateSensKnob.setRangeText ("", "");
-    gateSensKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
+    gateSensKnob.setValueFormatter ([] (double value)
+    {
+        // CORE-07: Gate Sens reports canonical threshold dB.
+        return juce::String (ParameterCurves::inputThresholdDb (static_cast<float> (value)), 2);
+    });
 
     sendFeelLabel.setText ("SEND FEEL", juce::dontSendNotification);
     sendFeelLabel.setJustificationType (juce::Justification::centred);

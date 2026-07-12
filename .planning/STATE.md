@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
-current_phase: 23
-current_phase_name: input, level & gate truth
+current_phase: 24
+current_phase_name: Reverb State & Wet-Dirt Integrity
 current_plan: Not started
 status: planning
-stopped_at: Completed Phase 22 verification (passed)
-last_updated: "2026-07-12T16:47:09.248Z"
+stopped_at: Completed Phase 23 verification (passed)
+last_updated: "2026-07-12T16:51:31.703Z"
 last_activity: 2026-07-12
-last_activity_desc: Phase 22 complete, transitioned to Phase 23
+last_activity_desc: Phase 23 complete, transitioned to Phase 24
 progress:
-  total_phases: 8
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 50
+  total_phases: 9
+  completed_phases: 5
+  total_plans: 15
+  completed_plans: 15
+  percent: 56
 ---
 
 # Project State
@@ -25,23 +25,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 22 complete; ready for Phase 23
+**Current focus:** Phase 23 complete; ready for Phase 24
 
 ## Current Position
 
-Phase: 23 of 27 (input, level & gate truth)
+Phase: 24 of 27 (Reverb State & Wet-Dirt Integrity)
 Current Plan: Not started
 Total Plans in Phase: TBD
 Status: Ready to plan
-Last activity: 2026-07-12 — Phase 22 complete, transitioned to Phase 23
+Last activity: 2026-07-12 — Phase 23 complete, transitioned to Phase 24
 
-Progress: [████░░░░░░] 44%
+Progress: [█████░░░░░] 56%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 12
+- Total plans completed: 15
 - Average duration: ~10 min
 - Total execution time: ~0.6 hours
 
@@ -53,6 +53,7 @@ Progress: [████░░░░░░] 44%
 | 20 | 3 | - | - |
 | 21 | 3 | - | - |
 | 22 | 3 | - | - |
+| 23 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -61,6 +62,7 @@ Progress: [████░░░░░░] 44%
 
 *Updated after each plan completion*
 | Phase 22 P01–P03 | ~25 min combined | MIDI purity + sample-accurate + per-sample |
+| Phase 23 P01–P03 | ~20 min combined | Input anchors + wet Level + PostHard ramp |
 
 ## Accumulated Context
 
@@ -77,6 +79,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 22]: MIDI target persists across blocks; span = min(..., distanceToNextCc1)
 - [Phase 22]: GatedBloomChain consumes per-sample distn/send/threshold arrays (ADR-V1-06)
 - [Phase 22]: MidiSendAmountTest + ReleaseTruth MIDI updated to ADR-V1-03 purity
+- [Phase 23]: inputGainDb = −9+18*smoothstep; UI/Gate Sens formatters call ParameterCurves
+- [Phase 23]: Level wet-only (dry=1); removed dryGain/levelDryGain
+- [Phase 23]: PostHard 0.75 ms linear close ramp (ADR-V1-11)
 
 ### Pending Todos
 
@@ -86,15 +91,15 @@ None yet.
 
 - Phase 27 blocked until Phases 19–25 automated requirements are green
 - Several REL/REF/UX gates require human evidence (`human_needed`)
-- PostHard / Input anchors / shipping remain red until Phases 23/25
+- Shipping-policy remains red until Phase 25
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T16:45:00.000Z
-**Stopped At:** Completed Phase 22 verification (passed)
+**Last session:** 2026-07-12T16:55:00.000Z
+**Stopped At:** Completed Phase 23 verification (passed)
 **Resume File:** None
 
-**Next action:** `/gsd-discuss-phase 23` or `/gsd-plan-phase 23` (Input, Level & Gate Truth)
+**Next action:** `/gsd-discuss-phase 24` or `/gsd-plan-phase 24` (Reverb State & Wet-Dirt Integrity)
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`

@@ -1,8 +1,10 @@
 #include <ParameterSnapshot.h>
 #include <ParameterIDs.h>
 #include <PluginProcessor.h>
+#include <juce_audio_basics/juce_audio_basics.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <cmath>
 
 TEST_CASE ("ParameterSnapshot capture applies curve mappings", "[parm][snapshot]")
 {
@@ -21,7 +23,7 @@ TEST_CASE ("ParameterSnapshot capture applies curve mappings", "[parm][snapshot]
 
     REQUIRE (snap.rt60Seconds == Catch::Approx (sendbloom::ParameterCurves::sizeToRT60 (0.5f)));
     REQUIRE (snap.distnBlend == Catch::Approx (1.0f));
-    REQUIRE (snap.wetGain == Catch::Approx (snap.dryGain).margin (1e-5f));
+    REQUIRE (snap.wetGain == Catch::Approx (std::sin (juce::MathConstants<float>::halfPi * 0.5f)).margin (1e-5f));
     REQUIRE (snap.sendGain == Catch::Approx (1.0f));
 }
 

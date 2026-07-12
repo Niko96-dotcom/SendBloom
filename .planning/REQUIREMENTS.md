@@ -69,19 +69,19 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### Input, Level, Gate, Bypass (`CORE`)
 
-- [ ] **CORE-01**: Input mapping is `-9/0/+9 dB` at `0/0.5/1`
-- [ ] **CORE-02**: Input display calls the canonical DSP curve
-- [ ] **CORE-03**: Increasing Input increases wet-path drive
-- [ ] **CORE-04**: Increasing Input increases the detector level at fixed raw input
-- [ ] **CORE-05**: Dry tap remains before Input gain
-- [ ] **CORE-06**: Gate Sens remains an advanced parameter using the existing ID
-- [ ] **CORE-07**: Gate Sens display reports the canonical threshold in dB
-- [ ] **CORE-08**: Level changes wet return only
-- [ ] **CORE-09**: Dead dry-gain fields/smoothers/tests are removed
-- [ ] **CORE-10**: PostHard close uses a 0.75 ms ramp, not a one-sample snap
-- [ ] **CORE-11**: PostHard reaches zero no later than 1 ms after the close command
-- [ ] **CORE-12**: Post gate still chops wet within 15 ms after silence onset
-- [ ] **CORE-13**: PreSoft retains its long unobtrusive close behavior
+- [x] **CORE-01**: Input mapping is `-9/0/+9 dB` at `0/0.5/1`
+- [x] **CORE-02**: Input display calls the canonical DSP curve
+- [x] **CORE-03**: Increasing Input increases wet-path drive
+- [x] **CORE-04**: Increasing Input increases the detector level at fixed raw input
+- [x] **CORE-05**: Dry tap remains before Input gain
+- [x] **CORE-06**: Gate Sens remains an advanced parameter using the existing ID
+- [x] **CORE-07**: Gate Sens display reports the canonical threshold in dB
+- [x] **CORE-08**: Level changes wet return only
+- [x] **CORE-09**: Dead dry-gain fields/smoothers/tests are removed
+- [x] **CORE-10**: PostHard close uses a 0.75 ms ramp, not a one-sample snap
+- [x] **CORE-11**: PostHard reaches zero no later than 1 ms after the close command
+- [x] **CORE-12**: Post gate still chops wet within 15 ms after silence onset
+- [x] **CORE-13**: PreSoft retains its long unobtrusive close behavior
 - [x] **CORE-14**: Settled bypass is channel-preserving
 - [x] **CORE-15**: Settled bypass is unity within floating tolerance
 - [x] **CORE-16**: Settled bypass ignores Input, Distn, Gate, Level, and Output settings
@@ -282,19 +282,19 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | RT-04 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[RT-04] |
 | RT-06 | Phase 22 | Complete | tests/V1ContractPerSampleControlsTest.cpp#[per-sample] |
 | RT-07 | Phase 22 | Complete | tests/V1ContractPerSampleControlsTest.cpp#[per-sample] |
-| CORE-01 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-02 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-03 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-04 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-05 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-06 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-07 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-08 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-09 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-10 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-11 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-12 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
-| CORE-13 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-01 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-02 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-03 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-04 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-05 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-06 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-07 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-08 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-09 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-10 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-11 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-12 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-13 | Phase 23 | Complete | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
 | DSP-01 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-02 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-03 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |

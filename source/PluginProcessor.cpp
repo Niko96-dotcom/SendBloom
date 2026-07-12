@@ -309,7 +309,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
             ParameterCurves::inputThresholdDb (thresholdNorm);
         bypassWetScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextBypassWetMix();
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
-        (void) smoothedBank.getNextLevelDryGain();
         const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
         // authenticColorTarget smoother is no longer the request trigger (ADR-V1-07).
         (void) smoothedBank.getNextAuthenticColorTarget();

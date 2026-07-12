@@ -19,18 +19,19 @@ TEST_CASE ("distnBlend uses pow 2.8 curve", "[curves][parm]")
     REQUIRE (distnBlend (0.25f) == Catch::Approx (std::pow (0.25f, 2.8f)));
 }
 
-TEST_CASE ("level equal-power at 0.5", "[curves][parm]")
+TEST_CASE ("level equal-power wet-only at 0.5", "[curves][parm]")
 {
     float dry {}, wet {};
     levelEqualPower (0.5f, dry, wet);
-    REQUIRE (dry == Catch::Approx (wet).margin (1e-5f));
-    REQUIRE (dry == Catch::Approx (std::sin (juce::MathConstants<float>::halfPi * 0.5f)).margin (1e-5f));
+    REQUIRE (dry == Catch::Approx (1.0f).margin (1e-5f));
+    REQUIRE (wet == Catch::Approx (std::sin (juce::MathConstants<float>::halfPi * 0.5f)).margin (1e-5f));
 }
 
-TEST_CASE ("inputGainDb smoothstep mapping", "[curves][parm]")
+TEST_CASE ("inputGainDb ADR-V1-08 anchors", "[curves][parm]")
 {
-    REQUIRE (inputGainDb (0.0f) == Catch::Approx (9.0f));
-    REQUIRE (inputGainDb (1.0f) == Catch::Approx (-3.0f));
+    REQUIRE (inputGainDb (0.0f) == Catch::Approx (-9.0f).margin (1e-4f));
+    REQUIRE (inputGainDb (0.5f) == Catch::Approx (0.0f).margin (1e-4f));
+    REQUIRE (inputGainDb (1.0f) == Catch::Approx (9.0f).margin (1e-4f));
 }
 
 TEST_CASE ("inputThresholdDb pow skew mapping", "[curves][parm]")

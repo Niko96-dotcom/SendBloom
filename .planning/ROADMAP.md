@@ -21,7 +21,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 - [x] **Phase 20: Pressure Send State Truth** - Dry-at-rest pressure mode with correct UI/preset resting semantics (completed 2026-07-12)
 - [x] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass (3 plans) (completed 2026-07-12)
 - [x] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption (completed 2026-07-12)
-- [ ] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click
+- [x] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click (completed 2026-07-12)
 - [ ] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC
 - [ ] **Phase 25: Presets, UI, Branding & Release Truth** - Original SendBloom branding, clean-room scan, truthful docs
 - [ ] **Phase 26: Reference Capture & Sonic Classification** - Capture protocol, metrics tooling, ADR-V1-17 claim status
@@ -116,6 +116,8 @@ Plans:
 
 **ADRs**: ADR-V1-03, ADR-V1-06
 
+### Phase 23: Input, Level & Gate Truth
+
 **Goal**: Input, Level, and Gate controls agree with their labels — clockwise Input drives wet harder, Level scales wet only, PostHard is brutal but de-clicked.
 **Depends on**: Phase 22
 **Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, CORE-08, CORE-09, CORE-10, CORE-11, CORE-12, CORE-13
@@ -125,7 +127,13 @@ Plans:
   2. Level changes wet return only; dead dry-gain fields/smoothers/tests are gone; Gate Sens remains advanced with existing ID and canonical dB display
   3. PostHard closes with a 0.75 ms ramp (not a one-sample snap), reaches zero within 1 ms, and still chops wet within 15 ms after silence; PreSoft retains long unobtrusive close
 
-**Plans**: TBD
+**Plans**: 3/3 plans complete
+Plans:
+
+- [x] 23-01-PLAN.md — Canonical Input −9/0/+9 + display truth (CORE-01…05)
+- [x] 23-02-PLAN.md — Wet-only Level + Gate Sens dB (CORE-06…09)
+- [x] 23-03-PLAN.md — PostHard 0.75 ms de-click ramp (CORE-10…13)
+
 **UI hint**: yes
 **ADRs**: ADR-V1-08, ADR-V1-09, ADR-V1-11
 
@@ -217,7 +225,7 @@ Plans:
 | 20. Pressure Send State Truth | 3/3 | Complete    | 2026-07-12 |
 | 21. Realtime Span Engine & True Bypass | 3/3 | Complete    | 2026-07-12 |
 | 22. MIDI & Per-Sample Control Delivery | 3/3 | Complete    | 2026-07-12 |
-| 23. Input, Level & Gate Truth | 0/TBD | Not started | - |
+| 23. Input, Level & Gate Truth | 3/3 | Complete    | 2026-07-12 |
 | 24. Reverb State & Wet-Dirt Integrity | 0/TBD | Not started | - |
 | 25. Presets, UI, Branding & Release Truth | 0/TBD | Not started | - |
 | 26. Reference Capture & Sonic Classification | 0/TBD | Not started | - |

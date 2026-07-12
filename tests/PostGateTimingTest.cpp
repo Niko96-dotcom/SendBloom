@@ -61,17 +61,22 @@ TEST_CASE ("PostHard gate release budget under 15 ms", "[gate][NoiseGate][TEST-0
     gate.process (openThresh * 2.0f, -40.0f);
     REQUIRE (gate.getIsOpen());
 
-    int samplesToClose = 0;
+    int samplesToClosed = 0;
+    bool reachedFloor = false;
 
     for (int i = 0; i < kFifteenMsSamples; ++i)
     {
         gate.process (0.0f, -40.0f);
-        ++samplesToClose;
+        ++samplesToClosed;
 
-        if (! gate.getIsOpen())
+        if (! gate.getIsOpen() && gate.getGain() <= 1.0e-4f)
+        {
+            reachedFloor = true;
             break;
+        }
     }
 
-    REQUIRE (samplesToClose < kFifteenMsSamples);
+    REQUIRE (samplesToClosed < kFifteenMsSamples);
+    REQUIRE (reachedFloor);
     REQUIRE (gate.getGain() == Catch::Approx (0.0f).margin (1e-4f));
 }

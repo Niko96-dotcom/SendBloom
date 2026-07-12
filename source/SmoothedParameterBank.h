@@ -16,7 +16,6 @@ public:
         sizeNorm.reset (sampleRate, 0.050);
         inputThresholdNorm.reset (sampleRate, 0.050);
         levelWetGain.reset (sampleRate, 0.020);
-        levelDryGain.reset (sampleRate, 0.020);
         distnBlend.reset (sampleRate, 0.020);
         // sendGain smoothing removed — PressureController owns attack/release (ADR-V1-04)
         darkModeTarget.reset (sampleRate, 0.015);
@@ -31,7 +30,6 @@ public:
         sizeNorm.setTargetValue (snap.sizeNorm);
         inputThresholdNorm.setTargetValue (snap.inputThresholdNorm);
         levelWetGain.setTargetValue (snap.wetGain);
-        levelDryGain.setTargetValue (snap.dryGain);
         distnBlend.setTargetValue (snap.distnBlend);
         darkModeTarget.setTargetValue (snap.darkMode ? 1.0f : 0.0f);
         authenticColorTarget.setTargetValue (snap.authenticColor ? 1.0f : 0.0f);
@@ -45,7 +43,6 @@ public:
         sizeNorm.setCurrentAndTargetValue (sizeNorm.getTargetValue());
         inputThresholdNorm.setCurrentAndTargetValue (inputThresholdNorm.getTargetValue());
         levelWetGain.setCurrentAndTargetValue (levelWetGain.getTargetValue());
-        levelDryGain.setCurrentAndTargetValue (levelDryGain.getTargetValue());
         distnBlend.setCurrentAndTargetValue (distnBlend.getTargetValue());
         darkModeTarget.setCurrentAndTargetValue (darkModeTarget.getTargetValue());
         authenticColorTarget.setCurrentAndTargetValue (authenticColorTarget.getTargetValue());
@@ -57,7 +54,6 @@ public:
     float getNextSizeNorm() noexcept { return sizeNorm.getNextValue(); }
     float getNextInputThresholdNorm() noexcept { return inputThresholdNorm.getNextValue(); }
     float getNextLevelWetGain() noexcept { return levelWetGain.getNextValue(); }
-    float getNextLevelDryGain() noexcept { return levelDryGain.getNextValue(); }
     float getNextDistnBlend() noexcept { return distnBlend.getNextValue(); }
     float getNextDarkModeTarget() noexcept { return darkModeTarget.getNextValue(); }
     float getNextAuthenticColorTarget() noexcept { return authenticColorTarget.getNextValue(); }
@@ -71,7 +67,6 @@ private:
     juce::SmoothedValue<float> sizeNorm;
     juce::SmoothedValue<float> inputThresholdNorm;
     juce::SmoothedValue<float> levelWetGain;
-    juce::SmoothedValue<float> levelDryGain;
     juce::SmoothedValue<float> distnBlend;
     juce::SmoothedValue<float> darkModeTarget;
     juce::SmoothedValue<float> authenticColorTarget;

@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 #include "FactoryPresets.h"
+#include "ParameterCurves.h"
 #include "ui/PedalFaceplatePaint.h"
 
 #include <cmath>
@@ -21,10 +22,11 @@ juce::String upperPresetName (int index)
     return FactoryPresets::getPresetName (index).toUpperCase();
 }
 
-juce::String formatSignedDbFromNorm (double value)
+juce::String formatInputGainDb (double norm)
 {
-    const auto db = (0.5 - value) * 18.0;
-    if (std::abs (db) < 0.005)
+    // CORE-02 / ADR-V1-08: display must call the canonical DSP curve.
+    const auto db = ParameterCurves::inputGainDb (static_cast<float> (norm));
+    if (std::abs (db) < 0.005f)
         return "-0.00";
 
     return juce::String (db, 2);
@@ -86,7 +88,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     lvlKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
     sizeKnob.setValueFormatter ([] (double value) { return juce::String (1.0 + value * 0.2, 2); });
     distnKnob.setValueFormatter ([] (double value) { return juce::String (value * 100.0, 2); });
-    inKnob.setValueFormatter ([] (double value) { return formatSignedDbFromNorm (value); });
+    inKnob.setValueFormatter ([] (double value) { return formatInputGainDb (value); });
     outKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
 
     darkToggle.setLookAndFeel (&transparentControls);

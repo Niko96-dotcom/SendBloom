@@ -17,7 +17,6 @@ struct ParameterSnapshot
     float rt60Seconds {};
     float levelNorm {};
     float wetGain {};
-    float dryGain {};
     float distnNorm {};
     float distnBlend {};
     float outputGainDb {};
@@ -47,7 +46,10 @@ struct ParameterSnapshot
         s.rt60Seconds = ParameterCurves::sizeToRT60 (s.sizeNorm);
 
         s.levelNorm = apvts.getRawParameterValue (ParameterIDs::level)->load();
-        ParameterCurves::levelEqualPower (s.levelNorm, s.dryGain, s.wetGain);
+        {
+            float dryUnity = 1.0f;
+            ParameterCurves::levelEqualPower (s.levelNorm, dryUnity, s.wetGain);
+        }
 
         s.distnNorm = apvts.getRawParameterValue (ParameterIDs::distn)->load();
         s.distnBlend = ParameterCurves::distnBlend (s.distnNorm);

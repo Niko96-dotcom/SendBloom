@@ -9,11 +9,12 @@
 namespace
 {
 
-float sin3dBDryWetSum (float dryTap, float wetSample, float levelNorm) noexcept
+float legacyDualScaledEqualPowerSum (float dryTap, float wetSample, float levelNorm) noexcept
 {
-    float dryGain = 0.0f;
-    float wetGain = 0.0f;
-    sendbloom::ParameterCurves::levelEqualPower (levelNorm, dryGain, wetGain);
+    // Pre-ADR-V1-09 dual-sided equal-power (for regression contrast only).
+    constexpr auto halfPi = juce::MathConstants<float>::halfPi;
+    const auto dryGain = std::sin (halfPi * (1.0f - levelNorm));
+    const auto wetGain = std::sin (halfPi * levelNorm);
     return dryTap * dryGain + wetSample * wetGain;
 }
 
@@ -67,8 +68,9 @@ TEST_CASE ("ParallelWetMixer differs from dual-scaled equal-power sum", "[chain]
     sendbloom::ParameterCurves::levelEqualPower (levelNorm, dryGain, wetGain);
 
     const auto parallelMix = sendbloom::ParallelWetMixer::mix (dryTap, wetSample, wetGain);
-    const auto dualScaled = sin3dBDryWetSum (dryTap, wetSample, levelNorm);
+    const auto dualScaled = legacyDualScaledEqualPowerSum (dryTap, wetSample, levelNorm);
 
+    REQUIRE (dryGain == Catch::Approx (1.0f).margin (1e-5f));
     REQUIRE (wetGain > 0.0f);
     REQUIRE (parallelMix != Catch::Approx (dualScaled).margin (1e-4f));
     REQUIRE (parallelMix == Catch::Approx (dryTap + wetSample * wetGain).margin (1e-5f));
