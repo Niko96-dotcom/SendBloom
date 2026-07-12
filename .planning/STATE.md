@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Ready to plan Phase 19 — Baseline, Contracts & Failure Harness
+**Current focus:** Phase 19 planned — execute 19-01 (cmake restore + baseline)
 
 ## Current Position
 
 Phase: 19 of 27 (Baseline, Contracts & Failure Harness)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-07-12 — Roadmap created (Phases 19–27)
+Plan: 19-01 (next)
+Status: Planned — 3 plans ready (19-01..19-03)
+Last activity: 2026-07-12 — Phase 19 plans created
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -70,10 +70,11 @@ None yet.
 
 - Phase 27 blocked until Phases 19–25 automated requirements are green
 - Several REL/REF/UX gates require human evidence (`human_needed`)
+- Phase 19 Wave 0: `cmake/` submodule files deleted locally; parent gitlink points at unreachable `38bc0f5` — restore to reachable SHA with `Tests.cmake` (e.g. `d5cb9b3`) before metrics/contracts
 
 ## Session Continuity
 
-**Next action:** `/gsd-plan-phase 19` — Baseline, Contracts & Failure Harness
+**Next action:** `/gsd-execute-phase 19` — start with 19-01 (cmake restore + baseline)
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`
