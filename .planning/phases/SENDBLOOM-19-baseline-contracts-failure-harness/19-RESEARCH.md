@@ -376,21 +376,19 @@ Factory baseline truth to record (not fix): pressure presets `Firm_Pressure` / `
 
 **If A1 materializes:** Still ship APVTS purity + source-policy `sendParam->store` scan in Phase 19; document DSP-effect half as blocked until RT MIDI exists.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Submodule pointer repair scope**
+1. **Submodule pointer repair scope** — **RESOLVED**
    - What we know: local `cmake/` files deleted; parent records unreachable `38bc0f5`; `d5cb9b3` has `Tests.cmake`.
-   - What's unclear: whether CI currently relies on a different machine state / cached deps.
-   - Recommendation: Wave 0 task — restore files + align submodule SHA before any baseline metrics capture.
+   - Plan choice: Wave-0 restore in **19-01 Task 1** — restore submodule to a reachable SHA that includes `Tests.cmake` (e.g. `d5cb9b3`), realign the parent gitlink, then rediscover tests via `ctest -N` before baseline metrics capture.
 
-2. **MIDI §8.4 “DSP pressure changes” without RT path**
+2. **MIDI §8.4 “DSP pressure changes” without RT path** — **RESOLVED**
    - What we know: today CC1 only writes APVTS; no separate RT modulation lane yet.
-   - What's unclear: whether Phase 19 must fail only purity, or also fail a positive DSP-effect assertion.
-   - Recommendation: Prefer purity + source scan now; note positive DSP half as Phase 22 companion (A1).
+   - Plan choice: Phase 19 requires the MIDI APVTS **purity** contract plus **source scan** (no `sendParam->store` / raw APVTS write in `processBlock`). The positive DSP-effect / pressure-companion half of §8.4 is **deferred to Phase 22** (A1).
 
-3. **Single vs split contract translation units**
-   - Discretion: one `V1ContractHarnessTest.cpp` vs per-defect files.
-   - Recommendation: Per-defect files for clearer ctest names and parallel plan execution.
+3. **Single vs split contract translation units** — **RESOLVED**
+   - Discretion was: one `V1ContractHarnessTest.cpp` vs per-defect files.
+   - Plan choice: **per-defect dedicated `V1Contract*.cpp` files** as specified in **19-02** (clearer Catch2 filters, parallel task ownership, one contract per confirmed defect class).
 
 ## Environment Availability
 
