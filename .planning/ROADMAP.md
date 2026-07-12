@@ -19,7 +19,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 
 - [x] **Phase 19: Baseline, Contracts & Failure Harness** - Freeze truth, map requirements, add failing defect tests and durable verifier (completed 2026-07-12)
 - [x] **Phase 20: Pressure Send State Truth** - Dry-at-rest pressure mode with correct UI/preset resting semantics (completed 2026-07-12)
-- [ ] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass
+- [ ] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass (3 plans)
 - [ ] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption
 - [ ] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click
 - [ ] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC
@@ -87,7 +87,12 @@ Plans:
   4. Settled bypass preserves each input channel at unity within floating tolerance and ignores Input, Distn, Gate, Level, and Output; transitions remain click-bounded; engaged mono-first behavior unchanged
   5. Authentic-mode changes request exactly one engine target transition per parameter change; reported latency stays zero under ADR-003; crossfade begins in the first block after change, converges after rapid toggles, and resets only the idle engine with zero allocations; 10,000-block stress stays finite
 
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 21-01-PLAN.md — Span/no-alloc engine + oversized wet parity (RT-01/02/03/05/15)
+- [ ] 21-02-PLAN.md — ADR-V1-10 true bypass unity + click bounds (CORE-14…18)
+- [ ] 21-03-PLAN.md — Authentic snapshot edge + stress (RT-08…14)
+
 **ADRs**: ADR-V1-05, ADR-V1-07, ADR-V1-10
 
 ### Phase 22: MIDI & Per-Sample Control Delivery
@@ -204,8 +209,8 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 19. Baseline, Contracts & Failure Harness | 3/3 | Complete    | 2026-07-12 |
-| 20. Pressure Send State Truth | 3/3 | Complete   | 2026-07-12 |
-| 21. Realtime Span Engine & True Bypass | 0/TBD | Not started | - |
+| 20. Pressure Send State Truth | 3/3 | Complete    | 2026-07-12 |
+| 21. Realtime Span Engine & True Bypass | 0/3 | Planned | - |
 | 22. MIDI & Per-Sample Control Delivery | 0/TBD | Not started | - |
 | 23. Input, Level & Gate Truth | 0/TBD | Not started | - |
 | 24. Reverb State & Wet-Dirt Integrity | 0/TBD | Not started | - |
