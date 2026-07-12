@@ -5,11 +5,11 @@ milestone_name: Interaction Truth, Realtime Safety & Release Candidate
 current_phase: 21
 current_phase_name: Realtime Span Engine & True Bypass
 current_plan: 3
-status: verifying
+status: ready_for_verification
 stopped_at: Completed 21-03-PLAN.md
 last_updated: "2026-07-12T16:28:54.163Z"
 last_activity: 2026-07-12
-last_activity_desc: Completed 21-01 span engine / oversized wet parity
+last_activity_desc: Completed 21-03 authentic snapshot edge / 10k stress
 progress:
   total_phases: 9
   completed_phases: 3
@@ -25,17 +25,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 21 — Plan 01 complete; Plan 02 (true bypass) next
+**Current focus:** Phase 21 — all 3 plans complete; ready for verification
 
 ## Current Position
 
 Phase: 21 of 27 (Realtime Span Engine & True Bypass)
 Current Plan: 3
 Total Plans in Phase: 3
-Status: Executing Plan 01
-Last activity: 2026-07-12 — Completed 21-01 span engine / oversized wet parity
+Status: Ready for verification
+Last activity: 2026-07-12 — Completed 21-03 authentic snapshot edge / 10k stress
 
-Progress: [████████░░] 78%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -103,7 +103,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 21]: OutputStage only on engaged path before BypassCrossfade::mixSample (21-02)
 - [Phase 21]: extended_stereo off: mono-first engaged preserved; bypass dry per-channel (CORE-18)
 - [Phase 21]: CORE-17: unit ramp + cheap plugin mid-stream bypass click bound
-- [Phase ?]: Block-start authentic snapshot edge replaces 15 ms smoother 0.5 threshold (21-03)
+- [Phase 21]: Block-start authentic snapshot edge replaces 15 ms smoother 0.5 threshold (21-03)
 - [Phase 21]: Left authenticColorTarget smoother drained but unused as request trigger (21-03)
 - [Phase 21]: GatedBloomChain::isCrossfading() exposed for RT-08/10/11 observability (21-03)
 
