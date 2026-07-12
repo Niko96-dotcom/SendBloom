@@ -1,23 +1,28 @@
 # SendBloom RC0 Release Checklist
 
 **Milestone:** v1.0 RC0  
-**Date:** 2026-07-07  
+**Date:** 2026-07-07 (honesty model updated 2026-07-12 for Phase 19)  
 **Scope:** Honest pre-tag gate — automated checks verified locally on macOS unless noted.
 
-## Pre-Release Automated Gates (macOS local — verified 2026-07-07)
+**Durable automated entry:** `bash scripts/verify-v1.sh` (defaults `BUILD_DIR=Builds`). Discovers ctest suite size at runtime, prints a truthful RED/GREEN status table, and labels human-only gates `human_needed`. Do **not** hard-code suite totals here or in scripts (BASE-06).
 
-- [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`)
+## Pre-Release Automated Gates (macOS local)
+
+Historical note: legal/build/pluginval items below were verified locally on 2026-07-07. Re-run via `scripts/verify-v1.sh` before promoting a tag; record the **runtime-discovered** ctest count + date when re-verified.
+
+- [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`) — also invoked by `verify-v1.sh`
 - [x] Release AU + VST3 build succeeds (`cmake --build Builds --config Release`)
-- [x] Full Catch2 suite passes (`ctest --test-dir Builds -C Release --output-on-failure`) — **113/113** (macOS local, 2026-07-07)
-- [x] pluginval strictness **10** passes on Release **VST3** (macOS local)
+- [ ] Full Catch2 suite via ctest / `verify-v1.sh` — **do not claim a fixed N/N total**. Run `ctest --test-dir Builds -N` (or `verify-v1.sh`) and record the discovered count + verification date when green. While Phase 19 `[v1][contract]` failures remain, overall ctest / verify-v1 is expected **RED** — report truthfully; do not flip this box until contracts are fixed in later phases.
+- [x] pluginval strictness **10** passes on Release **VST3** (macOS local, 2026-07-07). Optional re-check: `RUN_PLUGINVAL=1 PLUGINVAL_BIN=… bash scripts/verify-v1.sh`
 - [x] Clean-room positioning documented (`docs/CLEAN_ROOM.md`)
 - [x] `tests/ReleaseTruthTest.cpp` tracked and included in test target
+- [x] ENAB-01 ProperSRC/HF gates (`BUILD_DIR=Builds bash scripts/enab-acceptance-gates.sh`) — also invoked by `verify-v1.sh`
 
-## Not Verified Locally (honest gaps)
+## Not Verified Locally (honest gaps) — human_needed
 
-- [ ] **AU pluginval** — CI does not run pluginval on `.component`; requires manual AU validation or future CI step
-- [ ] **Windows CI matrix** — not run on this machine
-- [ ] **Linux CI matrix** — not run on this machine
+- [ ] **AU pluginval / auval** — `human_needed` (CI does not run pluginval on `.component`; not auto-PASS)
+- [ ] **Windows CI matrix** — `human_needed` when not executed in this run
+- [ ] **Linux CI matrix** — `human_needed` when not executed in this run
 
 ## Artifacts
 
@@ -53,13 +58,19 @@ When **32k Color** (`authentic_color`) is enabled:
 - ProperSRC validated via Phase 18 acceptance gates (`bash scripts/enab-acceptance-gates.sh`); **32k Color remains off by default** until product explicitly enables default-on
 - When **32k Color** is enabled, the ProperSRC path described in **32k Color Truth (VERB-05)** above applies — not production-default until default-on is explicitly approved
 
-## Multi-DAW Smoke (TEST-07) — Human Required, Not Verified
+## Multi-DAW Smoke (TEST-07) — human_needed
 
-- [ ] **Logic** — AU loads, UI renders, audio processes, presets accessible
-- [ ] **Cubase** — VST3 loads, plugin info correct, bypass works
-- [ ] **REAPER** — VST3 loads in FX chain, wet/dry and pressure pad functional
+- [ ] **Logic** — `human_needed` — AU loads, UI renders, audio processes, presets accessible
+- [ ] **Cubase** — `human_needed` — VST3 loads, plugin info correct, bypass works
+- [ ] **REAPER** — `human_needed` — VST3 loads in FX chain, wet/dry and pressure pad functional
 
-These require manual validation in each host before v1.0.0 (non-RC) tag.
+These require manual validation in each host before v1.0.0 (non-RC) tag. Never treat as automated PASS.
+
+## Signing / Notarization / License — human_needed
+
+- [ ] **Developer ID signing** — `human_needed`
+- [ ] **Notarization / stapling** — `human_needed`
+- [ ] **JUCE license decision** — `human_needed`
 
 ## CI Matrix (GitHub Actions — not locally verified here)
 
@@ -67,10 +78,10 @@ CI workflow (`.github/workflows/build_and_test.yml`) runs per OS:
 
 - Legal metadata audit
 - Release build (AU + VST3 on macOS; VST3 on Windows/Linux)
-- Catch2 via ctest
+- Catch2 via ctest (suite size discovered at runtime — not hard-coded in this checklist)
 - pluginval strictness 10 on **VST3 only**
 
-Confirm green CI on `main` before promoting RC0 → v1.0.0.
+Confirm green CI on `main` before promoting RC0 → v1.0.0. Local operators should prefer `bash scripts/verify-v1.sh` for the same automated surface.
 
 ## Version Tag (on human approval after DAW smoke)
 
