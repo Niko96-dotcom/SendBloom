@@ -96,7 +96,7 @@ Each task was committed atomically:
 1. **Task 1: Implement scripts/verify-v1.sh durable gate runner** - `d0c13ef` (feat)
 2. **Task 2: Remove hard-coded suite totals and align checklist honesty** - `4af6b94` (docs)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `1bace94` (docs: complete plan)
 
 ## Files Created/Modified
 
