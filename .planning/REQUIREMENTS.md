@@ -21,19 +21,19 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### Pressure Interaction (`SEND`)
 
-- [ ] **SEND-01**: `send_connected=false` produces always-on wet input
-- [ ] **SEND-02**: `send_connected=true` and pressure 0 produces no new wet input
-- [ ] **SEND-03**: Pressure >0 sends input into the wet path
-- [ ] **SEND-04**: Releasing pressure stops new wet input but preserves existing tail state
+- [x] **SEND-01**: `send_connected=false` produces always-on wet input
+- [x] **SEND-02**: `send_connected=true` and pressure 0 produces no new wet input
+- [x] **SEND-03**: Pressure >0 sends input into the wet path
+- [x] **SEND-04**: Releasing pressure stops new wet input but preserves existing tail state
 - [ ] **SEND-05**: UI mouse release sets `send_amount=0` and leaves `send_connected=true`
 - [ ] **SEND-06**: UI pressed overlay follows pressure/pressed state, not connection state
 - [ ] **SEND-07**: Advanced UI exposes persistent pressure-mode connection
 - [ ] **SEND-08**: Pressing the on-screen pad may auto-connect pressure mode without disconnecting on release
-- [ ] **SEND-09**: Firm and Soft curves remain audibly and numerically distinct
-- [ ] **SEND-10**: Pressure attack is 3 ms and release is 25 ms
+- [x] **SEND-09**: Firm and Soft curves remain audibly and numerically distinct
+- [x] **SEND-10**: Pressure attack is 3 ms and release is 25 ms
 - [ ] **SEND-11**: Factory pressure presets load at rest with `send_amount=0`
-- [ ] **SEND-12**: Disconnecting pressure mode restores ordinary always-on reverb
-- [ ] **SEND-13**: `send_amount` APVTS ID remains unchanged
+- [x] **SEND-12**: Disconnecting pressure mode restores ordinary always-on reverb
+- [x] **SEND-13**: `send_amount` APVTS ID remains unchanged
 - [ ] **SEND-14**: Pressure behavior is invariant across host block sizes
 
 ### MIDI (`MIDI`)
@@ -108,8 +108,8 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### State, Presets, UI, and Branding (`UX`)
 
-- [ ] **UX-01**: Parameter IDs remain unchanged
-- [ ] **UX-02**: Default `send_amount` becomes 0
+- [x] **UX-01**: Parameter IDs remain unchanged
+- [x] **UX-02**: Default `send_amount` becomes 0
 - [ ] **UX-03**: Factory preset XML and `FactoryPresets.cpp` remain identical in recalled state
 - [ ] **UX-04**: Pressure presets use connected mode and zero resting pressure
 - [ ] **UX-05**: Always-on presets use disconnected mode
@@ -233,22 +233,22 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | BASE-06 | Phase 19 | Complete | scripts/verify-v1.sh; 19-BASELINE.md discovered-at-capture |
 | BASE-07 | Phase 19 | Complete | tests/BaselinePresetMetricsTest.cpp#[baseline][metrics]; 19-BASELINE-METRICS.md |
 | BASE-08 | Phase 19 | Complete | scripts/verify-v1.sh human_needed; docs/RELEASE_CHECKLIST.md |
-| SEND-01 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-02 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-03 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-04 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-01 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-02 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-03 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-04 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-05 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-06 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-07 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-08 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-09 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-10 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-09 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-10 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-11 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-12 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-13 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-12 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-13 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-14 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| UX-01 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
-| UX-02 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-01 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-02 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-03 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-04 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-05 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
