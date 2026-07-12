@@ -42,7 +42,7 @@ echo "========================================"
 echo
 
 # --- (a) Legal metadata -------------------------------------------------------
-echo "==> [1/6] Legal metadata audit"
+echo "==> [1/7] Legal metadata audit"
 if bash "$ROOT/scripts/check-legal-metadata.sh"; then
   record_gate "legal-metadata" "PASS" "check-legal-metadata.sh"
 else
@@ -51,8 +51,18 @@ else
 fi
 echo
 
-# --- (b) Configure if needed --------------------------------------------------
-echo "==> [2/6] CMake configure (if needed)"
+# --- (b) Reference claim truth -----------------------------------------------
+echo "==> [2/7] Reference claim truth"
+if bash "$ROOT/scripts/verify-reference-claims.sh"; then
+  record_gate "reference-claims" "PASS" "verify-reference-claims.sh"
+else
+  record_gate "reference-claims" "FAIL" "verify-reference-claims.sh failed"
+  mark_fail
+fi
+echo
+
+# --- (c) Configure if needed --------------------------------------------------
+echo "==> [3/7] CMake configure (if needed)"
 if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
   echo "No CMakeCache.txt — configuring into $BUILD_DIR"
   if cmake -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" "$ROOT"; then
@@ -67,8 +77,8 @@ else
 fi
 echo
 
-# --- (c) Build Tests (Release) ------------------------------------------------
-echo "==> [3/6] cmake --build Tests ($BUILD_TYPE)"
+# --- (d) Build Tests (Release) ------------------------------------------------
+echo "==> [4/7] cmake --build Tests ($BUILD_TYPE)"
 if cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" --target Tests; then
   record_gate "build-Tests" "PASS" "target Tests / $BUILD_TYPE"
 else
@@ -90,8 +100,8 @@ else
 fi
 echo
 
-# --- (d) Full ctest suite (expect red while [v1][contract] exist) -------------
-echo "==> [4/6] ctest full suite ($BUILD_TYPE)"
+# --- (e) Full ctest suite -----------------------------------------------------
+echo "==> [5/7] ctest full suite ($BUILD_TYPE)"
 CTEST_LOG="$(mktemp -t verify-v1-ctest.XXXXXX)"
 ctest --test-dir "$BUILD_DIR" -C "$BUILD_TYPE" --output-on-failure >"$CTEST_LOG" 2>&1
 CTEST_EC=$?
@@ -123,8 +133,8 @@ fi
 rm -f "$CTEST_LOG"
 echo
 
-# --- (e) ENAB acceptance gates ------------------------------------------------
-echo "==> [5/6] ENAB-01 acceptance gates"
+# --- (f) ENAB acceptance gates ------------------------------------------------
+echo "==> [6/7] ENAB-01 acceptance gates"
 if BUILD_DIR="$BUILD_DIR" bash "$ROOT/scripts/enab-acceptance-gates.sh"; then
   record_gate "enab-acceptance" "PASS" "enab-acceptance-gates.sh"
 else
@@ -133,8 +143,8 @@ else
 fi
 echo
 
-# --- (f) Optional pluginval (VST3) --------------------------------------------
-echo "==> [6/6] Optional VST3 pluginval"
+# --- (g) Optional pluginval (VST3) --------------------------------------------
+echo "==> [7/7] Optional VST3 pluginval"
 VST3_PATH="${VST3_PATH:-$BUILD_DIR/SendBloom_artefacts/$BUILD_TYPE/VST3/SendBloom.vst3}"
 if [[ "$RUN_PLUGINVAL" == "1" && -n "$PLUGINVAL_BIN" ]]; then
   if [[ ! -e "$PLUGINVAL_BIN" ]]; then
@@ -194,6 +204,8 @@ echo "- DAW smoke REAPER: human_needed"
 echo "- Developer ID signing: human_needed"
 echo "- Notarization / stapling: human_needed"
 echo "- JUCE license decision: human_needed"
+echo "- Hardware reference grids: human_needed"
+echo "- Blind or level-matched listening review: human_needed"
 echo
 # Note: do not place the token PASS/passed on any human_needed line (BASE-08).
 

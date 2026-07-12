@@ -37,6 +37,7 @@ These are common musician-described behaviors, not proprietary interfaces.
 - Matching is normalized by lowercasing and stripping non-alphanumeric characters (including spaces, hyphens, underscores, and punctuation), so spelling and punctuation variants collapse to the same policy token.
 - Internal citation records are deliberately outside the product-facing scan surface: `.planning/` plus clean-room and release-tracking documents under `docs/` are allowlisted per milestone specification section 14.4 because they must preserve research and audit context.
 - CI runs the legal audit on every build matrix leg.
+- Reference work accepts only user-created audio captures with explicit provenance. The protocol and analysis tools are documented in [`reference-capture-protocol.md`](reference-capture-protocol.md); the sole current ADR-V1-17 classification is recorded in [`../CLAIM_STATUS.md`](../CLAIM_STATUS.md).
 
 ## Commercial Considerations (Post-v1)
 

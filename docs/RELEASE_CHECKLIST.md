@@ -17,12 +17,15 @@ Historical note: legal/build/pluginval items below were verified locally on 2026
 - [x] Clean-room positioning documented (`docs/CLEAN_ROOM.md`)
 - [x] `tests/ReleaseTruthTest.cpp` tracked and included in test target
 - [x] ENAB-01 ProperSRC/HF gates (`BUILD_DIR=Builds bash scripts/enab-acceptance-gates.sh`) — also invoked by `verify-v1.sh`
+- [x] Reference protocol/tooling and single-status claim invariant (`bash scripts/verify-reference-claims.sh`) — status is `original-inspired`
 
 ## Not Verified Locally (honest gaps) — human_needed
 
 - [ ] **AU pluginval / auval** — `human_needed` (CI does not run pluginval on `.component`; not auto-PASS)
 - [ ] **Windows CI matrix** — `human_needed` when not executed in this run
 - [ ] **Linux CI matrix** — `human_needed` when not executed in this run
+- [ ] **Hardware reference grids** — `human_needed`; no hardware captures supplied for Phase 26 closeout
+- [ ] **Blind or level-matched listening review** — `human_needed`; no dated Niko verdict supplied
 
 ## Artifacts
 
