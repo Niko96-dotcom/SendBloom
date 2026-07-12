@@ -30,6 +30,8 @@ public:
         spec.numChannels = 1;
         predelayLine.prepare (spec);
         predelayLine.reset();
+        predelayLine.setDelay (static_cast<float> (SchroederTank32DelayTable::kDarkPredelaySeconds
+                                                    * SchroederTank32DelayTable::kInternalRate));
 
         for (size_t i = 0; i < seriesApfs.size(); ++i)
         {
@@ -88,7 +90,7 @@ public:
         inputAccumulator = 0.0;
         outputHold = 0.0f;
         lastInternalOut = 0.0f;
-        predelaySamples = 0.0f;
+        darkMix_ = 0.0f;
     }
 
 private:
@@ -122,12 +124,9 @@ private:
 
     void updateCoeffs (float rt60Seconds, float darkMix) noexcept
     {
-        const auto mix = juce::jlimit (0.0f, 1.0f, darkMix);
-        const auto predelaySec = mix * SchroederTank32DelayTable::kDarkPredelaySeconds;
-        predelaySamples = predelaySec * static_cast<float> (SchroederTank32DelayTable::kInternalRate);
-        predelayLine.setDelay (predelaySamples);
+        darkMix_ = juce::jlimit (0.0f, 1.0f, darkMix);
 
-        auto dampingHz = juce::jmap (mix,
+        auto dampingHz = juce::jmap (darkMix_,
                                      SchroederTank32DelayTable::kAuthenticBrightDampingHz,
                                      SchroederTank32DelayTable::kDarkDampingHz);
 
@@ -148,13 +147,9 @@ private:
 
     float processTank (float input) noexcept
     {
-        float x = input;
-
-        if (predelaySamples > 0.5f)
-        {
-            predelayLine.pushSample (0, input);
-            x = predelayLine.popSample (0);
-        }
+        predelayLine.pushSample (0, input);
+        const auto delayed = predelayLine.popSample (0);
+        float x = input + darkMix_ * (delayed - input);
 
         for (auto& apf : seriesApfs)
             x = apf.processSample (x);
@@ -205,7 +200,7 @@ private:
     juce::dsp::StateVariableTPTFilter<float> antiImageFilter;
 
     double hostRate_ { 48000.0 };
-    float predelaySamples { 0.0f };
+    float darkMix_ { 0.0f };
     float lfoPhase { 0.0f };
     double inputAccumulator { 0.0 };
     float outputHold { 0.0f };
