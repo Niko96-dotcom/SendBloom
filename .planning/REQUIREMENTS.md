@@ -223,136 +223,136 @@ These constrain implementation; full text lives in the master milestone spec:
 
 Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no duplicates.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| BASE-01 | Phase 19 | Pending |
-| BASE-02 | Phase 19 | Pending |
-| BASE-03 | Phase 19 | Pending |
-| BASE-04 | Phase 19 | Pending |
-| BASE-05 | Phase 19 | Pending |
-| BASE-06 | Phase 19 | Pending |
-| BASE-07 | Phase 19 | Pending |
-| BASE-08 | Phase 19 | Pending |
-| SEND-01 | Phase 20 | Pending |
-| SEND-02 | Phase 20 | Pending |
-| SEND-03 | Phase 20 | Pending |
-| SEND-04 | Phase 20 | Pending |
-| SEND-05 | Phase 20 | Pending |
-| SEND-06 | Phase 20 | Pending |
-| SEND-07 | Phase 20 | Pending |
-| SEND-08 | Phase 20 | Pending |
-| SEND-09 | Phase 20 | Pending |
-| SEND-10 | Phase 20 | Pending |
-| SEND-11 | Phase 20 | Pending |
-| SEND-12 | Phase 20 | Pending |
-| SEND-13 | Phase 20 | Pending |
-| SEND-14 | Phase 20 | Pending |
-| UX-01 | Phase 20 | Pending |
-| UX-02 | Phase 20 | Pending |
-| UX-03 | Phase 20 | Pending |
-| UX-04 | Phase 20 | Pending |
-| UX-05 | Phase 20 | Pending |
-| RT-01 | Phase 21 | Pending |
-| RT-02 | Phase 21 | Pending |
-| RT-03 | Phase 21 | Pending |
-| RT-05 | Phase 21 | Pending |
-| RT-08 | Phase 21 | Pending |
-| RT-09 | Phase 21 | Pending |
-| RT-10 | Phase 21 | Pending |
-| RT-11 | Phase 21 | Pending |
-| RT-12 | Phase 21 | Pending |
-| RT-13 | Phase 21 | Pending |
-| RT-14 | Phase 21 | Pending |
-| RT-15 | Phase 21 | Pending |
-| CORE-14 | Phase 21 | Pending |
-| CORE-15 | Phase 21 | Pending |
-| CORE-16 | Phase 21 | Pending |
-| CORE-17 | Phase 21 | Pending |
-| CORE-18 | Phase 21 | Pending |
-| MIDI-01 | Phase 22 | Pending |
-| MIDI-02 | Phase 22 | Pending |
-| MIDI-03 | Phase 22 | Pending |
-| MIDI-04 | Phase 22 | Pending |
-| MIDI-05 | Phase 22 | Pending |
-| MIDI-06 | Phase 22 | Pending |
-| MIDI-07 | Phase 22 | Pending |
-| MIDI-08 | Phase 22 | Pending |
-| MIDI-09 | Phase 22 | Pending |
-| MIDI-10 | Phase 22 | Pending |
-| RT-04 | Phase 22 | Pending |
-| RT-06 | Phase 22 | Pending |
-| RT-07 | Phase 22 | Pending |
-| CORE-01 | Phase 23 | Pending |
-| CORE-02 | Phase 23 | Pending |
-| CORE-03 | Phase 23 | Pending |
-| CORE-04 | Phase 23 | Pending |
-| CORE-05 | Phase 23 | Pending |
-| CORE-06 | Phase 23 | Pending |
-| CORE-07 | Phase 23 | Pending |
-| CORE-08 | Phase 23 | Pending |
-| CORE-09 | Phase 23 | Pending |
-| CORE-10 | Phase 23 | Pending |
-| CORE-11 | Phase 23 | Pending |
-| CORE-12 | Phase 23 | Pending |
-| CORE-13 | Phase 23 | Pending |
-| DSP-01 | Phase 24 | Pending |
-| DSP-02 | Phase 24 | Pending |
-| DSP-03 | Phase 24 | Pending |
-| DSP-04 | Phase 24 | Pending |
-| DSP-05 | Phase 24 | Pending |
-| DSP-06 | Phase 24 | Pending |
-| DSP-07 | Phase 24 | Pending |
-| DSP-08 | Phase 24 | Pending |
-| DSP-09 | Phase 24 | Pending |
-| DSP-10 | Phase 24 | Pending |
-| DSP-11 | Phase 24 | Pending |
-| DSP-12 | Phase 24 | Pending |
-| DSP-13 | Phase 24 | Pending |
-| DSP-14 | Phase 24 | Pending |
-| DSP-15 | Phase 24 | Pending |
-| UX-06 | Phase 25 | Pending |
-| UX-07 | Phase 25 | Pending |
-| UX-08 | Phase 25 | Pending |
-| UX-09 | Phase 25 | Pending |
-| UX-10 | Phase 25 | Pending |
-| UX-11 | Phase 25 | Pending |
-| UX-12 | Phase 25 | Pending |
-| UX-13 | Phase 25 | Pending |
-| UX-14 | Phase 25 | Pending |
-| UX-15 | Phase 25 | Pending |
-| UX-16 | Phase 25 | Pending |
-| REF-01 | Phase 26 | Pending |
-| REF-02 | Phase 26 | Pending |
-| REF-03 | Phase 26 | Pending |
-| REF-04 | Phase 26 | Pending |
-| REF-05 | Phase 26 | Pending |
-| REF-06 | Phase 26 | Pending |
-| REF-07 | Phase 26 | Pending |
-| REF-08 | Phase 26 | Pending |
-| REF-09 | Phase 26 | Pending |
-| REF-10 | Phase 26 | Pending |
-| REF-11 | Phase 26 | Pending |
-| REF-12 | Phase 26 | Pending |
-| REL-01 | Phase 27 | Pending |
-| REL-02 | Phase 27 | Pending |
-| REL-03 | Phase 27 | Pending |
-| REL-04 | Phase 27 | Pending |
-| REL-05 | Phase 27 | Pending |
-| REL-06 | Phase 27 | Pending |
-| REL-07 | Phase 27 | Pending |
-| REL-08 | Phase 27 | Pending |
-| REL-09 | Phase 27 | Pending |
-| REL-10 | Phase 27 | Pending |
-| REL-11 | Phase 27 | Pending |
-| REL-12 | Phase 27 | Pending |
-| REL-13 | Phase 27 | Pending |
-| REL-14 | Phase 27 | Pending |
-| REL-15 | Phase 27 | Pending |
-| REL-16 | Phase 27 | Pending |
-| REL-17 | Phase 27 | Pending |
-| REL-18 | Phase 27 | Pending |
-| REL-19 | Phase 27 | Pending |
-| REL-20 | Phase 27 | Pending |
+| Requirement | Phase | Status | Verification artifact |
+|-------------|-------|--------|------------------------|
+| BASE-01 | Phase 19 | Pending | .planning/phases/SENDBLOOM-19-baseline-contracts-failure-harness/19-BASELINE.md |
+| BASE-02 | Phase 19 | Pending | .planning/REQUIREMENTS.md |
+| BASE-03 | Phase 19 | Pending | tests/RequirementsTraceabilityTest.cpp#[traceability][BASE-03] |
+| BASE-04 | Phase 19 | Pending | tests/ReleaseTruthTest.cpp; tests/DryPathIntegrityTest.cpp |
+| BASE-05 | Phase 19 | Pending | scripts/verify-v1.sh (Plan 03) |
+| BASE-06 | Phase 19 | Pending | scripts/verify-v1.sh; 19-BASELINE.md discovered-at-capture |
+| BASE-07 | Phase 19 | Pending | tests/BaselinePresetMetricsTest.cpp#[baseline][metrics]; 19-BASELINE-METRICS.md |
+| BASE-08 | Phase 19 | Pending | scripts/verify-v1.sh human_needed; docs/RELEASE_CHECKLIST.md |
+| SEND-01 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-02 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-03 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-04 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-05 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-06 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-07 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-08 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-09 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-10 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-11 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-12 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-13 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-14 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| UX-01 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-02 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-03 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-04 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-05 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| RT-01 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-02 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-03 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-05 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-08 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-09 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-10 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-11 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-12 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-13 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-14 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-15 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| CORE-14 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-15 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-16 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-17 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-18 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| MIDI-01 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-02 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-03 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-04 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-05 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-06 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-07 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-08 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-09 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| MIDI-10 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
+| RT-04 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; RT MIDI purity contracts (Phase 22) |
+| RT-06 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; RT MIDI purity contracts (Phase 22) |
+| RT-07 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; RT MIDI purity contracts (Phase 22) |
+| CORE-01 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-02 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-03 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-04 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-05 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-06 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-07 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-08 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-09 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-10 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-11 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-12 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| CORE-13 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
+| DSP-01 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-02 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-03 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-04 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-05 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-06 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-07 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-08 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-09 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-10 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-11 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-12 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-13 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-14 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-15 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| UX-06 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-07 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-08 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-09 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-10 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-11 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-12 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-13 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-14 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-15 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| UX-16 | Phase 25 | Pending | UX visual/branding gates (Phase 25); docs + human_needed where applicable |
+| REF-01 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-02 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-03 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-04 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-05 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-06 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-07 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-08 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-09 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-10 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-11 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REF-12 | Phase 26 | Pending | docs reference / clean-room artifacts (Phase 26); docs/CLEAN_ROOM.md |
+| REL-01 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-02 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-03 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-04 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-05 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-06 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-07 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-08 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-09 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-10 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-11 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-12 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-13 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-14 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-15 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-16 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-17 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-18 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-19 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
+| REL-20 | Phase 27 | Pending | docs/RELEASE_CHECKLIST.md; scripts/check-legal-metadata.sh; Phase 27 packaging |
 
 **Coverage:**
 - v1 requirements: 128 total (BASE 8 + SEND 14 + MIDI 10 + RT 15 + CORE 18 + DSP 15 + UX 16 + REF 12 + REL 20)
@@ -364,4 +364,4 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 
 ---
 *Requirements defined: 2026-07-12*  
-*Last updated: 2026-07-12 after roadmap creation (exact 1:1 traceability)*
+*Last updated: 2026-07-12 — Phase 19-01 added Verification artifact column (BASE-03)*
