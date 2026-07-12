@@ -141,12 +141,9 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
         pressureController.setFirmFeel (snap.sendFirmFeel);
         pressureController.snapToTarget();
     }
-    lastAuthenticColorSmoothed_ =
-        apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f ? 1.0f : 0.0f;
-
-    const auto authenticOn =
+    requestedAuthenticColor_ =
         apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f;
-    updateReportedLatency (authenticOn);
+    updateReportedLatency (requestedAuthenticColor_);
 }
 
 void PluginProcessor::releaseResources()
@@ -219,6 +216,14 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     pressureController.setMidiPressureTarget (0.0f);
     pressureController.setFirmFeel (snap.sendFirmFeel);
 
+    // ADR-V1-07 / RT-08…11: one engine-crossfade request per authentic snapshot edge.
+    if (snap.authenticColor != requestedAuthenticColor_)
+    {
+        chain.requestEngineCrossfade (snap.authenticColor);
+        updateReportedLatency (snap.authenticColor);
+        requestedAuthenticColor_ = snap.authenticColor;
+    }
+
     const auto numSamples = buffer.getNumSamples();
     int offset = 0;
 
@@ -253,11 +258,9 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
 
     float spanRt60 = 0.0f;
     float spanDark = 0.0f;
-    bool spanAuthentic = false;
+    bool spanAuthentic = snap.authenticColor;
     float spanDistn = 0.0f;
     float spanThresholdDb = 0.0f;
-    float prevAuthenticSmoothed = lastAuthenticColorSmoothed_;
-    bool crossfadeEdgeHandled = false;
 
     for (int sample = 0; sample < span; ++sample)
     {
@@ -271,25 +274,13 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
         (void) smoothedBank.getNextLevelDryGain();
         const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
-        const auto authenticColorTarget = smoothedBank.getNextAuthenticColorTarget();
-        const auto authenticColor = authenticColorTarget > 0.5f;
-
-        if (! crossfadeEdgeHandled
-            && ((prevAuthenticSmoothed <= 0.5f && authenticColorTarget > 0.5f)
-                || (prevAuthenticSmoothed > 0.5f && authenticColorTarget <= 0.5f)))
-        {
-            chain.requestEngineCrossfade (authenticColorTarget > 0.5f);
-            updateReportedLatency (authenticColorTarget > 0.5f);
-            crossfadeEdgeHandled = true;
-        }
-
-        prevAuthenticSmoothed = authenticColorTarget;
+        // authenticColorTarget smoother is no longer the request trigger (ADR-V1-07).
+        (void) smoothedBank.getNextAuthenticColorTarget();
 
         if (sample == 0)
         {
             spanRt60 = ParameterCurves::sizeToRT60 (sizeNorm);
             spanDark = darkModeMix;
-            spanAuthentic = authenticColor;
             spanDistn = distnBlend;
             spanThresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
         }
@@ -304,8 +295,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         envelopeScratch_[static_cast<size_t> (sample)] =
             chain.getEnvelope().process (std::abs (monoScratch_[static_cast<size_t> (sample)]));
     }
-
-    lastAuthenticColorSmoothed_ = prevAuthenticSmoothed;
 
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), span,
                         spanRt60, spanDark, spanAuthentic, spanDistn,
