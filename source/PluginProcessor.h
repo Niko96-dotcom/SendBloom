@@ -62,6 +62,9 @@ public:
     GatedBloomChain chain;
     InputStage inputStage;
 
+    /** ADR-V1-05 control-rate latch quantum (samples). */
+    static constexpr int kControlQuantum = 128;
+
 private:
     std::atomic<bool> clipHoldFlag { false };
     int currentProgramIndex { 0 };
@@ -76,6 +79,10 @@ private:
     float lastAuthenticColorSmoothed_ { 0.0f };
 
     void updateReportedLatency (bool targetAuthenticOn) noexcept;
+    void processSpan (juce::AudioBuffer<float>& buffer,
+                      int offset,
+                      int span,
+                      const ParameterSnapshot& snap) noexcept;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

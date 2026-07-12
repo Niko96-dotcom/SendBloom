@@ -220,85 +220,46 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     pressureController.setFirmFeel (snap.sendFirmFeel);
 
     const auto numSamples = buffer.getNumSamples();
+    int offset = 0;
+
+    while (offset < numSamples)
+    {
+        const auto remaining = numSamples - offset;
+        const auto span = juce::jmin (remaining, preparedMaxBlock_, kControlQuantum);
+        processSpan (buffer, offset, span, snap);
+        offset += span;
+    }
+
+    clipHoldFlag.store (inputStage.isClipHoldActive());
+}
+
+void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
+                                   int offset,
+                                   int span,
+                                   const ParameterSnapshot& snap) noexcept
+{
+    jassert (span > 0);
+    jassert (span <= preparedMaxBlock_);
+    jassert (span <= kControlQuantum);
+    jassert (offset >= 0);
+    jassert (offset + span <= buffer.getNumSamples());
+
     const auto numChannels = juce::jmin (buffer.getNumChannels(), dryBuffer.getNumChannels());
     const auto gatePreSoft = snap.gatePreSoft;
     const auto extendedStereo = snap.extendedStereo;
 
-    // Temporary dry-only oversized path (Task 2 replaces with span engine).
-    // Read dry taps from the host buffer so we never grow dryBuffer on the audio thread.
-    if (numSamples > preparedMaxBlock_)
-    {
-        for (int sample = 0; sample < numSamples; ++sample)
-        {
-            const auto inputGain = smoothedBank.getNextInputGainLinear();
-            const auto sizeNorm = smoothedBank.getNextSizeNorm();
-            const auto distnBlend = smoothedBank.getNextDistnBlend();
-            const auto wetGain = smoothedBank.getNextLevelWetGain();
-            (void) pressureController.processSample();
-            const auto thresholdNorm = smoothedBank.getNextInputThresholdNorm();
-            const auto bypassWet = smoothedBank.getNextBypassWetMix();
-            const auto outputGain = smoothedBank.getNextOutputGainLinear();
-
-            (void) smoothedBank.getNextLevelDryGain();
-            const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
-            (void) smoothedBank.getNextAuthenticColorTarget();
-
-            const auto rt60 = ParameterCurves::sizeToRT60 (sizeNorm);
-            const auto thresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
-            const auto dryMix = 1.0f - bypassWet;
-
-            float monoSum = 0.0f;
-
-            for (int channel = 0; channel < numChannels; ++channel)
-                monoSum += buffer.getReadPointer (channel)[sample];
-
-            monoSum /= static_cast<float> (juce::jmax (1, numChannels));
-            (void) inputStage.processSample (monoSum, inputGain);
-            (void) chain.getEnvelope().process (std::abs (monoSum));
-            (void) rt60;
-            (void) darkModeMix;
-            (void) distnBlend;
-            (void) thresholdDb;
-
-            constexpr auto wet = 0.0f;
-
-            if (extendedStereo)
-            {
-                for (int channel = 0; channel < numChannels; ++channel)
-                {
-                    const auto dryTap = buffer.getReadPointer (channel)[sample];
-                    const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
-                    const auto preOutput = dryTap * dryMix + mixed * bypassWet;
-                    buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
-                }
-            }
-            else
-            {
-                const auto mixed = ParallelWetMixer::mix (monoSum, wet, wetGain);
-                const auto preOutput = monoSum * dryMix + mixed * bypassWet;
-                const auto out = OutputStage::processSample (preOutput, outputGain);
-
-                for (int channel = 0; channel < numChannels; ++channel)
-                    buffer.getWritePointer (channel)[sample] = out;
-            }
-        }
-
-        clipHoldFlag.store (inputStage.isClipHoldActive());
-        return;
-    }
-
     for (int channel = 0; channel < numChannels; ++channel)
-        dryBuffer.copyFrom (channel, 0, buffer, channel, 0, numSamples);
+        dryBuffer.copyFrom (channel, 0, buffer, channel, offset, span);
 
-    float blockStartRt60 = 0.0f;
-    float blockStartDark = 0.0f;
-    bool blockStartAuthentic = false;
-    float blockStartDistn = 0.0f;
-    float blockStartThresholdDb = 0.0f;
+    float spanRt60 = 0.0f;
+    float spanDark = 0.0f;
+    bool spanAuthentic = false;
+    float spanDistn = 0.0f;
+    float spanThresholdDb = 0.0f;
     float prevAuthenticSmoothed = lastAuthenticColorSmoothed_;
     bool crossfadeEdgeHandled = false;
 
-    for (int sample = 0; sample < numSamples; ++sample)
+    for (int sample = 0; sample < span; ++sample)
     {
         const auto inputGain = smoothedBank.getNextInputGainLinear();
         const auto sizeNorm = smoothedBank.getNextSizeNorm();
@@ -326,11 +287,11 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
         if (sample == 0)
         {
-            blockStartRt60 = ParameterCurves::sizeToRT60 (sizeNorm);
-            blockStartDark = darkModeMix;
-            blockStartAuthentic = authenticColor;
-            blockStartDistn = distnBlend;
-            blockStartThresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
+            spanRt60 = ParameterCurves::sizeToRT60 (sizeNorm);
+            spanDark = darkModeMix;
+            spanAuthentic = authenticColor;
+            spanDistn = distnBlend;
+            spanThresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
         }
 
         float monoSum = 0.0f;
@@ -338,7 +299,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         for (int channel = 0; channel < numChannels; ++channel)
             monoSum += dryBuffer.getReadPointer (channel)[sample];
 
-        monoSum /= static_cast<float> (numChannels);
+        monoSum /= static_cast<float> (juce::jmax (1, numChannels));
         monoScratch_[static_cast<size_t> (sample)] = inputStage.processSample (monoSum, inputGain);
         envelopeScratch_[static_cast<size_t> (sample)] =
             chain.getEnvelope().process (std::abs (monoScratch_[static_cast<size_t> (sample)]));
@@ -346,11 +307,11 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     lastAuthenticColorSmoothed_ = prevAuthenticSmoothed;
 
-    chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), numSamples,
-                        blockStartRt60, blockStartDark, blockStartAuthentic, blockStartDistn,
-                        sendGainScratch_.data(), gatePreSoft, blockStartThresholdDb);
+    chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), span,
+                        spanRt60, spanDark, spanAuthentic, spanDistn,
+                        sendGainScratch_.data(), gatePreSoft, spanThresholdDb);
 
-    for (int sample = 0; sample < numSamples; ++sample)
+    for (int sample = 0; sample < span; ++sample)
     {
         const auto wetGain = wetGainScratch_[static_cast<size_t> (sample)];
         const auto bypassWet = bypassWetScratch_[static_cast<size_t> (sample)];
@@ -358,6 +319,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
         const auto dryMix = 1.0f - bypassWet;
         const auto wet = wetScratch_[static_cast<size_t> (sample)];
+        const auto outIndex = offset + sample;
 
         if (extendedStereo)
         {
@@ -366,7 +328,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
                 const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
                 const auto preOutput = dryTap * dryMix + mixed * bypassWet;
-                buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
+                buffer.getWritePointer (channel)[outIndex] = OutputStage::processSample (preOutput, outputGain);
             }
         }
         else
@@ -376,17 +338,15 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             for (int channel = 0; channel < numChannels; ++channel)
                 monoSum += dryBuffer.getReadPointer (channel)[sample];
 
-            monoSum /= static_cast<float> (numChannels);
+            monoSum /= static_cast<float> (juce::jmax (1, numChannels));
             const auto mixed = ParallelWetMixer::mix (monoSum, wet, wetGain);
             const auto preOutput = monoSum * dryMix + mixed * bypassWet;
             const auto out = OutputStage::processSample (preOutput, outputGain);
 
             for (int channel = 0; channel < numChannels; ++channel)
-                buffer.getWritePointer (channel)[sample] = out;
+                buffer.getWritePointer (channel)[outIndex] = out;
         }
     }
-
-    clipHoldFlag.store (inputStage.isClipHoldActive());
 }
 
 bool PluginProcessor::hasEditor() const
