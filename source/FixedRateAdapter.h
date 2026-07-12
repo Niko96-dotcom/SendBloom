@@ -6,6 +6,7 @@
 #include "SchroederTank32DelayTable.h"
 #include "SchroederTankCore.h"
 #include <algorithm>
+#include <juce_core/juce_core.h>
 #include <vector>
 
 namespace sendbloom
@@ -61,7 +62,9 @@ public:
                                             darkMix));
                 }
 
-                converters.downsample (internalProcessBuf.data(), nInternal, out, n);
+                std::fill (out, out + n, 0.0f);
+                const int written = converters.downsample (internalProcessBuf.data(), nInternal, out, n);
+                jassert (written >= 0 && written <= n);
                 break;
             }
         }
