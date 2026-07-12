@@ -9,7 +9,7 @@ namespace sendbloom::ui
 /** True when footswitch pressed overlay should draw (press/amount — not connection alone). */
 bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, float sendAmountNorm) noexcept;
 
-/** Draw faceplate image + state overlays, or procedural chassis fallback. */
+/** Draw the production procedural chassis and its state overlays. */
 void paintPedalFaceplate (juce::Graphics& g,
                           juce::Rectangle<float> bounds,
                           juce::Colour cyan,

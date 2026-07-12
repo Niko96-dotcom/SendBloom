@@ -300,10 +300,14 @@ void paintProceduralChassis (juce::Graphics& g,
 
     g.setColour (juce::Colours::black);
     g.setFont (juce::FontOptions (34.0f, juce::Font::bold));
-    g.drawFittedText ("REVERB X", 104, 90, 218, 42, juce::Justification::centred, 1, 0.86f);
+    g.drawFittedText ("SENDBLOOM", 104, 90, 218, 42, juce::Justification::centred, 1, 0.86f);
     g.setColour (cyan);
     g.drawLine (48.0f, 113.0f, 112.0f, 113.0f, 5.0f);
     g.drawLine (312.0f, 113.0f, 372.0f, 113.0f, 5.0f);
+
+    g.setColour (juce::Colours::black);
+    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
+    g.drawText ("INITIAL PATCH", 70, 148, 200, 14, juce::Justification::centredLeft);
 
     drawCyanFrame (g, { 40.0f, 128.0f, 340.0f, 600.0f }, cyan);
     drawChevronRail (g, 24.0f, 270.0f, 4, cyan);
@@ -317,18 +321,24 @@ void paintProceduralChassis (juce::Graphics& g,
     g.setFont (juce::FontOptions (14.0f, juce::Font::bold));
     g.drawText ("OVERLOAD / CLIP", leftPanel.withHeight (42.0f).toNearestInt(), juce::Justification::centred);
 
-    constexpr const char* reverb = "REVERB";
-    g.setFont (juce::FontOptions (40.0f, juce::Font::bold));
-    for (int i = 0; i < 6; ++i)
-        g.drawText (juce::String::charToString (reverb[i]), 58, 248 + i * 25, 34, 28, juce::Justification::centred);
-
-    g.setFont (juce::FontOptions (116.0f, juce::Font::bold));
-    g.drawFittedText ("X", 98, 240, 96, 120, juce::Justification::centred, 1, 0.8f);
-    g.setColour (cyan);
-    for (int i = 0; i < 4; ++i)
+    // Original SendBloom abstract geometry (UX-07): nested rounded-rect frames
+    // over a soft white gradient, with a central chevron rail. No letterforms —
+    // confined to leftPanel (58,195,154,219). Locked palette only (cyan/white).
     {
-        const auto f = static_cast<float> (i);
-        g.drawEllipse (138.0f + f * 8.0f, 258.0f + f * 7.0f, 56.0f + f * 12.0f, 78.0f - f * 4.0f, 2.0f);
+        const auto art = juce::Rectangle<float> (66.0f, 240.0f, 138.0f, 162.0f);
+        juce::Graphics::ScopedSaveState ss (g);
+        g.reduceClipRegion (art.expanded (2.0f).toNearestInt());
+        juce::ColourGradient fill (juce::Colours::white.withAlpha (0.85f), art.getX(), art.getY(),
+                                   juce::Colours::white.withAlpha (0.22f), art.getRight(), art.getBottom(), false);
+        g.setGradientFill (fill);
+        g.fillRoundedRectangle (art, 8.0f);
+        g.setColour (cyan);
+        for (int i = 0; i < 4; ++i)
+        {
+            const auto f = static_cast<float> (i);
+            g.drawRoundedRectangle (art.reduced (4.0f + f * 8.0f), 6.0f, 2.0f);
+        }
+        drawChevronRail (g, art.getCentreX() - 14.0f, art.getY() + 18.0f, 3, cyan);
     }
 
     g.setColour (cyan);
@@ -419,20 +429,8 @@ void paintPedalFaceplate (juce::Graphics& g,
                           bool padPressed,
                           float padDisplayAmount)
 {
-    auto faceplate = juce::ImageFileFormat::loadFrom (
-        juce::File::getCurrentWorkingDirectory().getChildFile ("resources/ui/reverbx-faceplate.png"));
-    if (! faceplate.isValid())
-        faceplate = juce::ImageFileFormat::loadFrom (BinaryData::reverbxfaceplate_png,
-                                                     static_cast<size_t> (BinaryData::reverbxfaceplate_pngSize));
-
-    if (faceplate.isValid())
-    {
-        g.drawImage (faceplate, bounds);
-        drawStateOverlays (g, apvts, clipActive, advancedExpanded, padPressed, padDisplayAmount);
-        return;
-    }
-
     paintProceduralChassis (g, bounds, cyan, advancedExpanded);
+    drawStateOverlays (g, apvts, clipActive, advancedExpanded, padPressed, padDisplayAmount);
 }
 
 } // namespace sendbloom::ui

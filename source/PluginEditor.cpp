@@ -167,7 +167,7 @@ void PluginEditor::paint (juce::Graphics& g)
                              pressurePad.isPressed(),
                              pressurePad.getDisplayAmount());
 
-    // Default "INITIAL PATCH" is baked into the faceplate. Only redraw for other presets.
+    // The procedural chassis paints the default "INITIAL PATCH" label; redraw only overrides.
     if (presetBox.getSelectedId() != 1)
     {
         g.setColour (juce::Colours::white);
