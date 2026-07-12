@@ -1,19 +1,19 @@
 # SendBloom RC0 Release Checklist
 
 **Milestone:** v1.0 RC0  
-**Date:** 2026-07-07 (honesty model updated 2026-07-12 for Phase 19)  
+**Date:** 2026-07-12 (Phase 27 RC evidence pass)
 **Scope:** Honest pre-tag gate — automated checks verified locally on macOS unless noted.
 
 **Durable automated entry:** `bash scripts/verify-v1.sh` (defaults `BUILD_DIR=Builds`). Discovers ctest suite size at runtime, prints a truthful RED/GREEN status table, and labels human-only gates `human_needed`. Do **not** hard-code suite totals here or in scripts (BASE-06).
 
 ## Pre-Release Automated Gates (macOS local)
 
-Historical note: legal/build/pluginval items below were verified locally on 2026-07-07. Re-run via `scripts/verify-v1.sh` before promoting a tag; record the **runtime-discovered** ctest count + date when re-verified.
+Historical results are not RC promotion evidence. Re-run via `scripts/verify-v1.sh` from `Builds-v1`; record the runtime-discovered count, exact commit, and date in the release report.
 
 - [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`) — also invoked by `verify-v1.sh`
-- [x] Release AU + VST3 build succeeds (`cmake --build Builds --config Release`)
-- [ ] Full Catch2 suite via ctest / `verify-v1.sh` — **do not claim a fixed N/N total**. Run `ctest --test-dir Builds -N` (or `verify-v1.sh`) and record the discovered count + verification date when green. While Phase 19 `[v1][contract]` failures remain, overall ctest / verify-v1 is expected **RED** — report truthfully; do not flip this box until contracts are fixed in later phases.
-- [x] pluginval strictness **10** passes on Release **VST3** (macOS local, 2026-07-07). Optional re-check: `RUN_PLUGINVAL=1 PLUGINVAL_BIN=… bash scripts/verify-v1.sh`
+- [ ] Fresh Release AU + VST3 build — pending Phase 27 evidence run
+- [ ] Full discovered Catch2 suite — pending Phase 27 fresh-build evidence run
+- [ ] pluginval strictness **10** on the fresh Release VST3 — pending Phase 27 evidence run
 - [x] Clean-room positioning documented (`docs/CLEAN_ROOM.md`)
 - [x] `tests/ReleaseTruthTest.cpp` tracked and included in test target
 - [x] ENAB-01 ProperSRC/HF gates (`BUILD_DIR=Builds bash scripts/enab-acceptance-gates.sh`) — also invoked by `verify-v1.sh`
@@ -73,7 +73,8 @@ These require manual validation in each host before v1.0.0 (non-RC) tag. Never t
 
 - [ ] **Developer ID signing** — `human_needed`
 - [ ] **Notarization / stapling** — `human_needed`
-- [ ] **JUCE license decision** — `human_needed`
+- [x] **JUCE path selected** — commercial path approved; see `docs/LICENSING_DECISION.md`
+- [ ] **JUCE commercial entitlement fact** — `human_needed`; selection is not proof of coverage
 
 ## CI Matrix (GitHub Actions — not locally verified here)
 
@@ -84,12 +85,12 @@ CI workflow (`.github/workflows/build_and_test.yml`) runs per OS:
 - Catch2 via ctest (suite size discovered at runtime — not hard-coded in this checklist)
 - pluginval strictness 10 on **VST3 only**
 
-Confirm green CI on `main` before promoting RC0 → v1.0.0. Local operators should prefer `bash scripts/verify-v1.sh` for the same automated surface.
+Confirm a green run ID/URL for the exact candidate commit on all three OS jobs before creating RC0. Local success cannot satisfy REL-08.
 
-## Version Tag (on human approval after DAW smoke)
+## Version Tag (only after every required gate is evidenced)
 
 ```bash
-git tag -a v1.0.0-rc0 -m "SendBloom v1.0 RC0 — gated dirty ambience AU/VST3"
+git tag -a v1.0.0-rc0 -m "SendBloom v1.0.0-rc0"
 ```
 
 ## Post-v1 Deferred
