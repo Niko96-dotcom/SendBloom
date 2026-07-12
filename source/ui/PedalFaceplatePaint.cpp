@@ -167,32 +167,37 @@ int getChoiceIndex (juce::AudioProcessorValueTreeState& apvts, const char* id)
 
 void drawDarkPressedOverlay (juce::Graphics& g)
 {
-    const auto body = juce::Rectangle<float> (64.0f, 568.0f, 50.0f, 50.0f);
+    // Exact cover of the faceplate Dark Mode button — no offset ghost.
+    const auto body = juce::Rectangle<float> (64.0f, 562.0f, 40.0f, 40.0f);
     juce::ColourGradient fill (juce::Colour (0xff15191f), body.getX(), body.getY(),
-                               juce::Colour (0xff59616c), body.getRight(), body.getBottom(), false);
+                               juce::Colour (0xff4a515a), body.getRight(), body.getBottom(), false);
     g.setGradientFill (fill);
-    g.fillRoundedRectangle (body.translated (1.5f, 3.0f).reduced (2.0f), 6.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.8f));
-    g.drawRoundedRectangle (body.translated (1.5f, 3.0f).reduced (1.0f), 6.0f, 4.0f);
-    g.setColour (juce::Colours::white.withAlpha (0.10f));
-    g.drawRoundedRectangle (body.translated (1.5f, 3.0f).reduced (8.0f), 4.0f, 1.5f);
+    g.fillRoundedRectangle (body, 5.0f);
+    g.setColour (juce::Colours::black.withAlpha (0.85f));
+    g.drawRoundedRectangle (body.reduced (1.0f), 5.0f, 3.0f);
+    g.setColour (juce::Colours::white.withAlpha (0.08f));
+    g.drawRoundedRectangle (body.reduced (7.0f), 3.0f, 1.2f);
 }
 
 void drawGatePositionOverlay (juce::Graphics& g, bool post)
 {
-    const auto slot = juce::Rectangle<float> (143.0f, 560.0f, 27.0f, 64.0f);
-    g.setColour (juce::Colour (0xff151515));
-    g.fillRoundedRectangle (slot, 8.0f);
-    g.setColour (juce::Colour (0xff444444));
-    g.drawRoundedRectangle (slot, 8.0f, 2.0f);
+    // Faceplate default art is POST; only redraw when PRE.
+    if (post)
+        return;
 
-    auto thumb = juce::Rectangle<float> (148.0f, post ? 590.0f : 567.0f, 17.0f, 26.0f);
+    const auto slot = juce::Rectangle<float> (148.0f, 568.0f, 22.0f, 52.0f);
+    g.setColour (juce::Colour (0xff151515));
+    g.fillRoundedRectangle (slot, 7.0f);
+    g.setColour (juce::Colour (0xff444444));
+    g.drawRoundedRectangle (slot, 7.0f, 1.5f);
+
+    auto thumb = juce::Rectangle<float> (151.0f, 571.0f, 16.0f, 22.0f);
     juce::ColourGradient fill (juce::Colour (0xfff3f3ee), thumb.getX(), thumb.getY(),
                                juce::Colour (0xff7c7c7c), thumb.getRight(), thumb.getBottom(), false);
     g.setGradientFill (fill);
-    g.fillRoundedRectangle (thumb, 8.0f);
+    g.fillRoundedRectangle (thumb, 7.0f);
     g.setColour (juce::Colour (0xff5a5a5a));
-    g.drawRoundedRectangle (thumb, 8.0f, 1.5f);
+    g.drawRoundedRectangle (thumb, 7.0f, 1.2f);
 }
 
 void drawFootswitchPressedOverlay (juce::Graphics& g)
@@ -253,8 +258,7 @@ void drawStateOverlays (juce::Graphics& g,
     if (dark)
         drawDarkPressedOverlay (g);
 
-    if (! postGate)
-        drawGatePositionOverlay (g, false);
+    drawGatePositionOverlay (g, postGate);
 
     if (sendConnected)
         drawFootswitchPressedOverlay (g);

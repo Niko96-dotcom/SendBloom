@@ -24,7 +24,7 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     editor.resized();
 
     const juce::Point<int> levelCentre { 265, 213 };
-    const juce::Point<int> darkCentre { 89, 593 };
+    const juce::Point<int> darkCentre { 84, 582 };
     const juce::Point<int> advancedCentre { 316, 698 };
 
     auto* levelHit = editor.getComponentAt (levelCentre);

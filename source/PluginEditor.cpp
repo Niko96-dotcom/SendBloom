@@ -53,13 +53,21 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         presetBox.addItem (upperPresetName (i), i + 1);
 
     presetBox.setSelectedId (processorRef.getCurrentProgram() + 1, juce::dontSendNotification);
-    presetBox.onChange = [this] { presetChanged(); };
+    presetBox.onChange = [this]
+    {
+        presetChanged();
+        repaint();
+    };
     presetBox.setLookAndFeel (&transparentControls);
     presetBox.setColour (juce::ComboBox::backgroundColourId, juce::Colours::transparentBlack);
     presetBox.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
     presetBox.setColour (juce::ComboBox::textColourId, juce::Colours::transparentBlack);
     presetBox.setColour (juce::ComboBox::arrowColourId, juce::Colours::transparentBlack);
     addAndMakeVisible (presetBox);
+    // Kill the ComboBox's internal label — faceplate owns the default glyphs.
+    for (auto* child : presetBox.getChildren())
+        if (auto* label = dynamic_cast<juce::Label*> (child))
+            label->setAlpha (0.0f);
 
     for (auto* button : { &saveButton, &newButton, &deleteButton })
     {
@@ -82,6 +90,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     darkToggle.setLookAndFeel (&transparentControls);
     gateToggle.setLookAndFeel (&transparentControls);
+    darkToggle.setClickingTogglesState (true);
     addAndMakeVisible (darkToggle);
     addAndMakeVisible (gateToggle);
 
@@ -153,32 +162,49 @@ void PluginEditor::paint (juce::Graphics& g)
                              processorRef.isClipHoldActive(),
                              advancedDrawer.isExpanded());
 
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-    g.drawFittedText (presetBox.getText(),
-                      { 72, 150, 200, 26 },
-                      juce::Justification::centredLeft,
-                      1);
+    // Default "INITIAL PATCH" is baked into the faceplate. Only redraw for other presets.
+    if (presetBox.getSelectedId() != 1)
+    {
+        g.setColour (juce::Colours::white);
+        g.fillRect (70, 148, 200, 14);
+        g.setColour (juce::Colours::black);
+        g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
+        g.drawText (presetBox.getText(),
+                    76, 148, 184, 10,
+                    juce::Justification::centredLeft,
+                    false);
+    }
 }
 
 void PluginEditor::resized()
 {
     titleLabel.setBounds (0, 0, 0, 0);
-    presetBox.setBounds (64, 148, 234, 30);
+    // Invisible hit target over the faceplate preset field (name is painted by the editor).
+    presetBox.setBounds (64, 148, 210, 16);
     saveButton.setBounds (300, 148, 30, 44);
     newButton.setBounds (330, 148, 30, 44);
     deleteButton.setBounds (360, 148, 36, 44);
 
-    // Cropped knob art centres measured from cyan rings on the faceplate asset.
-    lvlKnob.setBounds (265 - 32, 213 - 32, 64, 84);
-    sizeKnob.setBounds (265 - 32, 302 - 32, 64, 84);
-    distnKnob.setBounds (265 - 32, 392 - 32, 64, 84);
-    inKnob.setBounds (265 - 32, 473 - 32, 64, 84);
-    outKnob.setBounds (265 - 32, 556 - 32, 64, 84);
+    // Exact dark-disk centres measured from the faceplate asset (50×50 art).
+    constexpr int k = 50;
+    constexpr int half = k / 2;
 
-    darkToggle.setBounds (64, 568, 50, 50);
-    gateToggle.setBounds (143, 560, 27, 64);
-    pressurePad.setBounds (90, 650, 95, 95);
+    lvlKnob.setBounds (265 - half, 213 - half, k, 76);
+    sizeKnob.setBounds (265 - half, 303 - half, k, 76);
+    distnKnob.setBounds (265 - half, 393 - half, k, 76); // dark-disk centre
+    inKnob.setBounds (265 - half, 479 - half, k, 76);
+    outKnob.setBounds (265 - half, 564 - half, k, 76);
+
+    lvlKnob.setValueBounds ({ 0, 60, 51, 15 });
+    sizeKnob.setValueBounds ({ 0, 60, 51, 15 });
+    distnKnob.setValueBounds ({ -1, 60, 52, 15 });
+    inKnob.setValueBounds ({ -1, 58, 53, 15 });
+    outKnob.setValueBounds ({ -1, 58, 53, 15 });
+
+    // Dark button on faceplate: ~64,562 .. 103,598
+    darkToggle.setBounds (64, 562, 40, 40);
+    gateToggle.setBounds (148, 568, 22, 52);
+    pressurePad.setBounds (90, 655, 95, 90);
 
     advancedButton.setBounds (250, 646, 132, 104);
     advancedDrawer.setBounds (getAdvancedBounds());

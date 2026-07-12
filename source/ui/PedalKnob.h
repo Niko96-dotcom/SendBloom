@@ -9,6 +9,7 @@
 namespace sendbloom::ui
 {
 
+/** Rotary hotspot: covers the faceplate knob, then paints a rotating crop of it. */
 class PedalKnob : public juce::Component
 {
 public:
@@ -38,17 +39,13 @@ public:
     void paint (juce::Graphics& g) override
     {
         paintKnob (g);
-
-        const auto valueBounds = juce::Rectangle<int> (2, kKnobSize + 5, 52, 15);
-        g.setColour (juce::Colours::white.withAlpha (0.92f));
-        g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
-        g.drawText (getDisplayValue(), valueBounds, juce::Justification::centred, false);
+        paintValue (g);
     }
 
     void paintOverChildren (juce::Graphics& g) override
     {
-        // Slider child paints after us; redraw the rotating knob on top so it stays visible.
         paintKnob (g);
+        paintValue (g);
     }
 
     void resized() override
@@ -56,17 +53,18 @@ public:
         slider.setBounds (0, 0, kKnobSize, kKnobSize);
     }
 
-    void setLabelColour (juce::Colour)
-    {
-    }
-
-    void setRangeText (juce::String, juce::String)
-    {
-    }
+    void setLabelColour (juce::Colour) {}
+    void setRangeText (juce::String, juce::String) {}
 
     void setValueFormatter (std::function<juce::String (double)> formatter)
     {
         valueFormatter = std::move (formatter);
+        repaint();
+    }
+
+    void setValueBounds (juce::Rectangle<int> boundsInComponent)
+    {
+        valueBounds = boundsInComponent;
         repaint();
     }
 
@@ -88,18 +86,36 @@ private:
 
         const auto centre = juce::Point<float> (static_cast<float> (kKnobSize) * 0.5f,
                                                 static_cast<float> (kKnobSize) * 0.5f);
-        const auto params = slider.getRotaryParameters();
-        const auto t = static_cast<float> (slider.valueToProportionOfLength (slider.getValue()));
-        const auto angle = params.startAngleRadians
-                         + t * (params.endAngleRadians - params.startAngleRadians);
-        // Keep art inside the faceplate cyan ring (~48px body inside a 64px hit target).
-        const auto dest = juce::Rectangle<float> (static_cast<float> (kKnobArtSize),
-                                                  static_cast<float> (kKnobArtSize))
-                              .withCentre (centre);
+        // Slightly inside the cyan ring so soft edges sit on the faceplate gap, not over it.
+        const auto coverRadius = 23.0f;
 
-        juce::Graphics::ScopedSaveState state (g);
-        g.addTransform (juce::AffineTransform::rotation (angle, centre.x, centre.y));
-        g.drawImage (knobImage, dest);
+        {
+            juce::Graphics::ScopedSaveState clip (g);
+            g.reduceClipRegion (juce::Rectangle<int> (0, 0, kKnobSize, kKnobSize));
+
+            // Opaque disc under the sprite hides the static faceplate pointer while dragging.
+            g.setColour (juce::Colour (0xff303030));
+            g.fillEllipse (centre.x - coverRadius, centre.y - coverRadius,
+                           coverRadius * 2.0f, coverRadius * 2.0f);
+
+            const auto params = slider.getRotaryParameters();
+            const auto t = static_cast<float> (slider.valueToProportionOfLength (slider.getValue()));
+            const auto angle = params.startAngleRadians
+                             + t * (params.endAngleRadians - params.startAngleRadians);
+            const auto dest = juce::Rectangle<float> (static_cast<float> (kKnobSize),
+                                                      static_cast<float> (kKnobSize));
+
+            g.addTransform (juce::AffineTransform::rotation (angle, centre.x, centre.y));
+            g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+            g.drawImage (knobImage, dest, juce::RectanglePlacement::centred, false);
+        }
+    }
+
+    void paintValue (juce::Graphics& g)
+    {
+        g.setColour (juce::Colours::white.withAlpha (0.95f));
+        g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
+        g.drawText (getDisplayValue(), valueBounds, juce::Justification::centred, false);
     }
 
     juce::String getDisplayValue() const
@@ -110,11 +126,11 @@ private:
         return juce::String (slider.getValue(), 2);
     }
 
-    static constexpr int kKnobSize = 64;
-    static constexpr int kKnobArtSize = 48;
+    static constexpr int kKnobSize = 50;
 
     juce::String labelName;
     std::function<juce::String (double)> valueFormatter;
+    juce::Rectangle<int> valueBounds { 0, 60, 51, 15 };
     TransparentControlsLookAndFeel transparentLnf;
     juce::Slider slider;
     juce::Image knobImage;
