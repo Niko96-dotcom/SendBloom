@@ -44,6 +44,7 @@ struct WetOverdrive
     static constexpr float kPreClipLpHz = 6500.0f;
     static constexpr float kPreClipHpHz = 100.0f;
     static constexpr float kPostClipLpHz = 7500.0f;
+    static constexpr float kPostClipDcBlockHpHz = 20.0f;
 
     // Small-signal gain ceiling for the raw clipper (pre-filter).
     static constexpr float kSmallSignalMaxGain = 1.15f;
@@ -185,27 +186,63 @@ private:
     float state = 0.0f;
 };
 
+class OnePoleHighpass
+{
+public:
+    void prepare (double sampleRate, float cutoffHz) noexcept
+    {
+        const auto omega = 2.0f * 3.14159265358979323846f * cutoffHz / static_cast<float> (sampleRate);
+        alpha = std::exp (-omega);
+    }
+
+    void reset() noexcept
+    {
+        prevInput = 0.0f;
+        prevOutput = 0.0f;
+    }
+
+    float process (float x) noexcept
+    {
+        const auto y = alpha * (prevOutput + x - prevInput);
+        prevInput = x;
+        prevOutput = y;
+        return y;
+    }
+
+private:
+    float alpha = 0.0f;
+    float prevInput = 0.0f;
+    float prevOutput = 0.0f;
+};
+
 class WetOverdriveState
 {
 public:
     void prepare (double sampleRate) noexcept
     {
+        preClipHp.prepare (sampleRate, WetOverdrive::kPreClipHpHz);
         preClipLp.prepare (sampleRate, WetOverdrive::kPreClipLpHz);
         postClipLp.prepare (sampleRate, WetOverdrive::kPostClipLpHz);
+        postClipDcBlock.prepare (sampleRate, WetOverdrive::kPostClipDcBlockHpHz);
         reset();
     }
 
     void reset() noexcept
     {
+        preClipHp.reset();
         preClipLp.reset();
         postClipLp.reset();
+        postClipDcBlock.reset();
     }
 
     float processFilteredBranch (float wet) noexcept
     {
-        const auto bandLimited = preClipLp.process (wet);
-        const auto clipped = WetOverdrive::clipSample (bandLimited, WetOverdrive::kActiveCurve);
-        return postClipLp.process (clipped);
+        auto x = preClipHp.process (wet);
+        x = preClipLp.process (x);
+        x = WetOverdrive::clipSample (x, WetOverdrive::kActiveCurve);
+        x = postClipLp.process (x);
+        x = postClipDcBlock.process (x);
+        return x;
     }
 
     float process (float wet, float distnBlend) noexcept
@@ -215,8 +252,10 @@ public:
     }
 
 private:
+    OnePoleHighpass preClipHp;
     OnePoleLowpass preClipLp;
     OnePoleLowpass postClipLp;
+    OnePoleHighpass postClipDcBlock;
 };
 
 } // namespace sendbloom

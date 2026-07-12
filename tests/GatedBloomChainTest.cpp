@@ -15,6 +15,7 @@ constexpr auto kSampleRate = 48000.0;
 constexpr auto kBlockSize = 512;
 constexpr auto kThresholdDb = -40.0f;
 constexpr int kWarmupSamples = 15000;
+constexpr auto kPi = 3.14159265358979323846f;
 
 float processChainSample (sendbloom::GatedBloomChain& chain,
                           float input,
@@ -65,7 +66,18 @@ TEST_CASE ("GatedBloomChain wet-only dirt increases wet magnitude", "[chain][rou
     sendbloom::GatedBloomChain chain;
     chain.prepare (kSampleRate, kBlockSize);
 
-    const std::vector<float> burst (static_cast<size_t> (kWarmupSamples), 0.5f);
+    // ADR-V1-15 added a 100 Hz pre-clip high-pass to the dirty branch (DSP-09),
+    // so a DC burst is no longer a valid stimulus here: the HP removes the DC
+    // energy that previously made dirty louder than clean. A 220 Hz tone keeps
+    // content above the HP and exercises the clipper's added harmonics, which is
+    // the behaviour under test. See milestone spec §13.7 / §17.2 (DC gate).
+    constexpr auto kProbeFreqHz = 220.0f;
+    const auto phaseInc = 2.0f * kPi * kProbeFreqHz / static_cast<float> (kSampleRate);
+    std::vector<float> burst (static_cast<size_t> (kWarmupSamples));
+
+    for (size_t i = 0; i < burst.size(); ++i)
+        burst[i] = 0.5f * std::sin (phaseInc * static_cast<float> (i));
+
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
 
     const auto cleanWet = renderChain (chain, burst, rt60, 0.0f, 1.0f, true);

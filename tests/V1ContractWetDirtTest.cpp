@@ -86,8 +86,10 @@ TEST_CASE ("30 Hz strongly attenuated vs 1 kHz on filtered branch",
 {
     sendbloom::WetOverdriveState od;
 
+    // 100 Hz one-pole HP needs ~2 s to reach steady state at 30 Hz, so let it
+    // settle across two seconds before measuring the steady-state RMS.
     constexpr auto kAmplitude = 0.35f;
-    constexpr size_t kSettle = 48000;
+    constexpr size_t kSettle = 48000 * 2;
     constexpr size_t kMeasure = 96000;
 
     const auto lowRms = measureFilteredBranchRms (od, 30.0f, kAmplitude, kSettle, kMeasure);
@@ -125,7 +127,11 @@ TEST_CASE ("post-clip DC blocker decays DC input on filtered branch",
     REQUIRE (std::abs (last) < 0.01f);
 }
 
-TEST_CASE ("long-run mean absolute output below 1e-4 after asymmetric clip",
+// Spec §17.2 gate is "Wet dirt DC mean < 1e-4 after settling" — i.e. the DC
+// component of the output (mean of y), not the signal magnitude (mean of |y|).
+// The 20 Hz post-clip DC blocker removes residual DC left by the asymmetric
+// clipper; a 0.35-amplitude 220 Hz sine itself is ~0.37 in mean-of-|y|.
+TEST_CASE ("long-run DC offset below 1e-4 after asymmetric clip",
            "[v1][contract][wet-dirt][DSP-11]")
 {
     sendbloom::WetOverdriveState od;
@@ -139,18 +145,18 @@ TEST_CASE ("long-run mean absolute output below 1e-4 after asymmetric clip",
     const auto phaseInc = 2.0f * kPi * kFreq / static_cast<float> (kSampleRate);
     auto phase = 0.0f;
 
-    auto sumAbs = 0.0;
+    auto sum = 0.0;
 
     for (size_t i = 0; i < kSamples; ++i)
     {
         const auto x = kDc + kAmplitude * std::sin (phase);
         phase += phaseInc;
         const auto y = od.process (x, 1.0f);
-        sumAbs += static_cast<double> (std::abs (y));
+        sum += static_cast<double> (y);
     }
 
-    const auto meanAbs = sumAbs / static_cast<double> (kSamples);
-    REQUIRE (meanAbs < 1.0e-4);
+    const auto dcMean = std::abs (sum / static_cast<double> (kSamples));
+    REQUIRE (dcMean < 1.0e-4);
 }
 
 TEST_CASE ("distn zero returns original wet within tolerance",
