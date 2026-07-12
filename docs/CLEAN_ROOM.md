@@ -33,7 +33,9 @@ These are common musician-described behaviors, not proprietary interfaces.
 
 ## Legal Metadata Controls
 
-- `scripts/check-legal-metadata.sh` scans sources, tests, CI, README, and `resources/presets/*.xml` for banned third-party identifiers.
+- `scripts/check-legal-metadata.sh` scans product-facing source, resources, tests, README, CMake files and modules, and CI workflows. It covers both file contents and normalized repo-relative filenames, including asset names, generated BinaryData symbol references, and CMake resource references.
+- Matching is normalized by lowercasing and stripping non-alphanumeric characters (including spaces, hyphens, underscores, and punctuation), so spelling and punctuation variants collapse to the same policy token.
+- Internal citation records are deliberately outside the product-facing scan surface: `.planning/` plus clean-room and release-tracking documents under `docs/` are allowlisted per milestone specification section 14.4 because they must preserve research and audit context.
 - CI runs the legal audit on every build matrix leg.
 
 ## Commercial Considerations (Post-v1)
