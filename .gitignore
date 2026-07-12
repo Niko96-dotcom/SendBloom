@@ -17,9 +17,12 @@ Builds/*
 build/
 Builds-Compare/
 Builds-deslop-check/
+Builds-v1/
 build-juce-unittests/
 artifacts/
+dist/
 .deslop/
+**/__pycache__/
 
 Install/*
 Testing
