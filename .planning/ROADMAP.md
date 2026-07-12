@@ -208,7 +208,13 @@ Plans:
   2. Logic/Cubase/REAPER smoke and 10-minute soak are signed with real tester/date/result evidence (`human_needed`); no human gate is represented as automated success
   3. JUCE commercial-vs-GPL decision is documented and approved by Niko (`human_needed`); repo/distribution license matches; macOS public binaries are Developer ID signed and notarized/stapled when credentials available (`human_needed`); artifacts have SHA-256 checksums; working tree is clean at tag; release checklist/report is complete
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+- [x] 27-01-PLAN.md — Close canonical automated blockers at the real product boundary
+- [x] 27-02-PLAN.md — Release policy and secret-free distribution tooling
+- [x] 27-03-PLAN.md — Fresh RC evidence run and truthful promotion decision
+
+**Verification**: `human_needed` (8/20 requirements verified). Local Release build, 260/260 CTest, strictness-10 VST3 pluginval, direct `aumf` auval, and candidate SHA-256 are green. `auval -a` enumeration, exact-candidate three-OS CI, DAW smoke/soaks, JUCE entitlement, Developer ID/notarization, and stale-tag resolution remain open; see `27-VERIFICATION.md`.
 **ADRs**: ADR-V1-16
 
 ## Coverage Map
