@@ -51,11 +51,11 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### Realtime / Block Engine (`RT`)
 
-- [ ] **RT-01**: No `setSize`, `resize`, `assign`, `make_unique`, `push_back`, or equivalent allocation path runs in `PluginProcessor::processBlock`
-- [ ] **RT-02**: Host blocks larger than `preparedMaxBlock_` retain full wet processing
-- [ ] **RT-03**: Processing a 2048-sample host block prepared at 512 matches equivalent smaller blocks within tolerance
+- [x] **RT-01**: No `setSize`, `resize`, `assign`, `make_unique`, `push_back`, or equivalent allocation path runs in `PluginProcessor::processBlock`
+- [x] **RT-02**: Host blocks larger than `preparedMaxBlock_` retain full wet processing
+- [x] **RT-03**: Processing a 2048-sample host block prepared at 512 matches equivalent smaller blocks within tolerance
 - [ ] **RT-04**: Span processing respects CC1 event boundaries
-- [ ] **RT-05**: Span processing uses at most 128 samples for control-rate reverb values
+- [x] **RT-05**: Span processing uses at most 128 samples for control-rate reverb values
 - [ ] **RT-06**: Dynamic send/distortion/threshold controls are consumed per sample
 - [ ] **RT-07**: Input gain, level, output gain, and bypass remain per sample
 - [ ] **RT-08**: Authentic-mode changes request exactly one engine target transition per parameter change
@@ -65,7 +65,7 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [ ] **RT-12**: Crossfade completion resets only the now-idle engine
 - [ ] **RT-13**: Crossfade completion performs zero heap allocations
 - [ ] **RT-14**: Output remains finite through 10,000-block stress with toggles, MIDI, bypass, and oversized blocks
-- [ ] **RT-15**: `preparedMaxBlock_ <= 0` is handled safely without allocation or undefined access
+- [x] **RT-15**: `preparedMaxBlock_ <= 0` is handled safely without allocation or undefined access
 
 ### Input, Level, Gate, Bypass (`CORE`)
 
@@ -252,10 +252,10 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | UX-03 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-04 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-05 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
-| RT-01 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
-| RT-02 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
-| RT-03 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
-| RT-05 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-01 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-02 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-03 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-05 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-08 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-09 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-10 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
@@ -263,7 +263,7 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | RT-12 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-13 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-14 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
-| RT-15 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-15 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | CORE-14 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
 | CORE-15 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
 | CORE-16 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
