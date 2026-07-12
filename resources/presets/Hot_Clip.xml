@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<SendBloomParams>
+<SendBloomParams preset_class="pre-v1-dev">
   <PARAM id="input_gain" value="0.92"/>
   <PARAM id="input_threshold" value="0.28"/>
   <PARAM id="size" value="0.4"/>
