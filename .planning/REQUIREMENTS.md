@@ -82,11 +82,11 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [ ] **CORE-11**: PostHard reaches zero no later than 1 ms after the close command
 - [ ] **CORE-12**: Post gate still chops wet within 15 ms after silence onset
 - [ ] **CORE-13**: PreSoft retains its long unobtrusive close behavior
-- [ ] **CORE-14**: Settled bypass is channel-preserving
-- [ ] **CORE-15**: Settled bypass is unity within floating tolerance
-- [ ] **CORE-16**: Settled bypass ignores Input, Distn, Gate, Level, and Output settings
-- [ ] **CORE-17**: Bypass transitions remain click-bounded
-- [ ] **CORE-18**: Engaged mono-first behavior is unchanged unless `extended_stereo` is later implemented
+- [x] **CORE-14**: Settled bypass is channel-preserving
+- [x] **CORE-15**: Settled bypass is unity within floating tolerance
+- [x] **CORE-16**: Settled bypass ignores Input, Distn, Gate, Level, and Output settings
+- [x] **CORE-17**: Bypass transitions remain click-bounded
+- [x] **CORE-18**: Engaged mono-first behavior is unchanged unless `extended_stereo` is later implemented
 
 ### Reverb and Dirt Integrity (`DSP`)
 
@@ -264,11 +264,11 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | RT-13 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-14 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-15 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
-| CORE-14 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
-| CORE-15 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
-| CORE-16 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
-| CORE-17 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
-| CORE-18 | Phase 21 | Pending | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-14 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-15 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-16 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-17 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
+| CORE-18 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
 | MIDI-01 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
 | MIDI-02 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
 | MIDI-03 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |

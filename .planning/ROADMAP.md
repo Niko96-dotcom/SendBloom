@@ -87,11 +87,11 @@ Plans:
   4. Settled bypass preserves each input channel at unity within floating tolerance and ignores Input, Distn, Gate, Level, and Output; transitions remain click-bounded; engaged mono-first behavior unchanged
   5. Authentic-mode changes request exactly one engine target transition per parameter change; reported latency stays zero under ADR-003; crossfade begins in the first block after change, converges after rapid toggles, and resets only the idle engine with zero allocations; 10,000-block stress stays finite
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 Plans:
 
 - [x] 21-01-PLAN.md — Span/no-alloc engine + oversized wet parity (RT-01/02/03/05/15)
-- [ ] 21-02-PLAN.md — ADR-V1-10 true bypass unity + click bounds (CORE-14…18)
+- [x] 21-02-PLAN.md — ADR-V1-10 true bypass unity + click bounds (CORE-14…18)
 - [ ] 21-03-PLAN.md — Authentic snapshot edge + stress (RT-08…14)
 
 **ADRs**: ADR-V1-05, ADR-V1-07, ADR-V1-10
@@ -211,7 +211,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 19. Baseline, Contracts & Failure Harness | 3/3 | Complete    | 2026-07-12 |
 | 20. Pressure Send State Truth | 3/3 | Complete    | 2026-07-12 |
-| 21. Realtime Span Engine & True Bypass | 1/3 | In Progress|  |
+| 21. Realtime Span Engine & True Bypass | 2/3 | In Progress|  |
 | 22. MIDI & Per-Sample Control Delivery | 0/TBD | Not started | - |
 | 23. Input, Level & Gate Truth | 0/TBD | Not started | - |
 | 24. Reverb State & Wet-Dirt Integrity | 0/TBD | Not started | - |
