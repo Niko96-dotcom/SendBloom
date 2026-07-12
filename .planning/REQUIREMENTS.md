@@ -142,26 +142,26 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### Release (`REL`)
 
-- [ ] **REL-01**: `VERSION` is numeric `1.0.0`
+- [x] **REL-01**: `VERSION` is numeric `1.0.0`
 - [ ] **REL-02**: RC tag is `v1.0.0-rc0`
-- [ ] **REL-03**: CMake config/build succeeds from a clean directory
-- [ ] **REL-04**: Full Catch2 suite passes in Release
-- [ ] **REL-05**: VST3 pluginval strictness 10 passes locally
+- [x] **REL-03**: CMake config/build succeeds from a clean directory
+- [x] **REL-04**: Full Catch2 suite passes in Release
+- [x] **REL-05**: VST3 pluginval strictness 10 passes locally
 - [ ] **REL-06**: AU validation uses the actual AU type discovered by `auval -a`, not an assumed `aufx`
-- [ ] **REL-07**: AU pluginval or equivalent validation passes locally
+- [x] **REL-07**: AU pluginval or equivalent validation passes locally
 - [ ] **REL-08**: GitHub Actions is green on macOS, Windows, and Linux
 - [ ] **REL-09**: Logic Pro AU smoke passes (`human_needed`)
 - [ ] **REL-10**: Cubase VST3 smoke passes (`human_needed`)
 - [ ] **REL-11**: REAPER VST3 smoke passes (`human_needed`)
 - [ ] **REL-12**: Minimum 10-minute abuse/soak passes in each host (`human_needed`)
-- [ ] **REL-13**: JUCE commercial-vs-GPL decision is documented and approved by Niko (`human_needed`)
+- [x] **REL-13**: JUCE commercial-vs-GPL decision is documented and approved by Niko (`human_needed`)
 - [ ] **REL-14**: Repository/distribution license matches the JUCE decision
 - [ ] **REL-15**: macOS binaries are Developer ID signed for public distribution (`human_needed` credentials)
 - [ ] **REL-16**: macOS distribution package is notarized and stapled (`human_needed` credentials)
-- [ ] **REL-17**: Release artifacts have SHA-256 checksums
+- [x] **REL-17**: Release artifacts have SHA-256 checksums
 - [ ] **REL-18**: Release checklist contains real tester/date/result evidence
 - [ ] **REL-19**: Working tree is clean at tag
-- [ ] **REL-20**: No human gate is represented as automated success
+- [x] **REL-20**: No human gate is represented as automated success
 
 ## Future Requirements
 

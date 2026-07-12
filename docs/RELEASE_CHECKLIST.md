@@ -11,9 +11,9 @@
 Historical results are not RC promotion evidence. Re-run via `scripts/verify-v1.sh` from `Builds-v1`; record the runtime-discovered count, exact commit, and date in the release report.
 
 - [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`) — also invoked by `verify-v1.sh`
-- [ ] Fresh Release AU + VST3 build — pending Phase 27 evidence run
-- [ ] Full discovered Catch2 suite — pending Phase 27 fresh-build evidence run
-- [ ] pluginval strictness **10** on the fresh Release VST3 — pending Phase 27 evidence run
+- [x] Fresh Release AU + VST3 build — `Builds-v1`, 2026-07-12
+- [x] Full discovered Catch2 suite — 260/260 PASS, one explicit unavailable Zip API skip, 2026-07-12
+- [x] pluginval strictness **10** on the fresh Release VST3 — final `SUCCESS`, 2026-07-12
 - [x] Clean-room positioning documented (`docs/CLEAN_ROOM.md`)
 - [x] `tests/ReleaseTruthTest.cpp` tracked and included in test target
 - [x] ENAB-01 ProperSRC/HF gates (`BUILD_DIR=Builds bash scripts/enab-acceptance-gates.sh`) — also invoked by `verify-v1.sh`
