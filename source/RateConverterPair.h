@@ -4,6 +4,7 @@
 #include "SchroederTank32DelayTable.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <memory>
@@ -58,7 +59,10 @@ public:
         scratchIn_.resize (static_cast<size_t> (maxHostBlock));
         upOut_.resize (static_cast<size_t> (upsampler_->getMaxOutLen (maxHostBlock)));
         downOut_.resize (static_cast<size_t> (downsampler_->getMaxOutLen (maxInternalIn)));
-        leftoverFifo_.resize (static_cast<size_t> (downsampler_->getMaxOutLen (maxInternalIn)));
+        const auto maxDownsampled = downsampler_->getMaxOutLen (maxInternalIn);
+        // r8brain may release a short burst after priming. Keep enough fixed storage for
+        // that burst plus several maximum host blocks without allocating on the audio thread.
+        leftoverFifo_.resize (static_cast<size_t> (maxDownsampled + 8 * maxHostBlock));
         leftoverDown_ = 0;
     }
 
@@ -85,6 +89,14 @@ public:
         if (downsampler_ == nullptr || nHostWanted <= 0)
             return 0;
 
+        // Every input block must reach the streaming resampler, even when old FIFO output
+        // is already sufficient for this host callback. Deferring this call would silently
+        // discard the current block because the caller will not submit it again.
+        double* op = nullptr;
+        const int produced = nInternal > 0
+                           ? downsampler_->process (const_cast<double*> (internalIn), nInternal, op)
+                           : 0;
+
         int hostWritten = 0;
         int fifoRead = 0;
 
@@ -102,19 +114,20 @@ public:
             leftoverDown_ = remaining;
         }
 
-        if (hostWritten >= nHostWanted || nInternal <= 0)
-            return hostWritten;
-
-        double* op = nullptr;
-        const int produced = downsampler_->process (const_cast<double*> (internalIn), nInternal, op);
-
         int opIdx = 0;
         while (hostWritten < nHostWanted && opIdx < produced)
             hostOut[hostWritten++] = static_cast<float> (op[opIdx++]);
 
         const int excess = produced - opIdx;
-        for (int i = 0; i < excess; ++i)
+        const auto capacity = static_cast<int> (leftoverFifo_.size());
+        const auto buffered = std::min (excess, capacity - leftoverDown_);
+
+        for (int i = 0; i < buffered; ++i)
             leftoverFifo_[static_cast<size_t> (leftoverDown_++)] = op[opIdx + i];
+
+        // The fixed FIFO is deliberately oversized in prepare(). If this ever fires in a
+        // debug build, increase the bound rather than allocating or dropping samples here.
+        assert (buffered == excess);
 
         return hostWritten;
     }

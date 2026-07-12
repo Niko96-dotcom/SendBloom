@@ -92,6 +92,31 @@ TEST_CASE ("PluginProcessor dual-mono output matches for identical stereo input"
         REQUIRE (buffer.getSample (0, i) == Catch::Approx (buffer.getSample (1, i)).margin (1e-5f));
 }
 
+TEST_CASE ("Extended Stereo preserves the dry channel image", "[io][stereo][integration]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    auto& apvts = plugin.getAPVTS();
+    *apvts.getRawParameterValue (outputGain) = 0.0f;
+    *apvts.getRawParameterValue (bypass) = 0.0f;
+    *apvts.getRawParameterValue (level) = 0.0f;
+    *apvts.getRawParameterValue (extendedStereo) = 1.0f;
+    plugin.prepareToPlay (48000.0, 512);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    fillStereoSine (buffer, 0.75f, 0.25f, 0.03f);
+    juce::AudioBuffer<float> expected (buffer);
+    juce::MidiBuffer midi;
+    plugin.processBlock (buffer, midi);
+
+    for (int i = 0; i < buffer.getNumSamples(); ++i)
+    {
+        REQUIRE (buffer.getSample (0, i) == Catch::Approx (expected.getSample (0, i)).margin (1.0e-6f));
+        REQUIRE (buffer.getSample (1, i) == Catch::Approx (expected.getSample (1, i)).margin (1.0e-6f));
+    }
+}
+
 TEST_CASE ("Wet path uses summed mono bus from stereo input", "[io][mono][integration]")
 {
     const auto inPhaseRms = renderStereoPluginRms (0.8f, 0.2f);

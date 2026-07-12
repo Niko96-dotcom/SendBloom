@@ -18,7 +18,16 @@ public:
 
     float processSample (float input, float, float, bool) noexcept override
     {
-        energy.fetch_add (static_cast<double> (std::abs (input)), std::memory_order_relaxed);
+        const auto increment = static_cast<double> (std::abs (input));
+        auto current = energy.load (std::memory_order_relaxed);
+
+        while (! energy.compare_exchange_weak (current,
+                                                current + increment,
+                                                std::memory_order_relaxed,
+                                                std::memory_order_relaxed))
+        {
+        }
+
         return input;
     }
 

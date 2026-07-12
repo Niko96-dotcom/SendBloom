@@ -125,24 +125,7 @@ std::string readTextFile (const juce::File& file)
 
 juce::File findRepoRoot()
 {
-    auto dir = juce::File::getCurrentWorkingDirectory();
-
-    for (int depth = 0; depth < 8; ++depth)
-    {
-        const auto cmakeLists = dir.getChildFile ("CMakeLists.txt");
-
-        if (cmakeLists.existsAsFile())
-        {
-            const auto cmakeText = readTextFile (cmakeLists);
-
-            if (cmakeText.find ("SendBloom") != std::string::npos)
-                return dir;
-        }
-
-        dir = dir.getParentDirectory();
-    }
-
-    return juce::File::getCurrentWorkingDirectory();
+    return juce::File { SENDBLOOM_SOURCE_DIR };
 }
 
 struct ReqArtifact
@@ -267,4 +250,3 @@ TEST_CASE ("REQUIREMENTS.md maps each of 128 IDs to a non-empty verification art
 
     REQUIRE (mapped == 128);
 }
-

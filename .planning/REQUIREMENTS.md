@@ -102,13 +102,13 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **DSP-10**: Wet dirt implements a 20 Hz post-clip DC blocker
 - [x] **DSP-11**: Wet dirt long-run DC offset is below the defined gate
 - [x] **DSP-12**: Dry path remains unaffected by all wet filtering
-- [x] **DSP-13**: `dirt_os` stays disabled and unimplemented
+- [x] **DSP-13**: Unimplemented `dirt_os` is absent from the shipping parameter contract
 - [x] **DSP-14**: `authentic_color` remains off by default
 - [x] **DSP-15**: All factory presets keep `authentic_color=0`
 
 ### State, Presets, UI, and Branding (`UX`)
 
-- [x] **UX-01**: Parameter IDs remain unchanged
+- [x] **UX-01**: Shipping parameter IDs are stable and every published control is functional
 - [x] **UX-02**: Default `send_amount` becomes 0
 - [x] **UX-03**: Factory preset XML and `FactoryPresets.cpp` remain identical in recalled state
 - [x] **UX-04**: Pressure presets use connected mode and zero resting pressure
@@ -169,7 +169,7 @@ Deferred beyond v1.0; tracked but not in this roadmap.
 
 ### Deferred product features
 
-- **FUT-01**: Extended Stereo production implementation
+- **FUT-01**: Additional stereo reverb topologies beyond the shipped dry-image preservation mode
 - **FUT-02**: Dirt OS / wet-path oversampling
 - **FUT-03**: CLAP and AAX formats
 - **FUT-04**: Preset browser architecture
@@ -184,9 +184,9 @@ Deferred beyond v1.0; tracked but not in this roadmap.
 | New reverb topology / FDN default | v1 locks current Schroeder tank |
 | Changing ProperSRC quality preset | Evidence-only later; not this milestone |
 | 32k Color default-on | Product policy unchanged |
-| Implementing Extended Stereo | Explicit deferral; param may remain disabled |
-| Implementing Dirt OS | Explicit deferral; param may remain disabled |
-| Oversampling as new feature | Tied to Dirt OS deferral |
+| Additional stereo reverb topologies | v1 ships dry-image preservation with a shared mono wet return |
+| Implementing Dirt OS | No shipping parameter is reserved; a future implementation requires a versioned product decision |
+| Oversampling as new feature | Tied to a future wet-path design and measurements |
 | CLAP / AAX | Not this release |
 | Preset browser / cloud licensing / storefront / telemetry | Post-v1 |
 | Visual redesign beyond branding/state truth | Branding only |

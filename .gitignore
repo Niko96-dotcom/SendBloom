@@ -35,3 +35,9 @@ cmake-build-relwithdebinfo
 
 # Local pluginval downloads (CI fetches its own)
 pluginval*
+
+# Repomix scratch dumps
+repomix-output.md
+
+# Vendored third-party repo samples (local research only)
+.planning/repo-samples/

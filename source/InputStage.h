@@ -34,12 +34,18 @@ public:
 private:
     static float softClip (float x) noexcept
     {
-        constexpr auto knee = 0.707946f;
+        constexpr auto ceiling = 0.707946f;
+        constexpr auto softKneeStart = ceiling * 0.75f;
+        constexpr auto softKneeWidth = ceiling - softKneeStart;
+        const auto magnitude = std::abs (x);
 
-        if (std::abs (x) <= knee)
+        if (magnitude <= softKneeStart)
             return x;
 
-        return std::copysign (knee * std::tanh (x / knee), x);
+        const auto shaped = softKneeStart
+                          + softKneeWidth * std::tanh ((magnitude - softKneeStart)
+                                                      / softKneeWidth);
+        return std::copysign (shaped, x);
     }
 
     void updateClipHold (float x) noexcept

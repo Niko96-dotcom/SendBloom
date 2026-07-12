@@ -7,8 +7,12 @@ namespace
 juce::MemoryBlock createCompressedZipEntry (const juce::String& entryName, const juce::String& content)
 {
     juce::MemoryBlock contentBlock;
-    juce::MemoryOutputStream contentStream (contentBlock, false);
-    contentStream << content;
+
+    {
+        juce::MemoryOutputStream contentStream (contentBlock, false);
+        contentStream << content;
+        contentStream.flush();
+    }
 
     juce::ZipFile::Builder builder;
     builder.addEntry (new juce::MemoryInputStream (contentBlock, false),

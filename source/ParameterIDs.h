@@ -17,7 +17,6 @@ inline constexpr const char* sendAmount      = "send_amount";
 inline constexpr const char* sendFeel        = "send_feel";
 inline constexpr const char* authenticColor  = "authentic_color";
 inline constexpr const char* extendedStereo  = "extended_stereo";
-inline constexpr const char* dirtOs          = "dirt_os";
 inline constexpr const char* bypass          = "bypass";
 
 } // namespace sendbloom::ParameterIDs

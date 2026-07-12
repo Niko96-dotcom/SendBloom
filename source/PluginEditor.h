@@ -35,9 +35,6 @@ private:
 
     juce::Label titleLabel;
     juce::ComboBox presetBox;
-    juce::TextButton saveButton { "SAVE" };
-    juce::TextButton newButton { "NEW" };
-    juce::TextButton deleteButton { "DELETE" };
     ui::PedalKnob inKnob { "INPUT (dB)" };
     ui::PedalKnob sizeKnob { "SIZE" };
     ui::PedalKnob lvlKnob { "LEVEL" };

@@ -27,24 +27,7 @@ std::string readTextFile (const juce::File& file)
 
 juce::File findRepoRoot()
 {
-    auto dir = juce::File::getCurrentWorkingDirectory();
-
-    for (int depth = 0; depth < 8; ++depth)
-    {
-        const auto cmakeLists = dir.getChildFile ("CMakeLists.txt");
-
-        if (cmakeLists.existsAsFile())
-        {
-            const auto cmakeText = readTextFile (cmakeLists);
-
-            if (cmakeText.find ("SendBloom") != std::string::npos)
-                return dir;
-        }
-
-        dir = dir.getParentDirectory();
-    }
-
-    return juce::File::getCurrentWorkingDirectory();
+    return juce::File { SENDBLOOM_SOURCE_DIR };
 }
 
 std::string extractProcessBlockBody (const std::string& source)
@@ -135,12 +118,12 @@ void assertAllFactoryPresetsRecallAuthenticColorOff()
 
 } // namespace
 
-TEST_CASE ("INTEG-04 parameter layout exposes exactly 15 Phase 2 contract IDs",
+TEST_CASE ("INTEG-04 parameter layout exposes exactly 14 shipping contract IDs",
            "[integrability][INTEG-04]")
 {
     using namespace sendbloom::ParameterIDs;
 
-    const std::array<const char*, 15> expected {
+    const std::array<const char*, 14> expected {
         inputGain,
         inputThreshold,
         size,
@@ -154,11 +137,10 @@ TEST_CASE ("INTEG-04 parameter layout exposes exactly 15 Phase 2 contract IDs",
         sendFeel,
         authenticColor,
         extendedStereo,
-        dirtOs,
         bypass,
     };
 
-    REQUIRE (expected.size() == 15);
+    REQUIRE (expected.size() == 14);
 
     for (const auto* id : expected)
     {
@@ -167,7 +149,7 @@ TEST_CASE ("INTEG-04 parameter layout exposes exactly 15 Phase 2 contract IDs",
     }
 
     sendbloom::PluginProcessor plugin;
-    REQUIRE (plugin.getParameters().size() == 15);
+    REQUIRE (plugin.getParameters().size() == 14);
 }
 
 TEST_CASE ("INTEG-04 authentic_color defaults off in fresh parameter layout",

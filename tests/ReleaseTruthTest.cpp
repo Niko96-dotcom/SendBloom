@@ -50,24 +50,7 @@ std::string readTextFile (const juce::File& file)
 
 juce::File findRepoRoot()
 {
-    auto dir = juce::File::getCurrentWorkingDirectory();
-
-    for (int depth = 0; depth < 8; ++depth)
-    {
-        const auto cmakeLists = dir.getChildFile ("CMakeLists.txt");
-
-        if (cmakeLists.existsAsFile())
-        {
-            const auto cmakeText = readTextFile (cmakeLists);
-
-            if (cmakeText.find ("SendBloom") != std::string::npos)
-                return dir;
-        }
-
-        dir = dir.getParentDirectory();
-    }
-
-    return juce::File::getCurrentWorkingDirectory();
+    return juce::File { SENDBLOOM_SOURCE_DIR };
 }
 
 std::string extractFunctionBody (const std::string& source, const std::string& signature)
@@ -474,7 +457,8 @@ TEST_CASE ("setCurrentProgram loads embedded XML preset values", "[release][pres
         fromProgram.setCurrentProgram (preset);
 
         sendbloom::PluginProcessor fromXml;
-        const auto xml = juce::parseXML (juce::String (presetXml[preset].data, presetXml[preset].size));
+        const auto xml = juce::parseXML (juce::String (presetXml[preset].data,
+                                                      static_cast<size_t> (presetXml[preset].size)));
         REQUIRE (xml != nullptr);
 
         juce::MemoryBlock block;
@@ -488,7 +472,7 @@ TEST_CASE ("setCurrentProgram loads embedded XML preset values", "[release][pres
 
         for (const auto* id : { inputGain, inputThreshold, size, level, distn, outputGain,
                                 darkMode, gatePrePost, sendConnected, sendAmount, sendFeel,
-                                authenticColor, extendedStereo, dirtOs, bypass })
+                                authenticColor, extendedStereo, bypass })
         {
             REQUIRE (programApvts.getRawParameterValue (id)->load()
                      == Catch::Approx (xmlApvts.getRawParameterValue (id)->load()).margin (1e-4f));

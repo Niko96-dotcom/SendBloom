@@ -59,7 +59,8 @@ std::vector<float> renderTankImpulse (sendbloom::SchroederTank32& tank,
 
 std::string readSourceFile (const char* relativePath)
 {
-    std::ifstream in (relativePath);
+    const auto path = std::string (SENDBLOOM_SOURCE_DIR) + "/" + relativePath;
+    std::ifstream in (path);
     std::ostringstream buffer;
     buffer << in.rdbuf();
     return buffer.str();

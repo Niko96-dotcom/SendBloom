@@ -1,18 +1,18 @@
 # SendBloom RC0 Release Checklist
 
 **Milestone:** v1.0 RC0  
-**Date:** 2026-07-12 (Phase 27 RC evidence pass)
+**Date:** 2026-07-12 (commercial-quality remediation pass)
 **Scope:** Honest pre-tag gate — automated checks verified locally on macOS unless noted.
 
 **Durable automated entry:** `bash scripts/verify-v1.sh` (defaults `BUILD_DIR=Builds`). Discovers ctest suite size at runtime, prints a truthful RED/GREEN status table, and labels human-only gates `human_needed`. Do **not** hard-code suite totals here or in scripts (BASE-06).
 
 ## Pre-Release Automated Gates (macOS local)
 
-Historical results are not RC promotion evidence. Re-run via `scripts/verify-v1.sh` from `Builds-v1`; record the runtime-discovered count, exact commit, and date in the release report.
+Historical results are not RC promotion evidence. Re-run via `scripts/verify-v1.sh` from a clean candidate build; record the runtime-discovered count, exact commit, and date in the release report.
 
 - [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`) — also invoked by `verify-v1.sh`
-- [x] Fresh Release AU + VST3 build — `Builds-v1`, 2026-07-12
-- [x] Full discovered Catch2 suite — 260/260 PASS, one explicit unavailable Zip API skip, 2026-07-12
+- [x] Release AU + VST3 build — `Builds`, 2026-07-12 remediation worktree
+- [x] Full discovered Catch2 suite — 265 discovered, 264 passed, 1 explicit unavailable Zip API skip, 0 failed, 2026-07-12
 - [x] pluginval strictness **10** on the fresh Release VST3 — final `SUCCESS`, 2026-07-12
 - [x] Clean-room positioning documented (`docs/CLEAN_ROOM.md`)
 - [x] `tests/ReleaseTruthTest.cpp` tracked and included in test target
@@ -97,5 +97,5 @@ git tag -a v1.0.0-rc0 -m "SendBloom v1.0.0-rc0"
 
 - CLAP / AAX formats
 - Commercial storefront
-- Extended stereo / dirt oversampling (shown disabled in UI)
+- Dirt oversampling (not published as a shipping parameter)
 - AU pluginval / automated AU smoke in CI

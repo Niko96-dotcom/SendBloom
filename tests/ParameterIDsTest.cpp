@@ -3,11 +3,11 @@
 #include <array>
 #include <cstring>
 
-TEST_CASE ("ParameterIDs exposes 15 unique immutable IDs", "[parm][ids]")
+TEST_CASE ("ParameterIDs exposes 14 unique immutable IDs", "[parm][ids]")
 {
     using namespace sendbloom::ParameterIDs;
 
-    const std::array<const char*, 15> expected {
+    const std::array<const char*, 14> expected {
         inputGain,
         inputThreshold,
         size,
@@ -21,11 +21,10 @@ TEST_CASE ("ParameterIDs exposes 15 unique immutable IDs", "[parm][ids]")
         sendFeel,
         authenticColor,
         extendedStereo,
-        dirtOs,
         bypass,
     };
 
-    REQUIRE (expected.size() == 15);
+    REQUIRE (expected.size() == 14);
 
     for (const auto* id : expected)
     {

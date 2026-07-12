@@ -20,6 +20,7 @@ set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded CACHE STRING "" FORCE)
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
 
 include(PamplejuceLog)
+include(Sanitizers)
 
 add_subdirectory(JUCE)
 
@@ -31,6 +32,7 @@ juce_add_plugin("${PROJECT_NAME}"
     PLUGIN_CODE SbLm
     FORMATS "${FORMATS}"
     PRODUCT_NAME "${PRODUCT_NAME}"
+    AU_SANDBOX_SAFE TRUE
     NEEDS_MIDI_INPUT TRUE)
 
 add_library(SharedCode INTERFACE)
@@ -95,4 +97,5 @@ target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 # include(PamplejuceIPP)
 
 include(Tests)
+target_compile_definitions(Tests PRIVATE SENDBLOOM_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 include(GitHubENV)

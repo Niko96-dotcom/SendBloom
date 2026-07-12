@@ -22,7 +22,6 @@ defaults:
 
 jobs:
   build_and_test:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -32,22 +31,26 @@ jobs:
           - name: Linux
             os: ubuntu-22.04
             pluginval-binary: ./pluginval
+            pluginval-sha256: 69adc87d6bbb2f7224a038d8f8c5e737ea5c906ea153752b8a546b6125e0564f
             extra-flags: -G Ninja -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DCMAKE_SHARED_LINKER_FLAGS=-fuse-ld=lld -DCMAKE_MODULE_LINKER_FLAGS=-fuse-ld=lld
           - name: macOS
             os: macos-14
             pluginval-binary: pluginval.app/Contents/MacOS/pluginval
+            pluginval-sha256: 6bb4d0acc964e775af155ec984c1566dc989dad2a708f64c773706d7baec43af
             extra-flags: -G Ninja -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
           - name: Windows
             os: windows-latest
             pluginval-binary: ./pluginval.exe
+            pluginval-sha256: 4d83bde21aebaf4d52ec0ca6d9f0c7119ad4181288eb82da103fade31a8523ad
             extra-flags: -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
 
     steps:
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
+        if: runner.os == 'Windows'
 
       - name: Set up Clang
         if: runner.os == 'Linux'
-        uses: egor-tensin/setup-clang@v2
+        uses: egor-tensin/setup-clang@23bc15cd4207e45f1566447deb48f4ff3ef932cb # v2
 
       - name: Install JUCE Linux deps
         if: runner.os == 'Linux'
@@ -64,7 +67,7 @@ jobs:
         run: brew install ninja
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: recursive
 
@@ -79,7 +82,6 @@ jobs:
         run: ctest --verbose --output-on-failure
 
       - name: Read in .env from CMake
-        working-directory: ${{ env.BUILD_DIR }}
         run: |
           cat .env
           cat .env >> $GITHUB_ENV
@@ -95,6 +97,8 @@ jobs:
 
       - name: Pluginval
         run: |
-          curl -LO "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/pluginval_${{ runner.os }}.zip"
-          7z x pluginval_${{ runner.os }}.zip
+          archive="pluginval_${{ runner.os }}.zip"
+          curl --fail --location --retry 3 --output "$archive" "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/$archive"
+          echo "${{ matrix.pluginval-sha256 }} *$archive" | shasum -a 256 --check
+          7z x "$archive"
           ${{ matrix.pluginval-binary }} --strictness-level ${{ env.STRICTNESS_LEVEL }} --verbose --validate "${{ env.VST3_PATH }}"

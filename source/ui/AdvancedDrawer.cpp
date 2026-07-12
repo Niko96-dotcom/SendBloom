@@ -9,7 +9,6 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& sendFeelId,
                                 const juce::String& authenticColorId,
                                 const juce::String& extendedStereoId,
-                                const juce::String& dirtOsId,
                                 const juce::String& sendConnectedId)
 {
     addChildComponent (gateSensKnob);
@@ -42,12 +41,9 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                             "host-rate reverb is the production default.");
     addChildComponent (colorToggle);
     addChildComponent (extendedStereoToggle);
-    addChildComponent (dirtOsToggle);
 
-    extendedStereoToggle.setEnabled (false);
-    dirtOsToggle.setEnabled (false);
-    extendedStereoToggle.setTooltip ("Coming soon");
-    dirtOsToggle.setTooltip ("Coming soon");
+    extendedStereoToggle.setTooltip ("Preserve the original left/right dry image while sharing "
+                                     "the mono wet return across both channels.");
 
     gateSensAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
         apvts, thresholdId, gateSensKnob.getSlider());
@@ -59,8 +55,6 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
         apvts, authenticColorId, colorToggle);
     extendedStereoAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
         apvts, extendedStereoId, extendedStereoToggle);
-    dirtOsAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
-        apvts, dirtOsId, dirtOsToggle);
 }
 
 void AdvancedDrawer::paint (juce::Graphics& g)
@@ -95,7 +89,6 @@ void AdvancedDrawer::setExpanded (bool shouldExpand)
     pressureModeToggle.setVisible (expanded);
     colorToggle.setVisible (expanded);
     extendedStereoToggle.setVisible (expanded);
-    dirtOsToggle.setVisible (expanded);
     setVisible (expanded);
     resized();
 }
@@ -117,7 +110,6 @@ void AdvancedDrawer::resized()
     colorToggle.setBounds (topRow.removeFromLeft (98).reduced (8, 24));
     pressureModeToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
     extendedStereoToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
-    dirtOsToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
 }
 
 } // namespace sendbloom::ui

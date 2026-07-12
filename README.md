@@ -15,6 +15,7 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 - Wet-only overdrive blended independently via `distn`
 - Dual gate profiles: Pre (hum suppression) and Post (≤15 ms wet chop)
 - Pressure send pad and MIDI CC1 momentary control
+- Optional Extended Stereo wet return in the Advanced drawer
 - 8 factory presets with host save/load round-trip
 - Pedal-style UI with clip LED and advanced drawer
 - Zero reported latency, mono-first authentic mode
@@ -48,11 +49,11 @@ ctest --test-dir Builds --output-on-failure -C Release
 
 ### macOS local install
 
-Unsigned local builds may need ad-hoc codesign:
+Unsigned local builds may need ad-hoc codesign for development only. Public packages must use the fail-closed signing, packaging, and notarization scripts under `scripts/` with a real Developer ID identity:
 
 ```bash
-codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
-codesign --force --deep -s - "Builds/SendBloom_artefacts/Release/AU/SendBloom.component"
+codesign --force --sign - --timestamp=none "Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
+codesign --force --sign - --timestamp=none "Builds/SendBloom_artefacts/Release/AU/SendBloom.component"
 ```
 
 ## Legal & Clean-Room

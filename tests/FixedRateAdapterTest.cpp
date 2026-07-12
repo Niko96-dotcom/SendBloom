@@ -674,26 +674,17 @@ TEST_CASE ("FixedRateAdapter ProperSRC realtime stress with random block sizes",
     }());
 }
 
-std::string readAdapterHeaderSource()
+static std::string readAdapterHeaderSource()
 {
-    constexpr std::array<const char*, 3> kCandidates {
-        "source/FixedRateAdapter.h",
-        "../source/FixedRateAdapter.h",
-        "../../source/FixedRateAdapter.h",
-    };
+    const auto path = std::string (SENDBLOOM_SOURCE_DIR) + "/source/FixedRateAdapter.h";
+    std::ifstream header (path);
 
-    for (const auto* path : kCandidates)
-    {
-        std::ifstream header (path);
-        if (header.is_open())
-        {
-            std::ostringstream source;
-            source << header.rdbuf();
-            return source.str();
-        }
-    }
+    if (! header.is_open())
+        return {};
 
-    return {};
+    std::ostringstream source;
+    source << header.rdbuf();
+    return source.str();
 }
 
 TEST_CASE ("FixedRateAdapter processBlock has no heap allocation tokens",

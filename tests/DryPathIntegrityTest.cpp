@@ -14,7 +14,7 @@
 namespace
 {
 
-constexpr auto kSampleRate = 48000.0;
+constexpr auto kSampleRate = 48000.0f;
 constexpr auto kBlockSize = 512;
 constexpr auto kFundamentalHz = kSampleRate * 0.03f / (2.0f * 3.14159265358979323846f);
 constexpr auto kWarmupBlocks = 48;

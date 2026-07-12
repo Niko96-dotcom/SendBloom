@@ -15,7 +15,6 @@ public:
                     const juce::String& sendFeelId,
                     const juce::String& authenticColorId,
                     const juce::String& extendedStereoId,
-                    const juce::String& dirtOsId,
                     const juce::String& sendConnectedId);
 
     void setExpanded (bool shouldExpand);
@@ -34,14 +33,12 @@ private:
     juce::ToggleButton pressureModeToggle { "PRESSURE MODE" };
     juce::ToggleButton colorToggle { "32k Color" };
     juce::ToggleButton extendedStereoToggle { "Extended Stereo" };
-    juce::ToggleButton dirtOsToggle { "Dirt OS" };
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gateSensAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> sendFeelAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> pressureModeAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> colorAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> extendedStereoAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> dirtOsAttachment;
 };
 
 } // namespace sendbloom::ui

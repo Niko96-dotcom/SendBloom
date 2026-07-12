@@ -12,14 +12,15 @@ TEST_CASE ("LFO depth seconds invariant at five processing rates",
 
     const std::array<double, 5> rates { 32768.0, 44100.0, 48000.0, 88200.0, 96000.0 };
 
-    for (const auto rate : rates)
+    for (size_t i = 0; i < rates.size(); ++i)
     {
+        const auto rate = rates[i];
         const auto depthSamples = Table::tankLfoDepthSamplesForRate (rate);
         const auto depthSeconds = static_cast<double> (depthSamples) / rate;
 
         REQUIRE (depthSeconds == Catch::Approx (Table::kTankLfoDepthSeconds).margin (1.0e-6));
 
-        if (rate == Table::kInternalRate)
+        if (i == 0)
             REQUIRE (depthSamples == Catch::Approx (16.0f).margin (1.0e-3f));
     }
 }

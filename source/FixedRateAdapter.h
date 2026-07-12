@@ -65,6 +65,7 @@ public:
                 std::fill (out, out + n, 0.0f);
                 const int written = converters.downsample (internalProcessBuf.data(), nInternal, out, n);
                 jassert (written >= 0 && written <= n);
+                juce::ignoreUnused (written);
                 break;
             }
         }

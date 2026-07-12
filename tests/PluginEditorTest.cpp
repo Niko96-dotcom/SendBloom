@@ -60,3 +60,37 @@ TEST_CASE ("Clip hold flag accessible from processor", "[ui][clip]")
     sendbloom::PluginProcessor plugin;
     REQUIRE_FALSE (plugin.isClipHoldActive());
 }
+
+TEST_CASE ("Gate control follows preset changes and has no inert preset action buttons",
+           "[ui][editor][preset][regression]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+
+    juce::ToggleButton* gateButton = nullptr;
+
+    for (auto* child : editor.getChildren())
+    {
+        if (auto* button = dynamic_cast<juce::TextButton*> (child))
+        {
+            REQUIRE (button->getButtonText() != "SAVE");
+            REQUIRE (button->getButtonText() != "NEW");
+            REQUIRE (button->getButtonText() != "DELETE");
+        }
+
+        if (auto* toggle = dynamic_cast<juce::ToggleButton*> (child))
+            if (toggle->getButtonText() == "Gate")
+                gateButton = toggle;
+    }
+
+    REQUIRE (gateButton != nullptr);
+
+    processor.setCurrentProgram (0); // PostHard
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
+    REQUIRE (gateButton->getToggleState());
+
+    processor.setCurrentProgram (3); // Dry Dub Sends: PreSoft
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
+    REQUIRE_FALSE (gateButton->getToggleState());
+}

@@ -71,49 +71,6 @@ void drawChevronRail (juce::Graphics& g, float x, float y, int count, juce::Colo
     }
 }
 
-void drawControlIcons (juce::Graphics& g, juce::Rectangle<int> area)
-{
-    auto drawIcon = [&g] (juce::Rectangle<int> bounds, const juce::String& text)
-    {
-        const auto icon = bounds.removeFromTop (24).toFloat();
-        g.setColour (juce::Colour (0xff23282b));
-
-        if (text == "SAVE")
-        {
-            g.fillRoundedRectangle (icon.reduced (7.0f, 2.0f), 2.0f);
-            g.setColour (juce::Colours::white);
-            g.fillRect (icon.getX() + 12.0f, icon.getY() + 5.0f, 7.0f, 5.0f);
-            g.fillEllipse (icon.getX() + 13.0f, icon.getY() + 15.0f, 6.0f, 6.0f);
-        }
-        else if (text == "NEW")
-        {
-            juce::Path page;
-            page.startNewSubPath (icon.getX() + 8.0f, icon.getY() + 2.0f);
-            page.lineTo (icon.getX() + 21.0f, icon.getY() + 2.0f);
-            page.lineTo (icon.getX() + 28.0f, icon.getY() + 9.0f);
-            page.lineTo (icon.getX() + 28.0f, icon.getBottom() - 2.0f);
-            page.lineTo (icon.getX() + 8.0f, icon.getBottom() - 2.0f);
-            page.closeSubPath();
-            g.strokePath (page, juce::PathStrokeType (3.0f));
-        }
-        else
-        {
-            g.fillRect (icon.getX() + 11.0f, icon.getY() + 7.0f, 17.0f, 18.0f);
-            g.fillRect (icon.getX() + 9.0f, icon.getY() + 4.0f, 21.0f, 3.0f);
-            g.fillRect (icon.getX() + 15.0f, icon.getY() + 1.0f, 9.0f, 3.0f);
-        }
-
-        g.setColour (juce::Colours::black);
-        g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-        g.drawText (text, bounds, juce::Justification::centredTop);
-    };
-
-    const auto width = area.getWidth() / 3;
-    drawIcon (area.removeFromLeft (width), "SAVE");
-    drawIcon (area.removeFromLeft (width), "NEW");
-    drawIcon (area, "DELETE");
-}
-
 void fillTriangle (juce::Graphics& g, float x1, float y1, float x2, float y2, float x3, float y3)
 {
     juce::Path triangle;
@@ -312,8 +269,6 @@ void paintProceduralChassis (juce::Graphics& g,
     drawCyanFrame (g, { 40.0f, 128.0f, 340.0f, 600.0f }, cyan);
     drawChevronRail (g, 24.0f, 270.0f, 4, cyan);
     drawChevronRail (g, 24.0f, 610.0f, 6, cyan);
-    drawControlIcons (g, { 300, 148, 92, 44 });
-
     const auto leftPanel = juce::Rectangle<float> (58.0f, 195.0f, 154.0f, 219.0f);
     g.setColour (cyan);
     g.drawRect (leftPanel, 4.0f);

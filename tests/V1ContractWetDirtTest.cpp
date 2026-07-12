@@ -27,24 +27,7 @@ std::string readTextFile (const juce::File& file)
 
 juce::File findRepoRoot()
 {
-    auto dir = juce::File::getCurrentWorkingDirectory();
-
-    for (int depth = 0; depth < 8; ++depth)
-    {
-        const auto cmakeLists = dir.getChildFile ("CMakeLists.txt");
-
-        if (cmakeLists.existsAsFile())
-        {
-            const auto cmakeText = readTextFile (cmakeLists);
-
-            if (cmakeText.find ("SendBloom") != std::string::npos)
-                return dir;
-        }
-
-        dir = dir.getParentDirectory();
-    }
-
-    return juce::File::getCurrentWorkingDirectory();
+    return juce::File { SENDBLOOM_SOURCE_DIR };
 }
 
 float measureFilteredBranchRms (sendbloom::WetOverdriveState& od,
@@ -171,18 +154,20 @@ TEST_CASE ("distn zero returns original wet within tolerance",
         REQUIRE (od.process (wet, 0.0f) == Catch::Approx (wet).margin (1.0e-6f));
 }
 
-TEST_CASE ("dirt_os not consumed in GatedBloomChain audio path",
-           "[v1][contract][wet-dirt][DSP-13]")
+TEST_CASE ("unimplemented dirt_os is not published as a shipping parameter",
+           "[v1][contract][wet-dirt][DSP-13][shipping]")
 {
     const auto root = findRepoRoot();
-    const auto chainText = readTextFile (root.getChildFile ("source/GatedBloomChain.h"));
+    const auto parameterIds = readTextFile (root.getChildFile ("source/ParameterIDs.h"));
+    const auto parameterLayout = readTextFile (root.getChildFile ("source/ParameterLayout.cpp"));
     const auto drawerText = readTextFile (root.getChildFile ("source/ui/AdvancedDrawer.cpp"));
 
-    REQUIRE_FALSE (chainText.empty());
+    REQUIRE_FALSE (parameterIds.empty());
+    REQUIRE_FALSE (parameterLayout.empty());
     REQUIRE_FALSE (drawerText.empty());
-    REQUIRE (chainText.find ("dirtOs") == std::string::npos);
-    REQUIRE (chainText.find ("dirt_os") == std::string::npos);
-    REQUIRE (drawerText.find ("dirtOsToggle.setEnabled (false)") != std::string::npos);
+    REQUIRE (parameterIds.find ("dirtOs") == std::string::npos);
+    REQUIRE (parameterLayout.find ("Dirt OS") == std::string::npos);
+    REQUIRE (drawerText.find ("Dirt OS") == std::string::npos);
 }
 
 TEST_CASE ("GatedBloomChain wet overdrive path remains allocation-free at runtime",

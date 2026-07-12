@@ -29,7 +29,6 @@ struct ParameterSnapshot
     bool sendFirmFeel {};
     bool authenticColor {};
     bool extendedStereo {};
-    bool dirtOs {};
     bool bypassed {};
 
     static ParameterSnapshot capture (const juce::AudioProcessorValueTreeState& apvts) noexcept
@@ -69,7 +68,6 @@ struct ParameterSnapshot
 
         s.authenticColor = apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f;
         s.extendedStereo = apvts.getRawParameterValue (ParameterIDs::extendedStereo)->load() > 0.5f;
-        s.dirtOs = apvts.getRawParameterValue (ParameterIDs::dirtOs)->load() > 0.5f;
         s.bypassed = apvts.getRawParameterValue (ParameterIDs::bypass)->load() > 0.5f;
 
         return s;

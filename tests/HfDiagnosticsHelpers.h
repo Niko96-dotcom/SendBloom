@@ -278,7 +278,7 @@ inline HfMetrics measureTail (const std::string& config,
         }
     }
 
-    m.hfBandDecaySec = static_cast<float> (decaySamples / kSampleRate);
+    m.hfBandDecaySec = static_cast<float> (static_cast<double> (decaySamples) / kSampleRate);
     return m;
 }
 

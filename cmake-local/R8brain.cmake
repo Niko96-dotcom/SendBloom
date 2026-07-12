@@ -13,5 +13,5 @@ CPMAddPackage(
 
 if (r8brain_ADDED)
     add_library(r8brain INTERFACE)
-    target_include_directories(r8brain INTERFACE "${r8brain_SOURCE_DIR}")
+    target_include_directories(r8brain SYSTEM INTERFACE "${r8brain_SOURCE_DIR}")
 endif()

@@ -10,9 +10,17 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/Builds}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
-RUN_PLUGINVAL="${RUN_PLUGINVAL:-0}"
+RUN_PLUGINVAL="${RUN_PLUGINVAL:-1}"
 PLUGINVAL_BIN="${PLUGINVAL_BIN:-}"
 STRICTNESS_LEVEL="${STRICTNESS_LEVEL:-10}"
+
+if [[ -z "$PLUGINVAL_BIN" ]]; then
+  if command -v pluginval >/dev/null 2>&1; then
+    PLUGINVAL_BIN="$(command -v pluginval)"
+  elif [[ -x "/Applications/pluginval.app/Contents/MacOS/pluginval" ]]; then
+    PLUGINVAL_BIN="/Applications/pluginval.app/Contents/MacOS/pluginval"
+  fi
+fi
 
 declare -a GATE_NAMES=()
 declare -a GATE_STATUSES=()
@@ -77,13 +85,33 @@ else
 fi
 echo
 
-# --- (d) Build Tests (Release) ------------------------------------------------
-echo "==> [4/7] cmake --build Tests ($BUILD_TYPE)"
-if cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" --target Tests; then
-  record_gate "build-Tests" "PASS" "target Tests / $BUILD_TYPE"
+# --- (d) Build every shipping target plus tests -------------------------------
+echo "==> [4/7] cmake --build all ($BUILD_TYPE)"
+if cmake --build "$BUILD_DIR" --config "$BUILD_TYPE"; then
+  record_gate "build-shipping" "PASS" "all configured targets / $BUILD_TYPE"
 else
-  record_gate "build-Tests" "FAIL" "cmake --build Tests failed"
+  record_gate "build-shipping" "FAIL" "cmake --build failed"
   mark_fail
+fi
+echo
+
+VST3_PATH="${VST3_PATH:-$BUILD_DIR/SendBloom_artefacts/$BUILD_TYPE/VST3/SendBloom.vst3}"
+AU_PATH="${AU_PATH:-$BUILD_DIR/SendBloom_artefacts/$BUILD_TYPE/AU/SendBloom.component}"
+
+if [[ -d "$VST3_PATH" ]]; then
+  record_gate "artifact-vst3" "PASS" "$VST3_PATH"
+else
+  record_gate "artifact-vst3" "FAIL" "missing $VST3_PATH"
+  mark_fail
+fi
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if [[ -d "$AU_PATH" ]]; then
+    record_gate "artifact-au" "PASS" "$AU_PATH"
+  else
+    record_gate "artifact-au" "FAIL" "missing $AU_PATH"
+    mark_fail
+  fi
 fi
 echo
 
@@ -113,12 +141,13 @@ if [[ -n "$DISCOVERED_TOTAL" ]]; then
 fi
 
 # Parse runtime pass/fail summary when present (never a hard-coded expectation).
+CTEST_SKIPPED="$(grep -c '\*\*\*Skipped' "$CTEST_LOG" || true)"
 if grep -qE '[0-9]+ tests failed out of [0-9]+' "$CTEST_LOG"; then
   CTEST_FAILED="$(sed -nE 's/.* ([0-9]+) tests failed out of ([0-9]+).*/\1/p' "$CTEST_LOG" | tail -1)"
   CTEST_OUT_OF="$(sed -nE 's/.* ([0-9]+) tests failed out of ([0-9]+).*/\2/p' "$CTEST_LOG" | tail -1)"
   if [[ -n "$CTEST_FAILED" && -n "$CTEST_OUT_OF" ]]; then
-    CTEST_PASSED=$((CTEST_OUT_OF - CTEST_FAILED))
-    CTEST_DETAIL+="; passed=$CTEST_PASSED failed=$CTEST_FAILED (runtime)"
+    CTEST_PASSED=$((CTEST_OUT_OF - CTEST_FAILED - CTEST_SKIPPED))
+    CTEST_DETAIL+="; passed=$CTEST_PASSED skipped=$CTEST_SKIPPED failed=$CTEST_FAILED (runtime)"
   fi
 elif grep -qE '100% tests passed' "$CTEST_LOG"; then
   CTEST_DETAIL+="; all discovered tests passed (runtime)"
@@ -143,11 +172,10 @@ else
 fi
 echo
 
-# --- (g) Optional pluginval (VST3) --------------------------------------------
-echo "==> [7/7] Optional VST3 pluginval"
-VST3_PATH="${VST3_PATH:-$BUILD_DIR/SendBloom_artefacts/$BUILD_TYPE/VST3/SendBloom.vst3}"
-if [[ "$RUN_PLUGINVAL" == "1" && -n "$PLUGINVAL_BIN" ]]; then
-  if [[ ! -e "$PLUGINVAL_BIN" ]]; then
+# --- (g) Required pluginval (VST3) --------------------------------------------
+echo "==> [7/7] Required VST3 pluginval"
+if [[ "$RUN_PLUGINVAL" == "1" ]]; then
+  if [[ -z "$PLUGINVAL_BIN" || ! -x "$PLUGINVAL_BIN" ]]; then
     record_gate "pluginval-vst3" "FAIL" "PLUGINVAL_BIN not found: $PLUGINVAL_BIN"
     mark_fail
   elif [[ ! -e "$VST3_PATH" ]]; then
@@ -162,7 +190,8 @@ if [[ "$RUN_PLUGINVAL" == "1" && -n "$PLUGINVAL_BIN" ]]; then
     fi
   fi
 else
-  record_gate "pluginval-vst3" "SKIPPED" "not-run (set RUN_PLUGINVAL=1 and PLUGINVAL_BIN to enable); never treated as PASS"
+  record_gate "pluginval-vst3" "FAIL" "disabled by RUN_PLUGINVAL=$RUN_PLUGINVAL; release verification is fail-closed"
+  mark_fail
 fi
 echo
 
@@ -176,7 +205,7 @@ overall="GREEN"
 for i in "${!GATE_NAMES[@]}"; do
   st="${GATE_STATUSES[$i]}"
   printf '%-22s %-10s %s\n' "${GATE_NAMES[$i]}" "$st" "${GATE_DETAILS[$i]}"
-  if [[ "$st" == "FAIL" ]]; then
+  if [[ "$st" != "PASS" ]]; then
     overall="RED"
   fi
 done
@@ -203,7 +232,7 @@ echo "- DAW smoke Cubase: human_needed"
 echo "- DAW smoke REAPER: human_needed"
 echo "- Developer ID signing: human_needed"
 echo "- Notarization / stapling: human_needed"
-echo "- JUCE license decision: human_needed"
+echo "- JUCE commercial entitlement evidence: human_needed"
 echo "- Hardware reference grids: human_needed"
 echo "- Blind or level-matched listening review: human_needed"
 echo

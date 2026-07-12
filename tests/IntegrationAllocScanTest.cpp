@@ -10,27 +10,15 @@ namespace
 
 std::string readSourceFile (const char* relativePath)
 {
-    constexpr std::array<const char*, 3> kPathPrefixes {
-        "",
-        "../",
-        "../../",
-    };
+    const auto path = std::string (SENDBLOOM_SOURCE_DIR) + "/" + relativePath;
+    std::ifstream in (path);
 
-    for (const auto* prefix : kPathPrefixes)
-    {
-        std::ostringstream path;
-        path << prefix << relativePath;
+    if (! in.is_open())
+        return {};
 
-        std::ifstream in (path.str());
-        if (in.is_open())
-        {
-            std::ostringstream buffer;
-            buffer << in.rdbuf();
-            return buffer.str();
-        }
-    }
-
-    return {};
+    std::ostringstream buffer;
+    buffer << in.rdbuf();
+    return buffer.str();
 }
 
 std::string stripComments (std::string s)

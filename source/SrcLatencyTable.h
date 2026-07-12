@@ -32,7 +32,7 @@ inline constexpr int lookupRoundTripLatencySamples (double hostRateHz) noexcept
 {
     for (const auto& row : kMeasuredLatencyTable)
     {
-        if (row.hostRateHz == hostRateHz)
+        if (hostRateHz >= row.hostRateHz - 0.5 && hostRateHz <= row.hostRateHz + 0.5)
             return row.roundTripSamples;
     }
 

@@ -1,0 +1,1 @@
+{"content":"RT60 from IR: backward integration of squared samples (Schroeder 1965) yields smooth EDC; linear regression on decay slope extrapolates to -60dB. Existing SendBloom measureRT60 matches this pattern with 20ms start skip and 75% end window.","source":"web","provider":"websearch","confidence":"MEDIUM","fetched_at":"2026-07-08T19:28:00.536Z","ttl":86400000,"kind":"web"}

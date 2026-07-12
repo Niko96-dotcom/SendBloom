@@ -5,7 +5,19 @@ set -euo pipefail
 ARTIFACT="${1:?Usage: scripts/notarize-macos.sh path-to-zip-pkg-or-dmg}"
 [[ -f "$ARTIFACT" ]] || { echo "ERROR: missing $ARTIFACT" >&2; exit 1; }
 
-xcrun notarytool submit "$ARTIFACT" --keychain-profile "$NOTARY_PROFILE" --wait
+RESULT="$(xcrun notarytool submit "$ARTIFACT" \
+  --keychain-profile "$NOTARY_PROFILE" \
+  --wait \
+  --output-format json)"
+echo "$RESULT"
+
+STATUS="$(printf '%s' "$RESULT" | plutil -extract status raw -o - -- -)"
+SUBMISSION_ID="$(printf '%s' "$RESULT" | plutil -extract id raw -o - -- -)"
+
+if [[ "$STATUS" != "Accepted" ]]; then
+  echo "ERROR: notarization $SUBMISSION_ID finished with status: $STATUS" >&2
+  exit 1
+fi
 
 case "$ARTIFACT" in
   *.pkg|*.dmg)
@@ -13,7 +25,7 @@ case "$ARTIFACT" in
     xcrun stapler validate "$ARTIFACT"
     ;;
   *.zip)
-    echo "Accepted ZIP submission; tickets attach to the signed nested bundles and ZIP containers cannot be stapled."
+    echo "Accepted ZIP submission $SUBMISSION_ID; ZIP containers cannot be stapled."
     ;;
   *)
     echo "ERROR: notarization artifact must be .zip, .pkg, or .dmg" >&2

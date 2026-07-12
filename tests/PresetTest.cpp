@@ -7,21 +7,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <set>
 
-namespace
-{
-
-void expectParamNear (const sendbloom::PluginProcessor& plugin,
-                     const char* paramId,
-                     float expected,
-                     float tolerance = 0.02f)
-{
-    const auto actual = plugin.getAPVTS().getRawParameterValue (paramId)->load();
-    INFO ("param " << paramId << " expected " << expected << " got " << actual);
-    REQUIRE (actual == Catch::Approx (expected).margin (tolerance));
-}
-
-} // namespace
-
 TEST_CASE ("Factory presets exposes eight programs", "[preset][PRST-01]")
 {
     sendbloom::PluginProcessor plugin;
@@ -74,7 +59,7 @@ TEST_CASE ("Factory preset state round-trip preserves all parameters", "[preset]
 
     for (const auto* id : { inputGain, inputThreshold, size, level, distn, outputGain,
                             darkMode, gatePrePost, sendConnected, sendAmount, sendFeel,
-                            authenticColor, extendedStereo, dirtOs, bypass })
+                            authenticColor, extendedStereo, bypass })
     {
         REQUIRE (dst.getRawParameterValue (id)->load()
                  == Catch::Approx (src.getRawParameterValue (id)->load()).margin (1e-4f));
@@ -131,7 +116,7 @@ TEST_CASE ("All factory presets round-trip through get/setStateInformation", "[p
     }
 }
 
-TEST_CASE ("Factory presets match §9.7 send resting matrix (SEND-11 / UX-04/05)",
+TEST_CASE ("Factory presets match specification 9.7 send resting matrix (SEND-11 / UX-04/05)",
            "[preset][send][SEND-11][UX-04][UX-05]")
 {
     using namespace sendbloom::ParameterIDs;

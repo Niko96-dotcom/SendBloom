@@ -107,6 +107,30 @@ TEST_CASE ("APVTS state round-trip", "[parm][state]")
              == Catch::Approx (apvts.getRawParameterValue (bypass)->load()).margin (1e-4f));
 }
 
+TEST_CASE ("Discrete switch state restores after non-discrete host input", "[parm][state][pluginval]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    for (const auto* id : { darkMode, sendConnected, authenticColor, extendedStereo, bypass })
+    {
+        sendbloom::PluginProcessor plugin;
+        auto* parameter = plugin.getAPVTS().getParameter (id);
+        REQUIRE (parameter != nullptr);
+
+        parameter->setValueNotifyingHost (0.0f);
+        juce::MemoryBlock state;
+        plugin.getStateInformation (state);
+
+        // pluginval deliberately fuzzes discrete parameters with arbitrary
+        // normalised values before asking the processor to restore its state.
+        parameter->setValueNotifyingHost (0.346531f);
+        plugin.setStateInformation (state.getData(), static_cast<int> (state.getSize()));
+
+        INFO ("parameter " << id);
+        REQUIRE (parameter->getValue() == Catch::Approx (0.0f).margin (1.0e-6f));
+    }
+}
+
 TEST_CASE ("getBypassParameter returns bypass param", "[parm][layout]")
 {
     sendbloom::PluginProcessor plugin;
