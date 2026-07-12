@@ -20,7 +20,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 - [x] **Phase 19: Baseline, Contracts & Failure Harness** - Freeze truth, map requirements, add failing defect tests and durable verifier (completed 2026-07-12)
 - [x] **Phase 20: Pressure Send State Truth** - Dry-at-rest pressure mode with correct UI/preset resting semantics (completed 2026-07-12)
 - [x] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass (3 plans) (completed 2026-07-12)
-- [ ] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption
+- [x] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption (completed 2026-07-12)
 - [ ] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click
 - [ ] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC
 - [ ] **Phase 25: Presets, UI, Branding & Release Truth** - Original SendBloom branding, clean-room scan, truthful docs
@@ -107,10 +107,14 @@ Plans:
   2. CC1 sample positions and multiple events in one block are applied in order; value 0 releases MIDI pressure; host/UI and MIDI combine via `max`; non-CC1 messages do not change pressure
   3. Span boundaries respect CC1 event positions; send/distortion/threshold arrays and input/level/output/bypass remain per-sample; behavior stays finite and deterministic at block sizes 1–2048
 
-**Plans**: TBD
-**ADRs**: ADR-V1-03, ADR-V1-06
+**Plans**: 3/3 plans complete
+Plans:
 
-### Phase 23: Input, Level & Gate Truth
+- [x] 22-01-PLAN.md — MIDI purity: no APVTS store; PressureController midi target (MIDI-01/02/03/07/08)
+- [x] 22-02-PLAN.md — Sample-accurate CC1 + span cuts (MIDI-04/05/06/09/10, RT-04)
+- [x] 22-03-PLAN.md — Per-sample distn/threshold/send arrays (RT-06/07)
+
+**ADRs**: ADR-V1-03, ADR-V1-06
 
 **Goal**: Input, Level, and Gate controls agree with their labels — clockwise Input drives wet harder, Level scales wet only, PostHard is brutal but de-clicked.
 **Depends on**: Phase 22
@@ -211,8 +215,8 @@ Plans:
 |-------|----------------|--------|-----------|
 | 19. Baseline, Contracts & Failure Harness | 3/3 | Complete    | 2026-07-12 |
 | 20. Pressure Send State Truth | 3/3 | Complete    | 2026-07-12 |
-| 21. Realtime Span Engine & True Bypass | 3/3 | Complete   | 2026-07-12 |
-| 22. MIDI & Per-Sample Control Delivery | 0/TBD | Not started | - |
+| 21. Realtime Span Engine & True Bypass | 3/3 | Complete    | 2026-07-12 |
+| 22. MIDI & Per-Sample Control Delivery | 3/3 | Complete    | 2026-07-12 |
 | 23. Input, Level & Gate Truth | 0/TBD | Not started | - |
 | 24. Reverb State & Wet-Dirt Integrity | 0/TBD | Not started | - |
 | 25. Presets, UI, Branding & Release Truth | 0/TBD | Not started | - |

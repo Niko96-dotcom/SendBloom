@@ -38,26 +38,26 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### MIDI (`MIDI`)
 
-- [ ] **MIDI-01**: MIDI CC1 controls realtime pressure only when pressure mode is connected
-- [ ] **MIDI-02**: `processBlock` never calls `setValueNotifyingHost`
-- [ ] **MIDI-03**: `processBlock` never writes `send_amount` raw APVTS state
-- [ ] **MIDI-04**: CC1 event sample positions are respected
-- [ ] **MIDI-05**: Multiple CC1 events in one block are applied in order
-- [ ] **MIDI-06**: CC1 value 0 releases MIDI pressure
-- [ ] **MIDI-07**: Host/UI pressure and MIDI pressure combine via `max`
-- [ ] **MIDI-08**: MIDI modulation does not dirty saved plugin state
-- [ ] **MIDI-09**: Non-CC1 MIDI messages do not change pressure
-- [ ] **MIDI-10**: MIDI behavior remains finite and deterministic at block sizes 1–2048
+- [x] **MIDI-01**: MIDI CC1 controls realtime pressure only when pressure mode is connected
+- [x] **MIDI-02**: `processBlock` never calls `setValueNotifyingHost`
+- [x] **MIDI-03**: `processBlock` never writes `send_amount` raw APVTS state
+- [x] **MIDI-04**: CC1 event sample positions are respected
+- [x] **MIDI-05**: Multiple CC1 events in one block are applied in order
+- [x] **MIDI-06**: CC1 value 0 releases MIDI pressure
+- [x] **MIDI-07**: Host/UI pressure and MIDI pressure combine via `max`
+- [x] **MIDI-08**: MIDI modulation does not dirty saved plugin state
+- [x] **MIDI-09**: Non-CC1 MIDI messages do not change pressure
+- [x] **MIDI-10**: MIDI behavior remains finite and deterministic at block sizes 1–2048
 
 ### Realtime / Block Engine (`RT`)
 
 - [x] **RT-01**: No `setSize`, `resize`, `assign`, `make_unique`, `push_back`, or equivalent allocation path runs in `PluginProcessor::processBlock`
 - [x] **RT-02**: Host blocks larger than `preparedMaxBlock_` retain full wet processing
 - [x] **RT-03**: Processing a 2048-sample host block prepared at 512 matches equivalent smaller blocks within tolerance
-- [ ] **RT-04**: Span processing respects CC1 event boundaries
+- [x] **RT-04**: Span processing respects CC1 event boundaries
 - [x] **RT-05**: Span processing uses at most 128 samples for control-rate reverb values
-- [ ] **RT-06**: Dynamic send/distortion/threshold controls are consumed per sample
-- [ ] **RT-07**: Input gain, level, output gain, and bypass remain per sample
+- [x] **RT-06**: Dynamic send/distortion/threshold controls are consumed per sample
+- [x] **RT-07**: Input gain, level, output gain, and bypass remain per sample
 - [x] **RT-08**: Authentic-mode changes request exactly one engine target transition per parameter change
 - [x] **RT-09**: Reported latency remains zero under ADR-003 across transitions
 - [x] **RT-10**: Engine crossfade begins within the first processed block after the parameter change
@@ -269,19 +269,19 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | CORE-16 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
 | CORE-17 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
 | CORE-18 | Phase 21 | Complete | Core/bypass/span contracts (Phase 21); BypassCrossfadeTest |
-| MIDI-01 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-02 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-03 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-04 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-05 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-06 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-07 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-08 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-09 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| MIDI-10 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; MIDI purity contracts (Phase 22) |
-| RT-04 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; RT MIDI purity contracts (Phase 22) |
-| RT-06 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; RT MIDI purity contracts (Phase 22) |
-| RT-07 | Phase 22 | Pending | tests/MidiSendAmountTest.cpp; RT MIDI purity contracts (Phase 22) |
+| MIDI-01 | Phase 22 | Complete | tests/V1ContractMidi*.cpp#[v1][contract][midi]; tests/MidiSendAmountTest.cpp |
+| MIDI-02 | Phase 22 | Complete | tests/V1ContractMidiApvtsPurityTest.cpp#[midi-apvts] |
+| MIDI-03 | Phase 22 | Complete | tests/V1ContractMidiApvtsPurityTest.cpp#[midi-apvts] |
+| MIDI-04 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[v1][contract][midi] |
+| MIDI-05 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[v1][contract][midi] |
+| MIDI-06 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[v1][contract][midi] |
+| MIDI-07 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[v1][contract][midi] |
+| MIDI-08 | Phase 22 | Complete | tests/V1ContractMidiApvtsPurityTest.cpp#[midi-apvts] |
+| MIDI-09 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[v1][contract][midi] |
+| MIDI-10 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[v1][contract][midi] |
+| RT-04 | Phase 22 | Complete | tests/V1ContractMidiSampleAccurateTest.cpp#[RT-04] |
+| RT-06 | Phase 22 | Complete | tests/V1ContractPerSampleControlsTest.cpp#[per-sample] |
+| RT-07 | Phase 22 | Complete | tests/V1ContractPerSampleControlsTest.cpp#[per-sample] |
 | CORE-01 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
 | CORE-02 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
 | CORE-03 | Phase 23 | Pending | Input/Level/Gate contracts (Phase 23); PostGateTimingTest.cpp |
