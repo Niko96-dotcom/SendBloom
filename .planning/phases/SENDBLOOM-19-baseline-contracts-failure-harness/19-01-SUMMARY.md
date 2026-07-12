@@ -116,7 +116,7 @@ Each task was committed atomically:
 2. **Task 2: Author baseline report and factory-preset metrics** - `9024ccf` (test RED) → `612fbb1` (feat GREEN)
 3. **Task 3: Verify REQUIREMENTS completeness and artifact mapping** - `c573041` (test RED) → `776cbf9` (feat GREEN)
 
-**Plan metadata:** _(pending docs commit)_
+**Plan metadata:** `79f2f8b` (docs: complete baseline restore and freeze plan)
 
 ## Files Created/Modified
 

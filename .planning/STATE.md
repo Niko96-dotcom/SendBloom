@@ -4,10 +4,11 @@ milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
 current_phase: 19
 current_phase_name: Baseline, Contracts & Failure Harness
-status: planning
-last_updated: "2026-07-12T15:17:50.657Z"
+status: executing
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-07-12T15:18:25.028Z"
 last_activity: 2026-07-12
-last_activity_desc: Phase 19 plans created
+last_activity_desc: Completed 19-01 (cmake restore + baseline + traceability)
 progress:
   total_phases: 9
   completed_phases: 0
@@ -23,34 +24,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 19 planned — execute 19-01 (cmake restore + baseline)
+**Current focus:** Phase 19 executing — 19-01 complete; next 19-02 contracts
 
 ## Current Position
 
 Phase: 19 of 27 (Baseline, Contracts & Failure Harness)
-Plan: 19-01 (next)
-Status: Planned — 3 plans ready (19-01..19-03)
-Last activity: 2026-07-12 — Phase 19 plans created
+Plan: 2 of 3 in current phase
+Status: Ready to execute
+Last activity: 2026-07-12 — Completed 19-01 (cmake restore + baseline + traceability)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 11 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 19 | 1 | 11 min | 11 min |
 
 **Recent Trend:**
 
-- Last 5 plans: —
+- Last 5 plans: 11 min
 - Trend: —
 
 *Updated after each plan completion*
@@ -66,6 +67,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - Phase 27 must not begin while automated requirements from Phases 19–25 are red
 - Human gates stay `human_needed`
 - RT ownership: Phase 21 = span/no-alloc/bypass; Phase 22 = MIDI + per-sample delivery (RT-04/06/07)
+- [Phase 19]: Realign JUCE to reachable 8.0.12 when parent gitlink c3c318cf was unreachable
+- [Phase 19]: Guard ZipFile max-uncompressed test behind SENDBLOOM_HAS_JUCE_ZIP_MAX_UNCOMPRESSED
+- [Phase 19]: Embed BASE artifacts in Catch2; verify all 128 IDs via REQUIREMENTS.md parse
 
 ### Pending Todos
 
@@ -75,11 +79,15 @@ None yet.
 
 - Phase 27 blocked until Phases 19–25 automated requirements are green
 - Several REL/REF/UX gates require human evidence (`human_needed`)
-- Phase 19 Wave 0: `cmake/` submodule files deleted locally; parent gitlink points at unreachable `38bc0f5` — restore to reachable SHA with `Tests.cmake` (e.g. `d5cb9b3`) before metrics/contracts
+- Resolved in 19-01: cmake Wave 0 restore (d5cb9b3) and JUCE realign (8.0.12); ZipFile max-uncompressed API still absent on stock 8.0.12 (SKIP until reachable pin)
 
 ## Session Continuity
 
-**Next action:** `/gsd-execute-phase 19` — start with 19-01 (cmake restore + baseline)
+**Last session:** 2026-07-12 15:17
+**Stopped At:** Completed 19-01-PLAN.md
+**Resume File:** None
+
+**Next action:** Execute 19-02 (failing v1 contract tests)
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`
