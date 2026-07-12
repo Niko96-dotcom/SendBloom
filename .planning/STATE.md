@@ -4,11 +4,11 @@ milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
 current_phase: 20
 current_phase_name: Pressure Send State Truth
-status: planning
-stopped_at: Created 20-01/02/03-PLAN.md + 20-VALIDATION.md
-last_updated: "2026-07-12T15:48:18.537Z"
+status: executing
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-07-12T15:49:01.057Z"
 last_activity: 2026-07-12
-last_activity_desc: Phase 20 plans + validation created
+last_activity_desc: Completed 20-01 PressureController plan
 progress:
   total_phases: 9
   completed_phases: 1
@@ -24,30 +24,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 20 planned — execute 20-01 PressureController next
+**Current focus:** Phase 20 — 20-01 complete; next 20-02 pad/overlay/Advanced
 
 ## Current Position
 
 Phase: 20 of 27 (Pressure Send State Truth)
-Plan: 20-01 ready (3 plans)
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-12 — Phase 20 plans + validation created
+Last activity: 2026-07-12 — Completed 20-01 PressureController plan
 
-Progress: [███░░░░░░░] 33%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 11 min
-- Total execution time: 0.2 hours
+- Total execution time: 0.35 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 19 | 3 | - | - |
+| 20 | 1 | - | - |
 
 **Recent Trend:**
 
@@ -57,6 +58,8 @@ Progress: [███░░░░░░░] 33%
 *Updated after each plan completion*
 | Phase 19 P02 | 6 | 3 tasks | 9 files |
 | Phase 19 P03 | 2 min | 2 tasks | 2 files |
+| Phase 20 P01 | 10 min | 2 tasks | 8 files |
+| Phase 20 P01 | 10min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -77,6 +80,12 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 19]: Default BUILD_DIR to Builds (CI-aligned); pass BUILD_DIR into ENAB subprocess
 - [Phase 19]: Optional pluginval only when RUN_PLUGINVAL=1 + PLUGINVAL_BIN — otherwise SKIPPED never PASS
 - [Phase 19]: Catch2 checklist unchecked while [v1][contract] reds remain; discover counts at runtime
+- [Phase 20]: PressureController owns live send gain; bank sendGain smoother removed
+- [Phase 20]: prepareToPlay uses snapToTarget so DryPath/reference tanks stay aligned
+- [Phase 20]: MIDI pressure target forced 0 in Phase 20 (Phase 22 wires realtime)
+- [Phase 20]: PressureController owns live send gain; bank sendGain smoother removed
+- [Phase 20]: prepareToPlay uses snapToTarget so DryPath/reference tanks stay aligned
+- [Phase 20]: MIDI pressure target forced 0 in Phase 20 (Phase 22 wires realtime)
 
 ### Pending Todos
 
@@ -90,11 +99,11 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T15:48:18.531Z
-**Stopped At:** Created 20-01/02/03-PLAN.md + 20-VALIDATION.md
+**Last session:** 2026-07-12T15:49:01.051Z
+**Stopped At:** Completed 20-01-PLAN.md
 **Resume File:** None
 
-**Next action:** Execute Phase 20 — `/gsd-execute-phase 20` (start 20-01 PressureController)
+**Next action:** Execute 20-02 pad/overlay/Advanced (PressureSendPad release-to-zero)
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`
