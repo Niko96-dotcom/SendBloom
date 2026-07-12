@@ -189,7 +189,12 @@ Plans:
   2. No third-party firmware/EEPROM/bytecode/schematics/dumps are committed; any hardware recordings are user-created audio captures only
   3. Closeout assigns exactly one ADR-V1-17 status (`original-inspired` if hardware unavailable); public copy matches that status; hardware comparison grids and listening remain `human_needed` when hardware/listening are unavailable — never silently passed
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+- [x] 26-01-PLAN.md — Reproducible clean-room capture protocol and deterministic metrics tooling
+- [x] 26-02-PLAN.md — ADR-V1-17 original-inspired closeout and public-claim verifier
+
+**Verification**: Outcome B passed; hardware grids and listening remain `human_needed` (see `26-VERIFICATION.md`). Canonical full ctest remains red on five pre-existing/out-of-scope failures recorded there.
 **ADRs**: ADR-V1-17
 
 ### Phase 27: RC Verification, Licensing & Distribution

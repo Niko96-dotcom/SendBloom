@@ -127,18 +127,18 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 ### Reference and Claim Evidence (`REF`)
 
-- [ ] **REF-01**: Add a reproducible reference-capture protocol
-- [ ] **REF-02**: Add tooling to measure predelay, decay, spectral centroid, gate envelope, harmonic ratios, and DC offset
-- [ ] **REF-03**: Store derived metrics with capture metadata and knob positions
-- [ ] **REF-04**: Never commit third-party firmware, EEPROM, bytecode, schematics, or proprietary dumps
-- [ ] **REF-05**: Hardware recordings, if made, are user-created audio captures only
-- [ ] **REF-06**: Compare at least five Size positions in bright and dark modes if hardware is available (`human_needed` if no hardware)
-- [ ] **REF-07**: Compare at least five Input and Distn combinations if hardware is available (`human_needed` if no hardware)
-- [ ] **REF-08**: Compare pre/post gate timing if hardware is available (`human_needed` if no hardware)
-- [ ] **REF-09**: Compare controller press/release behavior if hardware is available (`human_needed` if no hardware)
-- [ ] **REF-10**: Niko performs a blind or level-matched listening review (`human_needed`)
-- [ ] **REF-11**: Closeout assigns one ADR-V1-17 fidelity status
-- [ ] **REF-12**: Public copy matches the assigned status
+- [x] **REF-01**: Add a reproducible reference-capture protocol
+- [x] **REF-02**: Add tooling to measure predelay, decay, spectral centroid, gate envelope, harmonic ratios, and DC offset
+- [x] **REF-03**: Store derived metrics with capture metadata and knob positions
+- [x] **REF-04**: Never commit third-party firmware, EEPROM, bytecode, schematics, or proprietary dumps
+- [x] **REF-05**: Hardware recordings, if made, are user-created audio captures only
+- [ ] **REF-06**: Compare at least five Size positions in bright and dark modes if hardware is available (`human_needed` if no hardware) — no hardware supplied; grid remains `human_needed`
+- [ ] **REF-07**: Compare at least five Input and Distn combinations if hardware is available (`human_needed` if no hardware) — no hardware supplied; grid remains `human_needed`
+- [ ] **REF-08**: Compare pre/post gate timing if hardware is available (`human_needed` if no hardware) — no hardware supplied; comparison remains `human_needed`
+- [ ] **REF-09**: Compare controller press/release behavior if hardware is available (`human_needed` if no hardware) — no hardware supplied; comparison remains `human_needed`
+- [ ] **REF-10**: Niko performs a blind or level-matched listening review (`human_needed`) — explicitly recorded `human_needed`, not passed
+- [x] **REF-11**: Closeout assigns one ADR-V1-17 fidelity status
+- [x] **REF-12**: Public copy matches the assigned status
 
 ### Release (`REL`)
 
