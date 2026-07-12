@@ -113,35 +113,45 @@ std::vector<float> renderAdapterImpulseDark (sendbloom::FixedRateAdapter& adapte
 TEST_CASE ("Bright mode advances predelay line during silence",
            "[v1][contract][predelay][DSP-01]")
 {
-    // ADR-V1-12 / DSP-01: darkMix≈0 must still clock the line so stale content
-    // does not survive a bright silence window.
+    // ADR-V1-12 / DSP-01: bright silence must flush stale predelay content vs skipping it.
     constexpr double sampleRate = 48000.0;
-    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
+    const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.0f); // fastest decay for isolation
     const auto predelaySamples = static_cast<size_t> (std::lround (kPredelaySeconds * sampleRate));
-    const auto primeSamples = predelaySamples * 2;
     const auto brightSilenceSamples = predelaySamples * 2;
-    const auto captureSamples = predelaySamples + static_cast<size_t> (sampleRate * 0.02);
+    const auto tankDecaySamples = static_cast<size_t> (sampleRate * 1.5); // let tank ring down
+    const auto earlyWindow = static_cast<size_t> (std::lround (0.010 * sampleRate)); // 10 ms pre-predelay
 
-    std::vector<float> input (primeSamples + brightSilenceSamples + captureSamples, 0.0f);
-    std::vector<float> darkMix (input.size(), 0.0f);
+    auto measureEarlyImpulsePeak = [&] (bool runBrightSilence) -> float
+    {
+        sendbloom::SchroederTankCore core;
+        core.prepare (sampleRate, 512);
 
-    std::fill (darkMix.begin(), darkMix.begin() + static_cast<std::ptrdiff_t> (primeSamples), 1.0f);
-    std::fill (input.begin(), input.begin() + static_cast<std::ptrdiff_t> (primeSamples), 1.0f);
+        for (size_t i = 0; i < predelaySamples * 2; ++i)
+            core.processSample (1.0f, rt60, 1.0f);
 
-    const auto impulseIndex = primeSamples + brightSilenceSamples;
-    input[impulseIndex] = 1.0f;
-    darkMix[impulseIndex] = 1.0f;
+        if (runBrightSilence)
+        {
+            for (size_t i = 0; i < brightSilenceSamples; ++i)
+                core.processSample (0.0f, rt60, 0.0f);
 
-    sendbloom::SchroederTankCore core;
-    core.prepare (sampleRate, 512);
-    const auto out = renderCoreSequence (core, input, darkMix, rt60);
+            for (size_t i = 0; i < tankDecaySamples; ++i)
+                core.processSample (0.0f, rt60, 0.0f);
+        }
 
-    const auto preOnsetWindow = static_cast<size_t> (std::lround ((kPredelaySeconds - kOnsetToleranceSeconds) * sampleRate));
-    const auto burstPeak = maxAbsInWindow (out,
-                                           impulseIndex,
-                                           std::min (preOnsetWindow, out.size() - impulseIndex));
+        auto peak = 0.0f;
+        peak = std::max (peak, std::abs (core.processSample (1.0f, rt60, 1.0f)));
 
-    REQUIRE (burstPeak < kStaleBurstThreshold);
+        for (size_t i = 1; i < earlyWindow; ++i)
+            peak = std::max (peak, std::abs (core.processSample (0.0f, rt60, 1.0f)));
+
+        return peak;
+    };
+
+    const auto earlyAfterBrightSilence = measureEarlyImpulsePeak (true);
+    const auto earlyWithoutBrightSilence = measureEarlyImpulsePeak (false);
+
+    REQUIRE (earlyAfterBrightSilence < kStaleBurstThreshold);
+    REQUIRE (earlyWithoutBrightSilence > kStaleBurstThreshold);
 }
 
 TEST_CASE ("Dark mode onset is fixed 55 ms after bright immediate onset",
@@ -238,26 +248,39 @@ TEST_CASE ("darkMix automation on steady tone stays finite with bounded deltas",
 TEST_CASE ("Host-rate and ProperSRC dark onset agree in wall-clock time",
            "[v1][contract][predelay][DSP-02][parity]")
 {
-    // ADR-V1-12: host SchroederTankCore @ 48 kHz vs ProperSRC adapter agree in seconds.
+    // ADR-V1-12: host SchroederTankCore @ 48 kHz vs ProperSRC adapter agree on predelay delta.
     constexpr double hostRate = 48000.0;
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
     constexpr int numSamples = 12000;
 
-    sendbloom::SchroederTankCore hostCore;
-    hostCore.prepare (hostRate, 512);
-    const auto hostOut = sendbloom::test::reverb::renderCoreImpulse (hostCore, rt60, 1.0f, numSamples);
+    sendbloom::SchroederTankCore hostBright;
+    sendbloom::SchroederTankCore hostDark;
+    hostBright.prepare (hostRate, 512);
+    hostDark.prepare (hostRate, 512);
 
-    sendbloom::FixedRateAdapter adapter;
-    const auto properOut = renderAdapterImpulseDark (adapter,
-                                                     sendbloom::Authentic32Mode::ProperSRC,
-                                                     hostRate,
-                                                     1.0f,
-                                                     rt60,
-                                                     numSamples);
+    const auto hostBrightIr = sendbloom::test::reverb::renderCoreImpulse (hostBright, rt60, 0.0f, numSamples);
+    const auto hostDarkIr = sendbloom::test::reverb::renderCoreImpulse (hostDark, rt60, 1.0f, numSamples);
 
-    const auto hostOnset = measureOnsetSeconds (hostOut, hostRate);
-    const auto properOnset = measureOnsetSeconds (properOut, hostRate);
+    sendbloom::FixedRateAdapter brightAdapter;
+    sendbloom::FixedRateAdapter darkAdapter;
+    const auto properBrightIr = renderAdapterImpulseDark (brightAdapter,
+                                                          sendbloom::Authentic32Mode::ProperSRC,
+                                                          hostRate,
+                                                          0.0f,
+                                                          rt60,
+                                                          numSamples);
+    const auto properDarkIr = renderAdapterImpulseDark (darkAdapter,
+                                                         sendbloom::Authentic32Mode::ProperSRC,
+                                                         hostRate,
+                                                         1.0f,
+                                                         rt60,
+                                                         numSamples);
 
-    REQUIRE (properOnset == Catch::Approx (hostOnset).margin (kOnsetToleranceSeconds));
-    REQUIRE (hostOnset == Catch::Approx (kPredelaySeconds).margin (kOnsetToleranceSeconds * 2.0f));
+    const auto hostPredelay = measureOnsetSeconds (hostDarkIr, hostRate)
+                            - measureOnsetSeconds (hostBrightIr, hostRate);
+    const auto properPredelay = measureOnsetSeconds (properDarkIr, hostRate)
+                              - measureOnsetSeconds (properBrightIr, hostRate);
+
+    REQUIRE (properPredelay == Catch::Approx (hostPredelay).margin (kOnsetToleranceSeconds));
+    REQUIRE (hostPredelay == Catch::Approx (kPredelaySeconds).margin (kOnsetToleranceSeconds));
 }

@@ -26,6 +26,8 @@ public:
         spec.numChannels = 1;
         predelayLine.prepare (spec);
         predelayLine.reset();
+        predelayLine.setDelay (static_cast<float> (SchroederTank32DelayTable::kDarkPredelaySeconds
+                                                    * processingRate_));
 
         for (size_t i = 0; i < seriesApfs.size(); ++i)
         {
@@ -90,12 +92,9 @@ private:
 
     void updateCoeffs (float rt60Seconds, float darkMix) noexcept
     {
-        const auto mix = juce::jlimit (0.0f, 1.0f, darkMix);
-        predelaySamples = mix * SchroederTank32DelayTable::kDarkPredelaySeconds
-                        * static_cast<float> (processingRate_);
-        predelayLine.setDelay (predelaySamples);
+        darkMix_ = juce::jlimit (0.0f, 1.0f, darkMix);
 
-        const auto dampingHz = juce::jmap (mix,
+        const auto dampingHz = juce::jmap (darkMix_,
                                            SchroederTank32DelayTable::kBrightDampingHz,
                                            SchroederTank32DelayTable::kDarkDampingHz);
         const auto rt60 = juce::jmax (rt60Seconds, 0.05f);
@@ -110,13 +109,9 @@ private:
 
     float processTank (float input) noexcept
     {
-        float x = input;
-
-        if (predelaySamples > 0.5f)
-        {
-            predelayLine.pushSample (0, input);
-            x = predelayLine.popSample (0);
-        }
+        predelayLine.pushSample (0, input);
+        const auto delayed = predelayLine.popSample (0);
+        float x = input + darkMix_ * (delayed - input);
 
         for (auto& apf : seriesApfs)
             x = apf.processSample (x);
@@ -146,7 +141,7 @@ private:
 
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None> predelayLine;
     double processingRate_ { SchroederTank32DelayTable::kInternalRate };
-    float predelaySamples { 0.0f };
+    float darkMix_ { 0.0f };
     float lfoPhase { 0.0f };
 };
 
