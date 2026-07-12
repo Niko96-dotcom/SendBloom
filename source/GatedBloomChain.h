@@ -81,7 +81,7 @@ public:
     }
 
     void processBlock (const float* monoIn,
-                       const float* envelope,
+                       const float* envelopeIn,
                        float* wetOut,
                        int numSamples,
                        float rt60Seconds,
@@ -92,12 +92,12 @@ public:
                        bool gatePreSoft,
                        float thresholdDb) noexcept
     {
-        processBlock (monoIn, envelope, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
-                      distnBlend, static_cast<const float*> (nullptr), sendGain, gatePreSoft, thresholdDb);
+        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
+                      nullptr, distnBlend, nullptr, sendGain, nullptr, thresholdDb, gatePreSoft);
     }
 
     void processBlock (const float* monoIn,
-                       const float* envelope,
+                       const float* envelopeIn,
                        float* wetOut,
                        int numSamples,
                        float rt60Seconds,
@@ -108,37 +108,66 @@ public:
                        bool gatePreSoft,
                        float thresholdDb) noexcept
     {
-        processBlock (monoIn, envelope, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
-                      distnBlend, sendGains, 1.0f, gatePreSoft, thresholdDb);
+        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
+                      nullptr, distnBlend, sendGains, 1.0f, nullptr, thresholdDb, gatePreSoft);
+    }
+
+    /** ADR-V1-06: per-sample distn / send / threshold arrays (RT-06). */
+    void processBlock (const float* monoIn,
+                       const float* envelopeIn,
+                       float* wetOut,
+                       int numSamples,
+                       float rt60Seconds,
+                       float darkMix,
+                       bool authenticColor,
+                       const float* distnBlends,
+                       const float* sendGains,
+                       const float* thresholdDbs,
+                       bool gatePreSoft) noexcept
+    {
+        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
+                      distnBlends, 0.0f, sendGains, 1.0f, thresholdDbs, 0.0f, gatePreSoft);
     }
 
 private:
     void processBlock (const float* monoIn,
-                       const float* envelope,
+                       const float* envelopeIn,
                        float* wetOut,
                        int numSamples,
                        float rt60Seconds,
                        float darkMix,
                        bool authenticColor,
-                       float distnBlend,
+                       const float* distnBlends,
+                       float constantDistn,
                        const float* sendGains,
                        float constantSendGain,
-                       bool gatePreSoft,
-                       float thresholdDb) noexcept
+                       const float* thresholdDbs,
+                       float constantThresholdDb,
+                       bool gatePreSoft) noexcept
     {
         if (numSamples > maxBlockSize_)
             return;
 
+        const auto sampleDistn = [distnBlends, constantDistn] (int i) noexcept
+        {
+            return distnBlends != nullptr ? distnBlends[static_cast<size_t> (i)] : constantDistn;
+        };
         const auto sampleSendGain = [sendGains, constantSendGain] (int i) noexcept
         {
             return sendGains != nullptr ? sendGains[static_cast<size_t> (i)] : constantSendGain;
+        };
+        const auto sampleThreshold = [thresholdDbs, constantThresholdDb] (int i) noexcept
+        {
+            return thresholdDbs != nullptr ? thresholdDbs[static_cast<size_t> (i)]
+                                          : constantThresholdDb;
         };
 
         if (! authenticColor && ! reverb->isCrossfading())
         {
             for (int i = 0; i < numSamples; ++i)
-                wetOut[i] = processSample (monoIn[i], envelope[i], rt60Seconds, darkMix, false,
-                                           distnBlend, sampleSendGain (i), gatePreSoft, thresholdDb);
+                wetOut[i] = processSample (monoIn[i], envelopeIn[i], rt60Seconds, darkMix, false,
+                                           sampleDistn (i), sampleSendGain (i), gatePreSoft,
+                                           sampleThreshold (i));
             return;
         }
 
@@ -147,7 +176,7 @@ private:
             auto wet = monoIn[i];
 
             if (gatePreSoft)
-                wet *= preGate.process (envelope[i], thresholdDb);
+                wet *= preGate.process (envelopeIn[i], sampleThreshold (i));
 
             wetSendScratch_[static_cast<size_t> (i)] = PressureSend::process (wet, sampleSendGain (i));
         }
@@ -157,10 +186,10 @@ private:
 
         for (int i = 0; i < numSamples; ++i)
         {
-            auto wet = overdrive.process (reverbScratch_[static_cast<size_t> (i)], distnBlend);
+            auto wet = overdrive.process (reverbScratch_[static_cast<size_t> (i)], sampleDistn (i));
 
             if (! gatePreSoft)
-                wet *= postGate.process (envelope[i], thresholdDb);
+                wet *= postGate.process (envelopeIn[i], sampleThreshold (i));
 
             wetOut[i] = wet;
         }

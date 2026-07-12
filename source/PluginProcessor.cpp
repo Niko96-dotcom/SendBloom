@@ -129,6 +129,8 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     wetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     wetGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     sendGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    distnScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    thresholdDbScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     bypassWetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     outputGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
@@ -155,6 +157,8 @@ void PluginProcessor::releaseResources()
     wetScratch_.clear();
     wetGainScratch_.clear();
     sendGainScratch_.clear();
+    distnScratch_.clear();
+    thresholdDbScratch_.clear();
     bypassWetScratch_.clear();
     outputGainScratch_.clear();
 }
@@ -178,26 +182,52 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
   #endif
 }
 
-void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-                                    juce::MidiBuffer& midiMessages)
+void PluginProcessor::applyCc1AtSample (const juce::MidiBuffer& midiMessages,
+                                        int samplePosition,
+                                        bool connected) noexcept
 {
+    // ADR-V1-03: MIDI is realtime modulation only — never touch APVTS / host notify.
+    if (! connected)
+        return;
+
+    for (const auto metadata : midiMessages)
+    {
+        if (metadata.samplePosition != samplePosition)
+            continue;
+
+        const auto message = metadata.getMessage();
+
+        if (! message.isController() || message.getControllerNumber() != 1)
+            continue;
+
+        const auto norm = static_cast<float> (message.getControllerValue()) / 127.0f;
+        pressureController.setMidiPressureTarget (norm);
+    }
+}
+
+int PluginProcessor::findNextCc1SampleAfter (const juce::MidiBuffer& midiMessages,
+                                             int afterSample,
+                                             int numSamples) const noexcept
+{
+    int next = numSamples;
+
     for (const auto metadata : midiMessages)
     {
         const auto message = metadata.getMessage();
 
-        if (message.isController() && message.getControllerNumber() == 1)
-        {
-            if (apvts.getRawParameterValue (ParameterIDs::sendConnected)->load() > 0.5f)
-            {
-                if (auto* sendParam = apvts.getRawParameterValue (ParameterIDs::sendAmount))
-                {
-                    const auto norm = static_cast<float> (message.getControllerValue()) / 127.0f;
-                    sendParam->store (norm);
-                }
-            }
-        }
+        if (! message.isController() || message.getControllerNumber() != 1)
+            continue;
+
+        if (metadata.samplePosition > afterSample && metadata.samplePosition < next)
+            next = metadata.samplePosition;
     }
 
+    return next;
+}
+
+void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
+                                    juce::MidiBuffer& midiMessages)
+{
     juce::ScopedNoDenormals noDenormals;
     const auto totalNumInputChannels  = getTotalNumInputChannels();
     const auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -213,7 +243,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedBank.setTargets (snap);
     pressureController.setConnected (snap.sendConnected);
     pressureController.setHostPressureTarget (snap.sendAmountNorm);
-    pressureController.setMidiPressureTarget (0.0f);
+    // MIDI target persists across blocks until a CC1 event updates it (ADR-V1-03).
     pressureController.setFirmFeel (snap.sendFirmFeel);
 
     // ADR-V1-07 / RT-08…11: one engine-crossfade request per authentic snapshot edge.
@@ -225,12 +255,18 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
 
     const auto numSamples = buffer.getNumSamples();
+    const auto connected = snap.sendConnected;
     int offset = 0;
 
     while (offset < numSamples)
     {
+        // RT-04 / MIDI-04/05: apply CC1 at this sample, then cut span before the next CC1.
+        applyCc1AtSample (midiMessages, offset, connected);
+
         const auto remaining = numSamples - offset;
-        const auto span = juce::jmin (remaining, preparedMaxBlock_, kControlQuantum);
+        const auto nextCc1 = findNextCc1SampleAfter (midiMessages, offset, numSamples);
+        const auto distanceToNextCc1 = nextCc1 - offset;
+        const auto span = juce::jmin (remaining, preparedMaxBlock_, kControlQuantum, distanceToNextCc1);
         processSpan (buffer, offset, span, snap);
         offset += span;
     }
@@ -259,8 +295,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
     float spanRt60 = 0.0f;
     float spanDark = 0.0f;
     bool spanAuthentic = snap.authenticColor;
-    float spanDistn = 0.0f;
-    float spanThresholdDb = 0.0f;
 
     for (int sample = 0; sample < span; ++sample)
     {
@@ -269,7 +303,10 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         const auto distnBlend = smoothedBank.getNextDistnBlend();
         wetGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextLevelWetGain();
         sendGainScratch_[static_cast<size_t> (sample)] = pressureController.processSample();
+        distnScratch_[static_cast<size_t> (sample)] = distnBlend;
         const auto thresholdNorm = smoothedBank.getNextInputThresholdNorm();
+        thresholdDbScratch_[static_cast<size_t> (sample)] =
+            ParameterCurves::inputThresholdDb (thresholdNorm);
         bypassWetScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextBypassWetMix();
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
         (void) smoothedBank.getNextLevelDryGain();
@@ -281,8 +318,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         {
             spanRt60 = ParameterCurves::sizeToRT60 (sizeNorm);
             spanDark = darkModeMix;
-            spanDistn = distnBlend;
-            spanThresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
         }
 
         float monoSum = 0.0f;
@@ -296,9 +331,11 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
             chain.getEnvelope().process (std::abs (monoScratch_[static_cast<size_t> (sample)]));
     }
 
+    // ADR-V1-06 / RT-06: send, distn, and threshold consumed per sample.
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), span,
-                        spanRt60, spanDark, spanAuthentic, spanDistn,
-                        sendGainScratch_.data(), gatePreSoft, spanThresholdDb);
+                        spanRt60, spanDark, spanAuthentic,
+                        distnScratch_.data(), sendGainScratch_.data(), thresholdDbScratch_.data(),
+                        gatePreSoft);
 
     // ADR-V1-10: build output-gained engaged path first, then crossfade against
     // original per-channel dry. Never apply OutputStage after the bypass mix.

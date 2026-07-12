@@ -537,10 +537,11 @@ TEST_CASE ("host-rate default path no HF imaging at 48 kHz", "[release][safe]")
     REQUIRE (dominance < kSafeNarrowbandDominanceMax);
 }
 
-TEST_CASE ("MIDI CC1 updates send_amount without host notification", "[release][midi][realtime]")
+TEST_CASE ("MIDI CC1 modulates pressure without mutating send_amount", "[release][midi][realtime]")
 {
     using namespace sendbloom::ParameterIDs;
 
+    // ADR-V1-03: CC1 is realtime modulation — APVTS send_amount stays unchanged.
     sendbloom::PluginProcessor plugin;
     auto& apvts = plugin.getAPVTS();
     *apvts.getRawParameterValue (inputGain) = 1.0f;
@@ -561,6 +562,5 @@ TEST_CASE ("MIDI CC1 updates send_amount without host notification", "[release][
 
     plugin.processBlock (buffer, midi);
 
-    REQUIRE (*apvts.getRawParameterValue (sendAmount)
-             == Catch::Approx (64.0f / 127.0f).margin (0.02f));
+    REQUIRE (*apvts.getRawParameterValue (sendAmount) == Catch::Approx (0.0f).margin (1.0e-6f));
 }
