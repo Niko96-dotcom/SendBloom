@@ -119,6 +119,7 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     smoothedBank.prepare (sampleRate);
+    pressureController.prepare (sampleRate);
     chain.prepare (sampleRate, samplesPerBlock);
     inputStage.prepare (sampleRate);
     dryBuffer.setSize (getTotalNumOutputChannels(), samplesPerBlock);
@@ -127,10 +128,19 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     envelopeScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     wetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     wetGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    sendGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     bypassWetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     outputGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
     smoothedBank.snapToTargets();
+    {
+        const auto snap = ParameterSnapshot::capture (apvts);
+        pressureController.setConnected (snap.sendConnected);
+        pressureController.setHostPressureTarget (snap.sendAmountNorm);
+        pressureController.setMidiPressureTarget (0.0f);
+        pressureController.setFirmFeel (snap.sendFirmFeel);
+        pressureController.snapToTarget();
+    }
     lastAuthenticColorSmoothed_ =
         apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f ? 1.0f : 0.0f;
 
@@ -142,10 +152,12 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 void PluginProcessor::releaseResources()
 {
     preparedMaxBlock_ = 0;
+    pressureController.reset();
     monoScratch_.clear();
     envelopeScratch_.clear();
     wetScratch_.clear();
     wetGainScratch_.clear();
+    sendGainScratch_.clear();
     bypassWetScratch_.clear();
     outputGainScratch_.clear();
 }
@@ -198,6 +210,10 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     const auto snap = ParameterSnapshot::capture (apvts);
     smoothedBank.setTargets (snap);
+    pressureController.setConnected (snap.sendConnected);
+    pressureController.setHostPressureTarget (snap.sendAmountNorm);
+    pressureController.setMidiPressureTarget (0.0f);
+    pressureController.setFirmFeel (snap.sendFirmFeel);
 
     const auto numSamples = buffer.getNumSamples();
     const auto numOutputChannels = getTotalNumOutputChannels();
@@ -220,7 +236,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             const auto sizeNorm = smoothedBank.getNextSizeNorm();
             const auto distnBlend = smoothedBank.getNextDistnBlend();
             const auto wetGain = smoothedBank.getNextLevelWetGain();
-            const auto sendGain = smoothedBank.getNextSendGain();
+            (void) pressureController.processSample();
             const auto thresholdNorm = smoothedBank.getNextInputThresholdNorm();
             const auto bypassWet = smoothedBank.getNextBypassWetMix();
             const auto outputGain = smoothedBank.getNextOutputGainLinear();
@@ -244,7 +260,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             (void) rt60;
             (void) darkModeMix;
             (void) distnBlend;
-            (void) sendGain;
             (void) thresholdDb;
 
             constexpr auto wet = 0.0f;
@@ -278,7 +293,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     float blockStartDark = 0.0f;
     bool blockStartAuthentic = false;
     float blockStartDistn = 0.0f;
-    float blockStartSend = 0.0f;
     float blockStartThresholdDb = 0.0f;
     float prevAuthenticSmoothed = lastAuthenticColorSmoothed_;
     bool crossfadeEdgeHandled = false;
@@ -289,7 +303,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         const auto sizeNorm = smoothedBank.getNextSizeNorm();
         const auto distnBlend = smoothedBank.getNextDistnBlend();
         wetGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextLevelWetGain();
-        const auto sendGain = smoothedBank.getNextSendGain();
+        sendGainScratch_[static_cast<size_t> (sample)] = pressureController.processSample();
         const auto thresholdNorm = smoothedBank.getNextInputThresholdNorm();
         bypassWetScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextBypassWetMix();
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
@@ -315,7 +329,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             blockStartDark = darkModeMix;
             blockStartAuthentic = authenticColor;
             blockStartDistn = distnBlend;
-            blockStartSend = sendGain;
             blockStartThresholdDb = ParameterCurves::inputThresholdDb (thresholdNorm);
         }
 
@@ -333,8 +346,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     lastAuthenticColorSmoothed_ = prevAuthenticSmoothed;
 
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), numSamples,
-                        blockStartRt60, blockStartDark, blockStartAuthentic, blockStartDistn, blockStartSend,
-                        gatePreSoft, blockStartThresholdDb);
+                        blockStartRt60, blockStartDark, blockStartAuthentic, blockStartDistn,
+                        sendGainScratch_.data(), gatePreSoft, blockStartThresholdDb);
 
     for (int sample = 0; sample < numSamples; ++sample)
     {

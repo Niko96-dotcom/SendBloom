@@ -18,7 +18,7 @@ public:
         levelWetGain.reset (sampleRate, 0.020);
         levelDryGain.reset (sampleRate, 0.020);
         distnBlend.reset (sampleRate, 0.020);
-        sendGain.reset (sampleRate, 0.025);
+        // sendGain smoothing removed — PressureController owns attack/release (ADR-V1-04)
         darkModeTarget.reset (sampleRate, 0.015);
         authenticColorTarget.reset (sampleRate, 0.015);
         bypassWetMix.reset (sampleRate, 0.005);
@@ -33,7 +33,6 @@ public:
         levelWetGain.setTargetValue (snap.wetGain);
         levelDryGain.setTargetValue (snap.dryGain);
         distnBlend.setTargetValue (snap.distnBlend);
-        sendGain.setTargetValue (snap.sendGain);
         darkModeTarget.setTargetValue (snap.darkMode ? 1.0f : 0.0f);
         authenticColorTarget.setTargetValue (snap.authenticColor ? 1.0f : 0.0f);
         bypassWetMix.setTargetValue (snap.bypassed ? 0.0f : 1.0f);
@@ -48,7 +47,6 @@ public:
         levelWetGain.setCurrentAndTargetValue (levelWetGain.getTargetValue());
         levelDryGain.setCurrentAndTargetValue (levelDryGain.getTargetValue());
         distnBlend.setCurrentAndTargetValue (distnBlend.getTargetValue());
-        sendGain.setCurrentAndTargetValue (sendGain.getTargetValue());
         darkModeTarget.setCurrentAndTargetValue (darkModeTarget.getTargetValue());
         authenticColorTarget.setCurrentAndTargetValue (authenticColorTarget.getTargetValue());
         bypassWetMix.setCurrentAndTargetValue (bypassWetMix.getTargetValue());
@@ -61,7 +59,6 @@ public:
     float getNextLevelWetGain() noexcept { return levelWetGain.getNextValue(); }
     float getNextLevelDryGain() noexcept { return levelDryGain.getNextValue(); }
     float getNextDistnBlend() noexcept { return distnBlend.getNextValue(); }
-    float getNextSendGain() noexcept { return sendGain.getNextValue(); }
     float getNextDarkModeTarget() noexcept { return darkModeTarget.getNextValue(); }
     float getNextAuthenticColorTarget() noexcept { return authenticColorTarget.getNextValue(); }
     float getNextBypassWetMix() noexcept { return bypassWetMix.getNextValue(); }
@@ -76,7 +73,6 @@ private:
     juce::SmoothedValue<float> levelWetGain;
     juce::SmoothedValue<float> levelDryGain;
     juce::SmoothedValue<float> distnBlend;
-    juce::SmoothedValue<float> sendGain;
     juce::SmoothedValue<float> darkModeTarget;
     juce::SmoothedValue<float> authenticColorTarget;
     juce::SmoothedValue<float> bypassWetMix;

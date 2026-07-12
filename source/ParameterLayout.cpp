@@ -46,7 +46,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { sendAmount, 1 }, "Send Amount",
-        juce::NormalisableRange<float> { 0.0f, 1.0f }, 1.0f));
+        juce::NormalisableRange<float> { 0.0f, 1.0f }, 0.0f));
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
         juce::ParameterID { sendFeel, 1 }, "Send Feel",

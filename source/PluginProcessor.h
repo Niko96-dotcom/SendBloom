@@ -8,6 +8,7 @@
 #include "GatedBloomChain.h"
 #include "InputStage.h"
 #include "OutputStage.h"
+#include "PressureController.h"
 
 namespace sendbloom
 {
@@ -56,6 +57,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
     SmoothedParameterBank smoothedBank;
+    PressureController pressureController;
     juce::AudioBuffer<float> dryBuffer;
     GatedBloomChain chain;
     InputStage inputStage;
@@ -68,6 +70,7 @@ private:
     std::vector<float> envelopeScratch_;
     std::vector<float> wetScratch_;
     std::vector<float> wetGainScratch_;
+    std::vector<float> sendGainScratch_;
     std::vector<float> bypassWetScratch_;
     std::vector<float> outputGainScratch_;
     float lastAuthenticColorSmoothed_ { 0.0f };

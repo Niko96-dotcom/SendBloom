@@ -3,6 +3,7 @@
 #include <PluginProcessor.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <string>
 
 namespace
 {
@@ -45,4 +46,14 @@ TEST_CASE ("size and output_gain ranges and defaults", "[parm][layout]")
 
     REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::gatePrePost)->load()
              == Catch::Approx (1.0f));
+}
+
+TEST_CASE ("default send_amount is 0 (UX-02)", "[parm][layout]")
+{
+    sendbloom::PluginProcessor plugin;
+
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::sendAmount)->load()
+             == Catch::Approx (0.0f));
+    REQUIRE (std::string (sendbloom::ParameterIDs::sendAmount) == "send_amount");
+    REQUIRE (std::string (sendbloom::ParameterIDs::sendConnected) == "send_connected");
 }

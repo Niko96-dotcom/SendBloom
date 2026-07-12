@@ -25,6 +25,12 @@ public:
         smoothedPressure_ = 0.0f;
     }
 
+    /** Snap smoother to the current host/midi max (prepare / program load — no attack ramp). */
+    void snapToTarget() noexcept
+    {
+        smoothedPressure_ = juce::jlimit (0.0f, 1.0f, std::max (hostTarget_, midiTarget_));
+    }
+
     void setConnected (bool connected) noexcept
     {
         connected_ = connected;
