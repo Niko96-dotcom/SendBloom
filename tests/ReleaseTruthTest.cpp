@@ -70,9 +70,9 @@ juce::File findRepoRoot()
     return juce::File::getCurrentWorkingDirectory();
 }
 
-std::string extractProcessBlockBody (const std::string& source)
+std::string extractFunctionBody (const std::string& source, const std::string& signature)
 {
-    const auto start = source.find ("void PluginProcessor::processBlock");
+    const auto start = source.find (signature);
 
     if (start == std::string::npos)
         return {};
@@ -98,6 +98,11 @@ std::string extractProcessBlockBody (const std::string& source)
     }
 
     return {};
+}
+
+std::string extractProcessBlockBody (const std::string& source)
+{
+    return extractFunctionBody (source, "void PluginProcessor::processBlock");
 }
 
 float renderMonoDryRms (float inputGainNorm, float levelNorm)
@@ -295,8 +300,12 @@ TEST_CASE ("PluginProcessor drives GatedBloomChain at block level",
     const auto body = extractProcessBlockBody (source);
 
     REQUIRE_FALSE (body.empty());
-    REQUIRE (body.find ("chain.processBlock") != std::string::npos);
+    const auto spanBody = extractFunctionBody (source, "void PluginProcessor::processSpan");
+    REQUIRE_FALSE (spanBody.empty());
+    REQUIRE (body.find ("processSpan") != std::string::npos);
+    REQUIRE (spanBody.find ("chain.processBlock") != std::string::npos);
     REQUIRE (body.find ("chain.processSample") == std::string::npos);
+    REQUIRE (spanBody.find ("chain.processSample") == std::string::npos);
 }
 
 TEST_CASE ("32k Color docs describe software model not firmware claims", "[release][verb][authentic]")

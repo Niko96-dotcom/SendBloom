@@ -8,6 +8,7 @@
 #include "BypassCrossfade.h"
 #include "ParallelWetMixer.h"
 #include "OutputStage.h"
+#include "SafeXml.h"
 
 namespace sendbloom
 {
@@ -397,6 +398,13 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
+    // Host-provided state is untrusted. JUCE 8.0.12's generic XmlDocument
+    // accepts DTD/entity declarations, so reject them and bound input before
+    // getXmlFromBinary reaches the parser.
+    if (sizeInBytes <= 0
+        || ! SafeXml::acceptsDocument (data, static_cast<size_t> (sizeInBytes)))
+        return;
+
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
             apvts.replaceState (juce::ValueTree::fromXml (*xml));

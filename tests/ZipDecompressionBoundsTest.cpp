@@ -100,7 +100,7 @@ TEST_CASE ("ZipFile still opens legitimate compressed entries", "[zip][security]
     REQUIRE (stream->readEntireStreamAsString() == "<html>ok</html>");
 }
 
-TEST_CASE ("GZIP decompressor stops when output exceeds declared length", "[zip][security]")
+TEST_CASE ("GZIP declared length is metadata and does not truncate valid output", "[zip][security]")
 {
     const auto compressed = createDeflatedPayload ("toolong");
     juce::MemoryInputStream input (compressed, false);
@@ -112,8 +112,9 @@ TEST_CASE ("GZIP decompressor stops when output exceeds declared length", "[zip]
     char buffer[16]{};
     const auto bytesRead = decompressor.read (buffer, (int) sizeof (buffer));
 
-    REQUIRE (bytesRead == 3);
-    REQUIRE (decompressor.getPosition() == 3);
+    REQUIRE (bytesRead == 7);
+    REQUIRE (decompressor.getPosition() == 7);
+    REQUIRE (decompressor.getTotalLength() == 3);
     REQUIRE (decompressor.isExhausted());
 }
 

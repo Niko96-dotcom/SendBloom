@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <juce_core/juce_core.h>
+#include "SafeXml.h"
 
 namespace
 {
@@ -27,11 +28,10 @@ juce::String makeBillionLaughsXml (int levels)
 
 TEST_CASE ("XmlDocument rejects exponential entity expansion", "[xml][security]")
 {
-    juce::XmlDocument doc (makeBillionLaughsXml (8));
-    const auto element = doc.getDocumentElement();
+    const auto xml = makeBillionLaughsXml (8);
+    const auto element = sendbloom::SafeXml::parseDocument (xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 
     REQUIRE (element == nullptr);
-    REQUIRE (doc.getLastParseError().containsIgnoreCase ("limit"));
 }
 
 TEST_CASE ("XmlDocument rejects oversized entity payload", "[xml][security]")
@@ -42,11 +42,9 @@ TEST_CASE ("XmlDocument rejects oversized entity payload", "[xml][security]")
 ]>
 <root>&big;</root>)";
 
-    juce::XmlDocument doc (xml);
-    const auto element = doc.getDocumentElement();
+    const auto element = sendbloom::SafeXml::parseDocument (xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 
     REQUIRE (element == nullptr);
-    REQUIRE (doc.getLastParseError().containsIgnoreCase ("limit"));
 }
 
 TEST_CASE ("XmlDocument rejects truncated DTD input", "[xml][security]")
@@ -56,11 +54,9 @@ TEST_CASE ("XmlDocument rejects truncated DTD input", "[xml][security]")
 <!ENTITY a "value"
 <root>&a;</root>)";
 
-    juce::XmlDocument doc (xml);
-    const auto element = doc.getDocumentElement();
+    const auto element = sendbloom::SafeXml::parseDocument (xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 
     REQUIRE (element == nullptr);
-    REQUIRE (doc.getLastParseError().isNotEmpty());
 }
 
 TEST_CASE ("XmlDocument rejects external SYSTEM entities", "[xml][security]")
@@ -69,11 +65,9 @@ TEST_CASE ("XmlDocument rejects external SYSTEM entities", "[xml][security]")
 <!DOCTYPE doc SYSTEM "evil.dtd">
 <root/>)";
 
-    juce::XmlDocument doc (xml);
-    const auto element = doc.getDocumentElement();
+    const auto element = sendbloom::SafeXml::parseDocument (xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 
     REQUIRE (element == nullptr);
-    REQUIRE (doc.getLastParseError().containsIgnoreCase ("SYSTEM"));
 }
 
 TEST_CASE ("XmlDocument parses normal APVTS-style state XML", "[xml][security]")
@@ -84,7 +78,7 @@ TEST_CASE ("XmlDocument parses normal APVTS-style state XML", "[xml][security]")
   <PARAM id="size" value="0.35"/>
 </SendBloomParams>)";
 
-    const auto element = juce::parseXML (xml);
+    const auto element = sendbloom::SafeXml::parseDocument (xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 
     REQUIRE (element != nullptr);
     REQUIRE (element->hasTagName ("SendBloomParams"));
@@ -92,7 +86,7 @@ TEST_CASE ("XmlDocument parses normal APVTS-style state XML", "[xml][security]")
     REQUIRE (element->getChildByName ("PARAM")->getStringAttribute ("id") == "input_gain");
 }
 
-TEST_CASE ("XmlDocument allows small nested entity definitions", "[xml][security]")
+TEST_CASE ("SendBloom rejects all DTD entity definitions at its ingestion boundary", "[xml][security]")
 {
     const juce::String xml = R"(<?xml version="1.0"?>
 <!DOCTYPE doc [
@@ -100,9 +94,13 @@ TEST_CASE ("XmlDocument allows small nested entity definitions", "[xml][security
 ]>
 <doc>&greeting;</doc>)";
 
-    const auto element = juce::parseXML (xml);
+    const auto element = sendbloom::SafeXml::parseDocument (xml.toRawUTF8(), xml.getNumBytesAsUTF8());
 
-    REQUIRE (element != nullptr);
-    REQUIRE (element->hasTagName ("doc"));
-    REQUIRE (element->getAllSubText().trim() == "hello");
+    REQUIRE (element == nullptr);
+}
+
+TEST_CASE ("SendBloom rejects XML above the product state size limit", "[xml][security]")
+{
+    const juce::String oversized (juce::String::repeatedString ("A", 4 * 1024 * 1024 + 1));
+    REQUIRE_FALSE (sendbloom::SafeXml::acceptsDocument (oversized.toRawUTF8(), oversized.getNumBytesAsUTF8()));
 }

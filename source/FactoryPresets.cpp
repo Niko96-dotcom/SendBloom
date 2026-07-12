@@ -1,5 +1,6 @@
 #include "FactoryPresets.h"
 #include "ParameterIDs.h"
+#include "SafeXml.h"
 #include <BinaryData.h>
 
 namespace sendbloom
@@ -28,7 +29,7 @@ const std::array<PresetResource, FactoryPresets::kNumPresets> kPresetResources {
 
 bool applyEmbeddedXml (juce::AudioProcessorValueTreeState& apvts, const PresetResource& preset)
 {
-    const auto xml = juce::parseXML (juce::String (preset.xml, static_cast<size_t> (preset.xmlSize)));
+    const auto xml = SafeXml::parseDocument (preset.xml, static_cast<size_t> (preset.xmlSize));
 
     if (xml == nullptr || ! xml->hasTagName (apvts.state.getType()))
         return false;
@@ -52,8 +53,8 @@ juce::ValueTree FactoryPresets::makePresetState (int index)
     if (index < 0 || index >= kNumPresets)
         return {};
 
-    const auto xml = juce::parseXML (juce::String (kPresetResources[static_cast<size_t> (index)].xml,
-                                                   static_cast<size_t> (kPresetResources[static_cast<size_t> (index)].xmlSize)));
+    const auto& preset = kPresetResources[static_cast<size_t> (index)];
+    const auto xml = SafeXml::parseDocument (preset.xml, static_cast<size_t> (preset.xmlSize));
 
     if (xml == nullptr)
         return {};
