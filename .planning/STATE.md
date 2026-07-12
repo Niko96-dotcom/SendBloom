@@ -4,11 +4,12 @@ milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
 current_phase: 21
 current_phase_name: Realtime Span Engine & True Bypass
+current_plan: 2
 status: verifying
-stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-07-12T16:17:36.493Z"
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-07-12T16:18:02.949Z"
 last_activity: 2026-07-12
-last_activity_desc: Phase 20 complete, transitioned to Phase 21
+last_activity_desc: Completed 21-01 span engine / oversized wet parity
 progress:
   total_phases: 9
   completed_phases: 2
@@ -24,16 +25,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 20 — all 3 plans complete; ready for verification
+**Current focus:** Phase 21 — Plan 01 complete; Plan 02 (true bypass) next
 
 ## Current Position
 
 Phase: 21 of 27 (Realtime Span Engine & True Bypass)
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-07-12 — Phase 20 complete, transitioned to Phase 21
+Current Plan: 2
+Total Plans in Phase: 3
+Status: Executing Plan 01
+Last activity: 2026-07-12 — Completed 21-01 span engine / oversized wet parity
 
-Progress: [██████████] 100%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -62,6 +64,7 @@ Progress: [██████████] 100%
 | Phase 20 P01 | 10min | 2 tasks | 8 files |
 | Phase 20 P02 | 6min | 2 tasks | 9 files |
 | Phase 20 P03 | 5min | 2 tasks | 12 files |
+| Phase 21 P01 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +95,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 20]: Dry Dub Sends is pressure preset (connected=1 amount=0) per §9.7
 - [Phase 20]: No Soft Pressure factory preset — Soft remains send_feel
 - [Phase 20]: SEND-14 in-range only; oversized dry fallback Phase 21 caveat
+- [Phase 21]: Scratch strategy: prepare-sized members; oversized via spans ≤ preparedMaxBlock_ (21-01 Q1)
+- [Phase 21]: MIDI distance excluded from span min until Phase 22 (21-01)
+- [Phase 21]: Authentic smoother-edge deferred to Plan 03; bypass mix order to Plan 02 (21-01)
 
 ### Pending Todos
 
@@ -105,8 +111,8 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T16:17:36.487Z
-**Stopped At:** Completed 20-03-PLAN.md
+**Last session:** 2026-07-12T16:18:02.942Z
+**Stopped At:** Completed 21-01-PLAN.md
 **Resume File:** None
 
 **Next action:** Verify Phase 20 (`/gsd-verify-work` or phase verifier)
