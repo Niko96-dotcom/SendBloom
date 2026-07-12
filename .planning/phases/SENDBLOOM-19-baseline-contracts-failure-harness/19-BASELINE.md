@@ -64,6 +64,18 @@ Mark these `human_needed` / not verified — never treat as automated green (BAS
 | License decision | Product/legal gate — not automated here |
 | Unreachable historical JUCE pin | Parent previously recorded `c3c318cf` (missing ZipFile max-uncompressed API on public 8.0.12); realigned to `8.0.12` for builds |
 
+## Expected `[v1][contract]` failure reasons (19-02)
+
+| Filter | Expected red assertion (current tree) |
+|--------|----------------------------------------|
+| `[pressure-release]` | `send_connected` cleared on `mouseUp` (not connected-at-rest) |
+| `[oversized-block]` | Oversized dry fallback → wet energy ≈ 0 vs chunked wet |
+| `[true-bypass]` | Mono-sum / output gain breaks per-channel unity |
+| `[posthard]` | First close sample snaps to gain 0 |
+| `[input-anchors]` | `inputGainDb(0)` is +9, not −9 |
+| `[midi-apvts]` | CC1 mutates APVTS `send_amount` / `sendParam->store` present |
+| `[shipping-policy]` | Faceplate `"REVERB X"`, `reverbx` resource name, `dryBuffer.setSize` in processBlock |
+
 ## Phase 19 scope reminder
 
 - **In scope:** cmake restore, this baseline, requirement→artifact traceability, failing `[v1][contract]` tests, `scripts/verify-v1.sh`, honest `human_needed` marking.
