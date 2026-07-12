@@ -17,7 +17,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 
 **Phase Numbering:** Continues from ProperSRC conceptual Phases 11–18. Do not renumber. Integer phases 19–27 are this milestone’s planned work.
 
-- [ ] **Phase 19: Baseline, Contracts & Failure Harness** - Freeze truth, map requirements, add failing defect tests and durable verifier
+- [x] **Phase 19: Baseline, Contracts & Failure Harness** - Freeze truth, map requirements, add failing defect tests and durable verifier (completed 2026-07-12)
 - [ ] **Phase 20: Pressure Send State Truth** - Dry-at-rest pressure mode with correct UI/preset resting semantics
 - [ ] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass
 - [ ] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption
@@ -42,12 +42,12 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
   4. `scripts/verify-v1.sh` runs the full automated gate set and truthfully reports current red gates without hard-coded test totals
   5. Human-only gates are marked `human_needed` and never silently treated as pass
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 Plans:
 
 - [x] 19-01-PLAN.md — Restore cmake submodule, freeze 19-BASELINE.md + metrics, complete requirement→artifact traceability (BASE-01/02/03/07)
 - [x] 19-02-PLAN.md — Add seven failing [v1][contract] suites; prove green ProperSRC/HF/DryPath/release remain green (BASE-04)
-- [ ] 19-03-PLAN.md — Ship scripts/verify-v1.sh with human_needed gates and no hard-coded totals (BASE-05/06/08)
+- [x] 19-03-PLAN.md — Ship scripts/verify-v1.sh with human_needed gates and no hard-coded totals (BASE-05/06/08)
 
 **ADRs**: ADR-V1-01…17 referenced as locked constraints for later phases
 
@@ -197,7 +197,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 19. Baseline, Contracts & Failure Harness | 2/3 | In Progress|  |
+| 19. Baseline, Contracts & Failure Harness | 3/3 | Complete   | 2026-07-12 |
 | 20. Pressure Send State Truth | 0/TBD | Not started | - |
 | 21. Realtime Span Engine & True Bypass | 0/TBD | Not started | - |
 | 22. MIDI & Per-Sample Control Delivery | 0/TBD | Not started | - |

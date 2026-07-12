@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
 current_phase: 19
 current_phase_name: Baseline, Contracts & Failure Harness
-status: executing
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-07-12T15:25:14.419Z"
+status: verifying
+stopped_at: Completed 19-03-PLAN.md
+last_updated: "2026-07-12T15:28:24.307Z"
 last_activity: 2026-07-12
 last_activity_desc: Completed 19-01 (cmake restore + baseline + traceability)
 progress:
   total_phases: 9
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 11
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-12)
 
 Phase: 19 of 27 (Baseline, Contracts & Failure Harness)
 Plan: 3 of 3 in current phase
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-12 — Completed 19-01 (cmake restore + baseline + traceability)
 
 Progress: [███░░░░░░░] 33%
@@ -56,6 +56,7 @@ Progress: [███░░░░░░░] 33%
 
 *Updated after each plan completion*
 | Phase 19 P02 | 6 | 3 tasks | 9 files |
+| Phase 19 P03 | 2 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 19]: Embed BASE artifacts in Catch2; verify all 128 IDs via REQUIREMENTS.md parse
 - [Phase 19]: MIDI purity + source scan only in Phase 19; DSP-effect half deferred to Phase 22 (A1)
 - [Phase 19]: Primary BASE-04 proof is [release]+[DryPath]+ENAB; ~[v1] Xml/Zip JUCE noise deferred
+- [Phase 19]: Default BUILD_DIR to Builds (CI-aligned); pass BUILD_DIR into ENAB subprocess
+- [Phase 19]: Optional pluginval only when RUN_PLUGINVAL=1 + PLUGINVAL_BIN — otherwise SKIPPED never PASS
+- [Phase 19]: Catch2 checklist unchecked while [v1][contract] reds remain; discover counts at runtime
 
 ### Pending Todos
 
@@ -86,8 +90,8 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T15:25:00.441Z
-**Stopped At:** Completed 19-01-PLAN.md
+**Last session:** 2026-07-12T15:28:24.302Z
+**Stopped At:** Completed 19-03-PLAN.md
 **Resume File:** None
 
 **Next action:** Execute 19-02 (failing v1 contract tests)
