@@ -208,6 +208,10 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    // RT-15 / D-05: never index prepare-sized scratch when unprepared.
+    if (preparedMaxBlock_ <= 0)
+        return;
+
     const auto snap = ParameterSnapshot::capture (apvts);
     smoothedBank.setTargets (snap);
     pressureController.setConnected (snap.sendConnected);
@@ -216,18 +220,12 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     pressureController.setFirmFeel (snap.sendFirmFeel);
 
     const auto numSamples = buffer.getNumSamples();
-    const auto numOutputChannels = getTotalNumOutputChannels();
-
-    if (dryBuffer.getNumChannels() < numOutputChannels || dryBuffer.getNumSamples() < numSamples)
-        dryBuffer.setSize (numOutputChannels, numSamples, false, false, true);
-
     const auto numChannels = juce::jmin (buffer.getNumChannels(), dryBuffer.getNumChannels());
     const auto gatePreSoft = snap.gatePreSoft;
     const auto extendedStereo = snap.extendedStereo;
 
-    for (int channel = 0; channel < numChannels; ++channel)
-        dryBuffer.copyFrom (channel, 0, buffer, channel, 0, numSamples);
-
+    // Temporary dry-only oversized path (Task 2 replaces with span engine).
+    // Read dry taps from the host buffer so we never grow dryBuffer on the audio thread.
     if (numSamples > preparedMaxBlock_)
     {
         for (int sample = 0; sample < numSamples; ++sample)
@@ -252,9 +250,9 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             float monoSum = 0.0f;
 
             for (int channel = 0; channel < numChannels; ++channel)
-                monoSum += dryBuffer.getReadPointer (channel)[sample];
+                monoSum += buffer.getReadPointer (channel)[sample];
 
-            monoSum /= static_cast<float> (numChannels);
+            monoSum /= static_cast<float> (juce::jmax (1, numChannels));
             (void) inputStage.processSample (monoSum, inputGain);
             (void) chain.getEnvelope().process (std::abs (monoSum));
             (void) rt60;
@@ -268,7 +266,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             {
                 for (int channel = 0; channel < numChannels; ++channel)
                 {
-                    const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
+                    const auto dryTap = buffer.getReadPointer (channel)[sample];
                     const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
                     const auto preOutput = dryTap * dryMix + mixed * bypassWet;
                     buffer.getWritePointer (channel)[sample] = OutputStage::processSample (preOutput, outputGain);
@@ -288,6 +286,9 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         clipHoldFlag.store (inputStage.isClipHoldActive());
         return;
     }
+
+    for (int channel = 0; channel < numChannels; ++channel)
+        dryBuffer.copyFrom (channel, 0, buffer, channel, 0, numSamples);
 
     float blockStartRt60 = 0.0f;
     float blockStartDark = 0.0f;
