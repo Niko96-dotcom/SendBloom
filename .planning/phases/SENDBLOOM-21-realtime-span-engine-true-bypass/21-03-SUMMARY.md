@@ -132,7 +132,7 @@ Each task was committed atomically:
 2. **Task 1 GREEN: Snapshot-edge authentic requests** - `1d85584` (feat)
 3. **Task 2: Strengthen 10k stress (RT-14)** - `9b2fba8` (test)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `11573c9` (docs: complete plan)
 
 _Note: TDD Task 1 used test → feat; Task 2 was test-only coverage._
 

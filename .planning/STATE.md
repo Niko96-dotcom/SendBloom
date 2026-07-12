@@ -6,8 +6,8 @@ current_phase: 21
 current_phase_name: Realtime Span Engine & True Bypass
 current_plan: 3
 status: verifying
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-07-12T16:28:35.801Z"
+stopped_at: Completed 21-03-PLAN.md
+last_updated: "2026-07-12T16:28:54.163Z"
 last_activity: 2026-07-12
 last_activity_desc: Completed 21-01 span engine / oversized wet parity
 progress:
@@ -66,6 +66,7 @@ Progress: [████████░░] 78%
 | Phase 20 P03 | 5min | 2 tasks | 12 files |
 | Phase 21 P01 | 8min | 2 tasks | 4 files |
 | Phase 21 P02 | 3min | 2 tasks | 4 files |
+| Phase 21 P03 | 5min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 21]: OutputStage only on engaged path before BypassCrossfade::mixSample (21-02)
 - [Phase 21]: extended_stereo off: mono-first engaged preserved; bypass dry per-channel (CORE-18)
 - [Phase 21]: CORE-17: unit ramp + cheap plugin mid-stream bypass click bound
+- [Phase ?]: Block-start authentic snapshot edge replaces 15 ms smoother 0.5 threshold (21-03)
+- [Phase 21]: Left authenticColorTarget smoother drained but unused as request trigger (21-03)
+- [Phase 21]: GatedBloomChain::isCrossfading() exposed for RT-08/10/11 observability (21-03)
 
 ### Pending Todos
 
@@ -115,8 +119,8 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T16:28:35.794Z
-**Stopped At:** Completed 21-02-PLAN.md
+**Last session:** 2026-07-12T16:28:54.157Z
+**Stopped At:** Completed 21-03-PLAN.md
 **Resume File:** None
 
 **Next action:** Verify Phase 20 (`/gsd-verify-work` or phase verifier)
