@@ -5,6 +5,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <ui/PressureSendPad.h>
+#include <array>
 #include <atomic>
 #include <cmath>
 #include <memory>
@@ -176,4 +177,99 @@ TEST_CASE ("v1 pressure release stays connected-at-rest with amount 0 and no new
 
     REQUIRE (energy->getEnergy() < 1.0e-6);
     REQUIRE (bufferRms (dryProbe) > 1.0e-3f);
+}
+
+// SEND-14 (in-range only): connected rest / press / release wet-feed semantics must match
+// across prepared block sizes 64/128/256/512 at 48 kHz. Avoid MIDI/CC1 (still mutates APVTS
+// until Phase 22). Oversized dry fallback (numSamples > preparedMaxBlock_) remains Phase 21 —
+// [v1][contract][oversized-block] must stay red.
+TEST_CASE ("SEND-14 processor pressure rest/press/release consistent across prepared blocks",
+           "[send][SEND-14]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    constexpr int kBlockSizes[] = { 64, 128, 256, 512 };
+
+    struct Row
+    {
+        int blockSize = 0;
+        double restEnergy = 0.0;
+        double pressEnergy = 0.0;
+        double releaseEnergy = 0.0;
+    };
+
+    std::array<Row, 4> rows {};
+    int rowIndex = 0;
+
+    for (const int blockSize : kBlockSizes)
+    {
+        INFO ("prepared block size " << blockSize);
+
+        sendbloom::PluginProcessor plugin;
+        configurePressurePlugin (plugin);
+        *plugin.getAPVTS().getRawParameterValue (sendConnected) = 1.0f;
+        *plugin.getAPVTS().getRawParameterValue (sendAmount) = 0.0f;
+        *plugin.getAPVTS().getRawParameterValue (sendFeel) = 0.0f; // Firm
+        plugin.prepareToPlay (kSampleRate, blockSize);
+
+        auto tracker = std::make_unique<EnergyTrackingReverb>();
+        auto* energy = tracker.get();
+        energy->prepare (kSampleRate, blockSize);
+        plugin.chain.setReverbEngineForTests (std::move (tracker));
+
+        auto processTone = [&] (int blocks) {
+            juce::AudioBuffer<float> buffer (2, blockSize);
+            juce::MidiBuffer midi;
+            auto phase = 0.0f;
+            for (int b = 0; b < blocks; ++b)
+            {
+                for (int i = 0; i < blockSize; ++i)
+                {
+                    const auto sample = 0.35f * std::sin (phase);
+                    phase += 0.07f;
+                    buffer.setSample (0, i, sample);
+                    buffer.setSample (1, i, sample);
+                }
+                plugin.processBlock (buffer, midi);
+            }
+        };
+
+        // Settle by wall time (~0.5 s) so small prepared blocks still clear the 25 ms release.
+        const int settleBlocks = std::max (4, static_cast<int> (std::lround (0.5 * kSampleRate / blockSize)));
+        const int probeBlocks = std::max (2, static_cast<int> (std::lround (0.05 * kSampleRate / blockSize)));
+
+        // Connected-at-rest: settle then prove dry wet feed.
+        processTone (settleBlocks);
+        energy->resetEnergy();
+        processTone (probeBlocks);
+        const auto restEnergy = energy->getEnergy();
+        REQUIRE (restEnergy < 1.0e-6);
+
+        // Press amount=1 — wet feed must engage (no MIDI).
+        *plugin.getAPVTS().getRawParameterValue (sendAmount) = 1.0f;
+        energy->resetEnergy();
+        processTone (probeBlocks);
+        const auto pressEnergy = energy->getEnergy();
+        REQUIRE (pressEnergy > 1.0e-3);
+
+        // Release amount=0 — settle (~25 ms release + margin), then dry again.
+        *plugin.getAPVTS().getRawParameterValue (sendAmount) = 0.0f;
+        processTone (settleBlocks);
+        energy->resetEnergy();
+        processTone (probeBlocks);
+        const auto releaseEnergy = energy->getEnergy();
+        REQUIRE (releaseEnergy < 1.0e-6);
+
+        rows[static_cast<size_t> (rowIndex++)] = { blockSize, restEnergy, pressEnergy, releaseEnergy };
+    }
+
+    // Cross-size invariance: press energy should stay in the same order of magnitude.
+    const auto refPress = rows[0].pressEnergy;
+    for (const auto& row : rows)
+    {
+        INFO ("compare press energy block " << row.blockSize);
+        REQUIRE (row.pressEnergy == Catch::Approx (refPress).margin (refPress * 0.5 + 1.0e-6));
+        REQUIRE (row.restEnergy < 1.0e-6);
+        REQUIRE (row.releaseEnergy < 1.0e-6);
+    }
 }

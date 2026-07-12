@@ -2,6 +2,7 @@
 #include <PressureController.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <algorithm>
 #include <cmath>
 
 namespace
@@ -132,4 +133,105 @@ TEST_CASE ("PressureController clamps host and midi targets to [0,1]",
     c.setMidiPressureTarget (-1.0f);
     const auto gain = settleGain (c, static_cast<int> (kSampleRate * 0.5));
     REQUIRE (gain == Catch::Approx (sendbloom::ParameterCurves::sendGain (1.0f, true)).margin (1e-4f));
+}
+
+// SEND-14 in-range: pressure semantics are sample-rate based and must match across
+// prepared host block sizes {64,128,256,512}. Oversized numSamples > preparedMaxBlock_
+// still forces dry wet=0 until Phase 21 — do not claim full host-block invariance;
+// leave [v1][contract][oversized-block] red.
+TEST_CASE ("SEND-14 PressureController connect/rest/press match across prepared block sizes",
+           "[send][SEND-14]")
+{
+    constexpr int kBlockSizes[] = { 64, 128, 256, 512 };
+    constexpr int kSettleSamples = static_cast<int> (kSampleRate * 0.5);
+
+    struct Snapshot
+    {
+        float disconnectedUnity = 0.0f;
+        float connectedRest = 0.0f;
+        float connectedPress = 0.0f;
+        float connectedRelease = 0.0f;
+    };
+
+    Snapshot reference {};
+    bool haveReference = false;
+
+    for (const int blockSize : kBlockSizes)
+    {
+        INFO ("prepared block size " << blockSize);
+
+        // Disconnected → unity (always-on), independent of chunking.
+        {
+            sendbloom::PressureController c;
+            c.prepare (kSampleRate);
+            c.setConnected (false);
+            c.setHostPressureTarget (1.0f);
+            c.setMidiPressureTarget (0.0f);
+            c.setFirmFeel (true);
+
+            float last = 0.0f;
+            int remaining = kSettleSamples;
+            while (remaining > 0)
+            {
+                const int n = std::min (blockSize, remaining);
+                for (int i = 0; i < n; ++i)
+                    last = c.processSample();
+                remaining -= n;
+            }
+            REQUIRE (last == Catch::Approx (1.0f).margin (1e-4f));
+            if (! haveReference)
+                reference.disconnectedUnity = last;
+            else
+                REQUIRE (last == Catch::Approx (reference.disconnectedUnity).margin (1e-4f));
+        }
+
+        // Connected rest → 0; press → Firm curve(1); release → 0.
+        {
+            sendbloom::PressureController c;
+            c.prepare (kSampleRate);
+            c.setConnected (true);
+            c.setMidiPressureTarget (0.0f);
+            c.setFirmFeel (true);
+            c.setHostPressureTarget (0.0f);
+
+            auto processChunks = [&] (int samples) {
+                float last = 0.0f;
+                int remaining = samples;
+                while (remaining > 0)
+                {
+                    const int n = std::min (blockSize, remaining);
+                    for (int i = 0; i < n; ++i)
+                        last = c.processSample();
+                    remaining -= n;
+                }
+                return last;
+            };
+
+            const auto rest = processChunks (kSettleSamples);
+            REQUIRE (rest == Catch::Approx (0.0f).margin (1e-4f));
+
+            c.setHostPressureTarget (1.0f);
+            const auto press = processChunks (kSettleSamples);
+            const auto expectedPress = sendbloom::ParameterCurves::sendGain (1.0f, true);
+            REQUIRE (press == Catch::Approx (expectedPress).margin (1e-4f));
+
+            c.setHostPressureTarget (0.0f);
+            const auto released = processChunks (kSettleSamples);
+            REQUIRE (released == Catch::Approx (0.0f).margin (1e-4f));
+
+            if (! haveReference)
+            {
+                reference.connectedRest = rest;
+                reference.connectedPress = press;
+                reference.connectedRelease = released;
+                haveReference = true;
+            }
+            else
+            {
+                REQUIRE (rest == Catch::Approx (reference.connectedRest).margin (1e-4f));
+                REQUIRE (press == Catch::Approx (reference.connectedPress).margin (1e-4f));
+                REQUIRE (released == Catch::Approx (reference.connectedRelease).margin (1e-4f));
+            }
+        }
+    }
 }
