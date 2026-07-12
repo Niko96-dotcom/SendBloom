@@ -42,6 +42,11 @@ public:
         reverb->requestEngineCrossfade (targetAuthentic);
     }
 
+    bool isCrossfading() const noexcept
+    {
+        return reverb != nullptr && reverb->isCrossfading();
+    }
+
     int getSrcRoundTripLatencySamples() const noexcept
     {
         return reverb != nullptr ? reverb->getSrcRoundTripLatencySamples() : 0;
