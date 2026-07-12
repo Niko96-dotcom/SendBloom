@@ -94,10 +94,10 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **DSP-02**: Dark mode uses a fixed 55 ms delayed tap blended by dark mix
 - [x] **DSP-03**: Re-enabling Dark after bright operation emits no stale frozen burst
 - [x] **DSP-04**: Bright/dark automation remains finite and click-bounded
-- [ ] **DSP-05**: LFO modulation depth is invariant in seconds across sample rates
-- [ ] **DSP-06**: ProperSRC output is pre-cleared
-- [ ] **DSP-07**: ProperSRC unwritten samples remain zero
-- [ ] **DSP-08**: Existing ProperSRC imaging/HF gates remain green
+- [x] **DSP-05**: LFO modulation depth is invariant in seconds across sample rates
+- [x] **DSP-06**: ProperSRC output is pre-cleared
+- [x] **DSP-07**: ProperSRC unwritten samples remain zero
+- [x] **DSP-08**: Existing ProperSRC imaging/HF gates remain green
 - [ ] **DSP-09**: Wet dirt implements the 100 Hz pre-clip high-pass
 - [ ] **DSP-10**: Wet dirt implements a 20 Hz post-clip DC blocker
 - [ ] **DSP-11**: Wet dirt long-run DC offset is below the defined gate
@@ -299,10 +299,10 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | DSP-02 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-03 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-04 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-05 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-06 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-07 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
-| DSP-08 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-05 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-06 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-07 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
+| DSP-08 | Phase 24 | Complete | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-09 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-10 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
 | DSP-11 | Phase 24 | Pending | DSP fidelity contracts (Phase 24); existing tank/HF/ProperSRC tests |
