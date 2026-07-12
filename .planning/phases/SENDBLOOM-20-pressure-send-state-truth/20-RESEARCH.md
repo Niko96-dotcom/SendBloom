@@ -424,24 +424,32 @@ Discretion items resolved below as **recommended defaults** (user auto-accepted 
 
 ## Open Questions
 
+> **Planning lock (2026-07-12):** All six items remain RESOLVED. Plans 20-01…03 implement the recommendations below (controller in 20-01; pad/overlay/Advanced in 20-02; preset matrix + SEND-14 caveat tests in 20-03). No open blockers.
+
 1. **SEND-14 vs Phase 21 oversized dry fallback — RESOLVED**
    - What we know: `numSamples > preparedMaxBlock_` forces wet=0 `[VERIFIED]`.
    - Recommendation: Assert pressure semantics for blocks ≤ prepared max (e.g. 64/128/256/512). Document temporary SEND-14 caveat for oversized hosts until Phase 21. Do not implement span engine here.
+   - **Plan lock:** 20-03 Task 2 + `20-VALIDATION.md` intentional-red table.
 
 2. **New SEND tests vs only flip V1Contract — RESOLVED**
    - Recommendation: Flip `[pressure-release]` by production fix **and** add focused greens for preset resting matrix, attack/release timing, Advanced toggle, overlay predicate. Do not delete Phase 19 contracts.
+   - **Plan lock:** 20-01 controller tests; 20-02 flip pressure-release; 20-03 preset matrix.
 
 3. **Dry Dub Sends as pressure preset — RESOLVED**
    - Recommendation: Follow locked milestone §9.7 matrix (`send_connected=1`, `send_amount=0`). Name already implies dry sends.
+   - **Plan lock:** 20-03 XML matrix.
 
 4. **Soft Pressure factory preset — RESOLVED**
    - Recommendation: Do not add. Soft remains `send_feel` choice; Firm Pressure stays Firm feel.
+   - **Plan lock:** 20-03 forbidden Soft Pressure preset.
 
 5. **PressureController in Phase 20 vs pad-only — RESOLVED**
    - Recommendation: Add `PressureController` now (MIDI target stubbed 0) so SEND-10 is honest; Phase 22 only wires MIDI max + removes APVTS store.
+   - **Plan lock:** 20-01.
 
 6. **Overlay access to pad — RESOLVED**
    - Recommendation: Prefer threading `isPressed`/`displayAmount` from editor into paint; if awkward, APVTS `send_amount > 0.001f` is an acceptable interim for SEND-06 (amount is 0 at rest after fix).
+   - **Plan lock:** 20-02 Task 2.
 
 ## Recommended Plan Split (3 plans)
 

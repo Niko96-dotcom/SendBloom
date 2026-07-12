@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
-current_phase: 19
-current_phase_name: Baseline, Contracts & Failure Harness
-status: verifying
-stopped_at: Completed 19-03-PLAN.md
-last_updated: "2026-07-12T15:28:24.307Z"
+current_phase: 20
+current_phase_name: Pressure Send State Truth
+status: planning
+stopped_at: Created 20-01/02/03-PLAN.md + 20-VALIDATION.md
+last_updated: "2026-07-12T15:45:00.000Z"
 last_activity: 2026-07-12
-last_activity_desc: Completed 19-01 (cmake restore + baseline + traceability)
+last_activity_desc: Phase 20 plans created (PressureController / pad-overlay / presets)
 progress:
   total_phases: 9
   completed_phases: 1
-  total_plans: 3
+  total_plans: 6
   completed_plans: 3
   percent: 11
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 19 executing — 19-01 complete; next 19-02 contracts
+**Current focus:** Phase 20 planned — execute 20-01 PressureController next
 
 ## Current Position
 
-Phase: 19 of 27 (Baseline, Contracts & Failure Harness)
-Plan: 3 of 3 in current phase
-Status: Phase complete — ready for verification
-Last activity: 2026-07-12 — Completed 19-01 (cmake restore + baseline + traceability)
+Phase: 20 of 27 (Pressure Send State Truth)
+Plan: 20-01 ready (3 plans)
+Status: Ready to execute
+Last activity: 2026-07-12 — Phase 20 plans + validation created
 
 Progress: [███░░░░░░░] 33%
 
@@ -39,7 +39,7 @@ Progress: [███░░░░░░░] 33%
 
 **Velocity:**
 
-- Total plans completed: 1
+- Total plans completed: 3
 - Average duration: 11 min
 - Total execution time: 0.2 hours
 
@@ -47,7 +47,7 @@ Progress: [███░░░░░░░] 33%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 19 | 1 | 11 min | 11 min |
+| 19 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -90,11 +90,11 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T15:28:24.302Z
-**Stopped At:** Completed 19-03-PLAN.md
+**Last session:** 2026-07-12T15:45:00.000Z
+**Stopped At:** Created 20-01/02/03-PLAN.md + 20-VALIDATION.md
 **Resume File:** None
 
-**Next action:** Execute 19-02 (failing v1 contract tests)
+**Next action:** Execute Phase 20 — `/gsd-execute-phase 20` (start 20-01 PressureController)
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`
