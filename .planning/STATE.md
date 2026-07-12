@@ -6,7 +6,7 @@ current_phase: 19
 current_phase_name: Baseline, Contracts & Failure Harness
 status: executing
 stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-07-12T15:25:00.448Z"
+last_updated: "2026-07-12T15:25:14.419Z"
 last_activity: 2026-07-12
 last_activity_desc: Completed 19-01 (cmake restore + baseline + traceability)
 progress:
@@ -55,6 +55,7 @@ Progress: [███░░░░░░░] 33%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 19 P02 | 6 | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 19]: Realign JUCE to reachable 8.0.12 when parent gitlink c3c318cf was unreachable
 - [Phase 19]: Guard ZipFile max-uncompressed test behind SENDBLOOM_HAS_JUCE_ZIP_MAX_UNCOMPRESSED
 - [Phase 19]: Embed BASE artifacts in Catch2; verify all 128 IDs via REQUIREMENTS.md parse
+- [Phase 19]: MIDI purity + source scan only in Phase 19; DSP-effect half deferred to Phase 22 (A1)
+- [Phase 19]: Primary BASE-04 proof is [release]+[DryPath]+ENAB; ~[v1] Xml/Zip JUCE noise deferred
 
 ### Pending Todos
 
