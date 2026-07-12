@@ -40,7 +40,7 @@ def analyze(samples, rate, fundamental=440.0):
         p=goertzel(samples,rate,fundamental*h); harmonics[str(h)]=10*math.log10(max(p,1e-30)/max(h1,1e-30))
     return {"predelay_ms":None if onset is None else onset*1000/rate,"edt_s":regression_time(times,db,0,-10),
       "rt20_s":regression_time(times,db,-5,-25),"rt30_s":regression_time(times,db,-5,-35),
-      "spectral_centroid_hz":cent,"harmonics_db":harmonics,"dc_offset":dc,
+      "spectral_centroid_hz":cent,"gate_envelope_db":db,"harmonics_db":harmonics,"dc_offset":dc,
       "gate_close_ms":None if close is None else (close-times[peak_i])*1000,"peak":peak}
 
 def main():

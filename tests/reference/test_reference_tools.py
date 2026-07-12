@@ -23,6 +23,6 @@ class ReferenceToolsTest(unittest.TestCase):
             with wave.open(str(wav),"wb") as w: w.setparams((1,2,rate,len(x),"NONE","")); w.writeframes(struct.pack("<"+"h"*len(x),*x))
             meta=d/"m.json"; meta.write_text(json.dumps({"capture_id":"c1","capture_metadata":{"operator":"Niko"},"settings":{"size_pct":50}}))
             j,c=d/"out.json",d/"out.csv"; subprocess.run([sys.executable,str(ROOT/"tools/reference/analyze_reference.py"),str(wav),str(meta),"--json",str(j),"--csv",str(c),"--fundamental","400"],check=True)
-            out=json.loads(j.read_text()); self.assertEqual(out["settings"]["size_pct"],50); self.assertIn("spectral_centroid_hz",out); self.assertTrue(c.read_text().startswith("schema_version,"))
+            out=json.loads(j.read_text()); self.assertEqual(out["settings"]["size_pct"],50); self.assertIn("spectral_centroid_hz",out); self.assertIn("gate_envelope_db",out); self.assertTrue(c.read_text().startswith("schema_version,"))
 
 if __name__=="__main__": unittest.main()
