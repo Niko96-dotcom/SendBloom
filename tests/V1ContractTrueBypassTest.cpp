@@ -75,4 +75,7 @@ TEST_CASE ("v1 settled true bypass is per-channel unity ignoring output gain",
     // Intended failure: mono-sum collapse and/or output gain applied.
     REQUIRE (maxErrL < 1.0e-6f);
     REQUIRE (maxErrR < 1.0e-6f);
+
+    // Distinct inputs must remain unequal after settled bypass (no mono collapse).
+    REQUIRE (std::abs (buffer.getSample (0, 0) - buffer.getSample (1, 0)) > 1.0e-3f);
 }
