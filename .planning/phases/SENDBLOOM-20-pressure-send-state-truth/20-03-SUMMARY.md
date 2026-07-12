@@ -133,7 +133,7 @@ status: complete
 3. **Task 2 tests:** `c877738` — test(20-03): add SEND-14 in-range block-size coverage
 4. **Task 2 docs:** `9fae206` — docs(20-03): lock SEND-14 oversized Phase 21 caveat
 
-**Plan metadata:** (see final docs commit)
+**Plan metadata:** `1e0f2e4` (docs: complete plan)
 
 ## Files Created/Modified
 
