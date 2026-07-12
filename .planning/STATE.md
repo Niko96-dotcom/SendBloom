@@ -83,9 +83,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 20]: PressureController owns live send gain; bank sendGain smoother removed
 - [Phase 20]: prepareToPlay uses snapToTarget so DryPath/reference tanks stay aligned
 - [Phase 20]: MIDI pressure target forced 0 in Phase 20 (Phase 22 wires realtime)
-- [Phase 20]: PressureController owns live send gain; bank sendGain smoother removed
-- [Phase 20]: prepareToPlay uses snapToTarget so DryPath/reference tanks stay aligned
-- [Phase 20]: MIDI pressure target forced 0 in Phase 20 (Phase 22 wires realtime)
 
 ### Pending Todos
 
