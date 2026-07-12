@@ -8,7 +8,8 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& sendFeelId,
                                 const juce::String& authenticColorId,
                                 const juce::String& extendedStereoId,
-                                const juce::String& dirtOsId)
+                                const juce::String& dirtOsId,
+                                const juce::String& sendConnectedId)
 {
     addChildComponent (gateSensKnob);
     gateSensKnob.setLabelColour (juce::Colour (0xff5fc0d2));
@@ -24,6 +25,10 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
     sendFeelBox.addItem ("Firm", 1);
     sendFeelBox.addItem ("Soft", 2);
     addChildComponent (sendFeelBox);
+
+    pressureModeToggle.setTooltip ("Pressure Mode: when on, wet feed follows pressure; "
+                                   "when off, reverb stays always-on.");
+    addChildComponent (pressureModeToggle);
 
     colorToggle.setTooltip ("Experimental — off by default until validated. "
                             "Steps the tank at 32,768 Hz with fixed delay-table lengths, "
@@ -44,6 +49,8 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
         apvts, thresholdId, gateSensKnob.getSlider());
     sendFeelAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
         apvts, sendFeelId, sendFeelBox);
+    pressureModeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
+        apvts, sendConnectedId, pressureModeToggle);
     colorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
         apvts, authenticColorId, colorToggle);
     extendedStereoAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
@@ -81,6 +88,7 @@ void AdvancedDrawer::setExpanded (bool shouldExpand)
     gateSensKnob.setVisible (expanded);
     sendFeelLabel.setVisible (expanded);
     sendFeelBox.setVisible (expanded);
+    pressureModeToggle.setVisible (expanded);
     colorToggle.setVisible (expanded);
     extendedStereoToggle.setVisible (expanded);
     dirtOsToggle.setVisible (expanded);
@@ -103,6 +111,7 @@ void AdvancedDrawer::resized()
     sendFeelBox.setBounds (feelArea.removeFromTop (28));
 
     colorToggle.setBounds (topRow.removeFromLeft (98).reduced (8, 24));
+    pressureModeToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
     extendedStereoToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
     dirtOsToggle.setBounds (area.removeFromTop (26).reduced (8, 0));
 }

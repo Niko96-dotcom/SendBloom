@@ -42,7 +42,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                       ParameterIDs::sendFeel,
                       ParameterIDs::authenticColor,
                       ParameterIDs::extendedStereo,
-                      ParameterIDs::dirtOs)
+                      ParameterIDs::dirtOs,
+                      ParameterIDs::sendConnected)
 {
     setLookAndFeel (&lookAndFeel);
 
@@ -160,7 +161,9 @@ void PluginEditor::paint (juce::Graphics& g)
                              lookAndFeel.cyanColour(),
                              processorRef.getAPVTS(),
                              processorRef.isClipHoldActive(),
-                             advancedDrawer.isExpanded());
+                             advancedDrawer.isExpanded(),
+                             pressurePad.isPressed(),
+                             pressurePad.getDisplayAmount());
 
     // Default "INITIAL PATCH" is baked into the faceplate. Only redraw for other presets.
     if (presetBox.getSelectedId() != 1)

@@ -157,6 +157,14 @@ bool isParamOn (juce::AudioProcessorValueTreeState& apvts, const char* id)
     return false;
 }
 
+float getParamNorm (juce::AudioProcessorValueTreeState& apvts, const char* id)
+{
+    if (auto* value = apvts.getRawParameterValue (id))
+        return value->load();
+
+    return 0.0f;
+}
+
 int getChoiceIndex (juce::AudioProcessorValueTreeState& apvts, const char* id)
 {
     if (auto* value = apvts.getRawParameterValue (id))
@@ -249,18 +257,21 @@ void drawClipReadOverlay (juce::Graphics& g, bool active)
 void drawStateOverlays (juce::Graphics& g,
                         juce::AudioProcessorValueTreeState& apvts,
                         bool clipActive,
-                        bool advancedExpanded)
+                        bool advancedExpanded,
+                        bool padPressed,
+                        float padDisplayAmount)
 {
     const auto dark = isParamOn (apvts, ParameterIDs::darkMode);
     const auto postGate = getChoiceIndex (apvts, ParameterIDs::gatePrePost) == 1;
-    const auto sendConnected = isParamOn (apvts, ParameterIDs::sendConnected);
+    const auto sendAmount = getParamNorm (apvts, ParameterIDs::sendAmount);
 
     if (dark)
         drawDarkPressedOverlay (g);
 
     drawGatePositionOverlay (g, postGate);
 
-    if (sendConnected)
+    // SEND-06: pressed overlay follows press/amount — not send_connected alone.
+    if (shouldDrawFootswitchPressedOverlay (padPressed, padDisplayAmount, sendAmount))
         drawFootswitchPressedOverlay (g);
 
     drawClipReadOverlay (g, clipActive);
@@ -393,12 +404,20 @@ void paintProceduralChassis (juce::Graphics& g,
 
 } // namespace
 
+bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, float sendAmountNorm) noexcept
+{
+    constexpr auto kEpsilon = 0.001f;
+    return padPressed || displayAmount > kEpsilon || sendAmountNorm > kEpsilon;
+}
+
 void paintPedalFaceplate (juce::Graphics& g,
                           juce::Rectangle<float> bounds,
                           juce::Colour cyan,
                           juce::AudioProcessorValueTreeState& apvts,
                           bool clipActive,
-                          bool advancedExpanded)
+                          bool advancedExpanded,
+                          bool padPressed,
+                          float padDisplayAmount)
 {
     auto faceplate = juce::ImageFileFormat::loadFrom (
         juce::File::getCurrentWorkingDirectory().getChildFile ("resources/ui/reverbx-faceplate.png"));
@@ -409,7 +428,7 @@ void paintPedalFaceplate (juce::Graphics& g,
     if (faceplate.isValid())
     {
         g.drawImage (faceplate, bounds);
-        drawStateOverlays (g, apvts, clipActive, advancedExpanded);
+        drawStateOverlays (g, apvts, clipActive, advancedExpanded, padPressed, padDisplayAmount);
         return;
     }
 
