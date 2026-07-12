@@ -23,7 +23,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 - [x] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption (completed 2026-07-12)
 - [x] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click (completed 2026-07-12)
 - [x] **Phase 24: Reverb State & Wet-Dirt Integrity** - Continuous dark tap, time-invariant LFO, SRC clear, wet HP/DC (completed 2026-07-12)
-- [ ] **Phase 25: Presets, UI, Branding & Release Truth** - Original SendBloom branding, clean-room scan, truthful docs
+- [ ] **Phase 25: Presets, UI, Branding & Release Truth** - Original SendBloom branding, clean-room scan, truthful docs (automated execution complete; human visual/editorial sign-off needed)
 - [ ] **Phase 26: Reference Capture & Sonic Classification** - Capture protocol, metrics tooling, ADR-V1-17 claim status
 - [ ] **Phase 27: RC Verification, Licensing & Distribution** - `v1.0.0-rc0` automated + human release gates
 
@@ -169,7 +169,13 @@ Plans:
   3. Legal metadata scan normalizes punctuation/spacing/case and scans filenames; `design-qa.md` uses portable repo-relative paths with current evidence
   4. UI explains Pressure Mode without third-party controller naming; pre-v1 sessions are explicitly classified with no hidden migration promise; README and clean-room docs describe only verified behavior
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+- [x] 25-01-PLAN.md — Procedural SENDBLOOM faceplate, legacy asset removal, normalized legal scanner
+- [x] 25-02-PLAN.md — Pre-v1 preset classification and portable release documentation
+- [x] 25-03-PLAN.md — Evidence-aligned UI copy and final automated release-truth matrix
+
+**Verification**: Automated criteria pass; final pixel/host alignment and editorial approvals remain `human_needed` (see `25-VERIFICATION.md`).
 **UI hint**: yes
 
 ### Phase 26: Reference Capture & Sonic Classification
@@ -233,7 +239,7 @@ Plans:
 | 22. MIDI & Per-Sample Control Delivery | 3/3 | Complete    | 2026-07-12 |
 | 23. Input, Level & Gate Truth | 3/3 | Complete    | 2026-07-12 |
 | 24. Reverb State & Wet-Dirt Integrity | 3/3 | Complete    | 2026-07-12 |
-| 25. Presets, UI, Branding & Release Truth | 0/TBD | Not started | - |
+| 25. Presets, UI, Branding & Release Truth | 3/3 | Human needed | - |
 | 26. Reference Capture & Sonic Classification | 0/TBD | Not started | - |
 | 27. RC Verification, Licensing & Distribution | 0/TBD | Not started | - |
 
