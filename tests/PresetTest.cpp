@@ -130,3 +130,63 @@ TEST_CASE ("All factory presets round-trip through get/setStateInformation", "[p
                  == Catch::Approx (src.getRawParameterValue (distn)->load()).margin (1e-4f));
     }
 }
+
+TEST_CASE ("Factory presets match §9.7 send resting matrix (SEND-11 / UX-04/05)",
+           "[preset][send][SEND-11][UX-04][UX-05]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    // Milestone §9.7 / research Q3–4: pressure trio connected+amount0; always-on five disconnected+amount0.
+    // Soft Pressure is NOT a factory preset — Soft remains send_feel via Advanced.
+    struct RestingExpectation
+    {
+        int index;
+        const char* name;
+        bool pressureConnected;
+    };
+
+    constexpr RestingExpectation kMatrix[] = {
+        { 0, "Sparkle Verb", false },
+        { 1, "Cut Sample Gate", false },
+        { 2, "Spacerock Burn", false },
+        { 3, "Dry Dub Sends", true },
+        { 4, "Dark Bloom", false },
+        { 5, "Firm Pressure", true },
+        { 6, "Gated Room", false },
+        { 7, "Hot Clip", true },
+    };
+
+    REQUIRE (sendbloom::FactoryPresets::kNumPresets == 8);
+
+    for (const auto& row : kMatrix)
+    {
+        sendbloom::PluginProcessor plugin;
+        REQUIRE (plugin.getProgramName (row.index) == row.name);
+        plugin.setCurrentProgram (row.index);
+
+        const auto connected = plugin.getAPVTS().getRawParameterValue (sendConnected)->load();
+        const auto amount = plugin.getAPVTS().getRawParameterValue (sendAmount)->load();
+
+        INFO ("preset " << row.name << " index " << row.index);
+        if (row.pressureConnected)
+        {
+            REQUIRE (connected == Catch::Approx (1.0f).margin (0.02f));
+            REQUIRE (amount == Catch::Approx (0.0f).margin (0.02f));
+        }
+        else
+        {
+            REQUIRE (connected == Catch::Approx (0.0f).margin (0.02f));
+            REQUIRE (amount == Catch::Approx (0.0f).margin (0.02f));
+        }
+
+        // UX-03: program load matches BinaryData XML parse for send resting state.
+        const auto xmlState = sendbloom::FactoryPresets::makePresetState (row.index);
+        REQUIRE (xmlState.isValid());
+        sendbloom::PluginProcessor fromXml;
+        fromXml.getAPVTS().replaceState (xmlState);
+        REQUIRE (fromXml.getAPVTS().getRawParameterValue (sendConnected)->load()
+                 == Catch::Approx (connected).margin (1e-4f));
+        REQUIRE (fromXml.getAPVTS().getRawParameterValue (sendAmount)->load()
+                 == Catch::Approx (amount).margin (1e-4f));
+    }
+}
