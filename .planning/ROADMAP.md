@@ -18,7 +18,7 @@ Milestone **v1.0 — Interaction Truth, Realtime Safety & Release Candidate** tu
 **Phase Numbering:** Continues from ProperSRC conceptual Phases 11–18. Do not renumber. Integer phases 19–27 are this milestone’s planned work.
 
 - [x] **Phase 19: Baseline, Contracts & Failure Harness** - Freeze truth, map requirements, add failing defect tests and durable verifier (completed 2026-07-12)
-- [ ] **Phase 20: Pressure Send State Truth** - Dry-at-rest pressure mode with correct UI/preset resting semantics
+- [x] **Phase 20: Pressure Send State Truth** - Dry-at-rest pressure mode with correct UI/preset resting semantics (completed 2026-07-12)
 - [ ] **Phase 21: Realtime Span Engine & True Bypass** - No-alloc spans, oversized blocks, channel-preserving unity bypass
 - [ ] **Phase 22: MIDI & Per-Sample Control Delivery** - CC1 realtime modulation and per-sample dynamic control consumption
 - [ ] **Phase 23: Input, Level & Gate Truth** - Canonical Input −9/0/+9, wet-only Level, PostHard de-click
@@ -64,12 +64,12 @@ Plans:
   4. Factory pressure presets load connected with `send_amount=0`; always-on presets load disconnected; XML and `FactoryPresets.cpp` recall identical state; parameter IDs unchanged; default `send_amount` is 0
   5. Firm vs Soft remain distinct; attack/release are ~3 ms / ~25 ms; behavior is invariant across host block sizes
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 Plans:
 
 - [x] 20-01-PLAN.md — PressureController + defaults + processor wiring (SEND-01…04/09/10/12/13, UX-01/02)
 - [x] 20-02-PLAN.md — Pad release / overlay / Advanced toggle → flip [pressure-release] green (SEND-05…08)
-- [ ] 20-03-PLAN.md — Preset matrix + UX + SEND-14 caveat tests (SEND-11/14, UX-01…05)
+- [x] 20-03-PLAN.md — Preset matrix + UX + SEND-14 caveat tests (SEND-11/14, UX-01…05)
 
 **UI hint**: yes
 **ADRs**: ADR-V1-01, ADR-V1-02, ADR-V1-04
@@ -204,7 +204,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 19. Baseline, Contracts & Failure Harness | 3/3 | Complete    | 2026-07-12 |
-| 20. Pressure Send State Truth | 2/3 | In Progress|  |
+| 20. Pressure Send State Truth | 3/3 | Complete   | 2026-07-12 |
 | 21. Realtime Span Engine & True Bypass | 0/TBD | Not started | - |
 | 22. MIDI & Per-Sample Control Delivery | 0/TBD | Not started | - |
 | 23. Input, Level & Gate Truth | 0/TBD | Not started | - |

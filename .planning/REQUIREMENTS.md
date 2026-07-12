@@ -31,10 +31,10 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **SEND-08**: Pressing the on-screen pad may auto-connect pressure mode without disconnecting on release
 - [x] **SEND-09**: Firm and Soft curves remain audibly and numerically distinct
 - [x] **SEND-10**: Pressure attack is 3 ms and release is 25 ms
-- [ ] **SEND-11**: Factory pressure presets load at rest with `send_amount=0`
+- [x] **SEND-11**: Factory pressure presets load at rest with `send_amount=0`
 - [x] **SEND-12**: Disconnecting pressure mode restores ordinary always-on reverb
 - [x] **SEND-13**: `send_amount` APVTS ID remains unchanged
-- [ ] **SEND-14**: Pressure behavior is invariant across host block sizes
+- [x] **SEND-14**: Pressure behavior is invariant across host block sizes
 
 ### MIDI (`MIDI`)
 
@@ -110,9 +110,9 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 
 - [x] **UX-01**: Parameter IDs remain unchanged
 - [x] **UX-02**: Default `send_amount` becomes 0
-- [ ] **UX-03**: Factory preset XML and `FactoryPresets.cpp` remain identical in recalled state
-- [ ] **UX-04**: Pressure presets use connected mode and zero resting pressure
-- [ ] **UX-05**: Always-on presets use disconnected mode
+- [x] **UX-03**: Factory preset XML and `FactoryPresets.cpp` remain identical in recalled state
+- [x] **UX-04**: Pressure presets use connected mode and zero resting pressure
+- [x] **UX-05**: Always-on presets use disconnected mode
 - [ ] **UX-06**: UI explains Pressure Mode without third-party controller naming
 - [ ] **UX-07**: No product-facing source string contains third-party product/brand/controller names
 - [ ] **UX-08**: No shipping resource filename contains those names
@@ -243,15 +243,15 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | SEND-08 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-09 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-10 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-11 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-11 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-12 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | SEND-13 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-14 | Phase 20 | Pending | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-14 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
 | UX-01 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-02 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
-| UX-03 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
-| UX-04 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
-| UX-05 | Phase 20 | Pending | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-03 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-04 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
+| UX-05 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | RT-01 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-02 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-03 | Phase 21 | Pending | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |

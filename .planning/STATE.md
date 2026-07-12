@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: Interaction Truth, Realtime Safety & Release Candidate
 current_phase: 20
 current_phase_name: Pressure Send State Truth
-status: executing
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-07-12T15:55:19.597Z"
+status: verifying
+stopped_at: Completed 20-03-PLAN.md
+last_updated: "2026-07-12T16:01:12.879Z"
 last_activity: 2026-07-12
-last_activity_desc: Completed 20-01 PressureController plan
+last_activity_desc: Completed 20-03-PLAN.md
 progress:
   total_phases: 9
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
-  percent: 11
+  completed_plans: 6
+  percent: 22
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-12)
 
 **Core value:** Pressure Mode, MIDI, and host automation must tell the truth — dry at rest with decaying tails; realtime never lies about blocks, bypass, or allocation.
-**Current focus:** Phase 20 — 20-01 complete; next 20-02 pad/overlay/Advanced
+**Current focus:** Phase 20 — all 3 plans complete; ready for verification
 
 ## Current Position
 
 Phase: 20 of 27 (Pressure Send State Truth)
 Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-07-12 — Completed 20-01 PressureController plan
+Status: Phase complete — ready for verification
+Last activity: 2026-07-12 — Completed 20-03-PLAN.md
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [███████░░░] 67%
 | Phase 20 P01 | 10 min | 2 tasks | 8 files |
 | Phase 20 P01 | 10min | 2 tasks | 8 files |
 | Phase 20 P02 | 6min | 2 tasks | 9 files |
+| Phase 20 P03 | 5min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Locked for this mileston
 - [Phase 20]: Overlay uses pad isPressed/displayAmount plus APVTS amount epsilon — not connection
 - [Phase 20]: PRESSURE MODE label avoids third-party controller product names
 - [Phase 20]: Settle ~20 blocks after release before energy assert (ADR-V1-04 / SEND-10)
+- [Phase 20]: Dry Dub Sends is pressure preset (connected=1 amount=0) per §9.7
+- [Phase 20]: No Soft Pressure factory preset — Soft remains send_feel
+- [Phase 20]: SEND-14 in-range only; oversized dry fallback Phase 21 caveat
 
 ### Pending Todos
 
@@ -101,11 +105,11 @@ None yet.
 
 ## Session Continuity
 
-**Last session:** 2026-07-12T15:55:15.443Z
-**Stopped At:** Completed 20-02-PLAN.md
+**Last session:** 2026-07-12T16:01:00.857Z
+**Stopped At:** Completed 20-03-PLAN.md
 **Resume File:** None
 
-**Next action:** Execute 20-02 pad/overlay/Advanced (PressureSendPad release-to-zero)
+**Next action:** Verify Phase 20 (`/gsd-verify-work` or phase verifier)
 
 **Roadmap:** `.planning/ROADMAP.md` (9 phases, 128/128 requirements mapped)
 **Requirements:** `.planning/REQUIREMENTS.md`
