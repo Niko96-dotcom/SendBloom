@@ -1,4 +1,6 @@
 #include <ParameterCurves.h>
+#include <ParameterIDs.h>
+#include <PluginProcessor.h>
 #include <PressureController.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -133,6 +135,114 @@ TEST_CASE ("PressureController clamps host and midi targets to [0,1]",
     c.setMidiPressureTarget (-1.0f);
     const auto gain = settleGain (c, static_cast<int> (kSampleRate * 0.5));
     REQUIRE (gain == Catch::Approx (sendbloom::ParameterCurves::sendGain (1.0f, true)).margin (1e-4f));
+}
+
+TEST_CASE ("PressureController advances release while disconnected before reconnect",
+           "[send][PressureController][reconnect][regression]")
+{
+    sendbloom::PressureController c;
+    c.prepare (kSampleRate);
+    c.setConnected (true);
+    c.setFirmFeel (true);
+    c.setHostPressureTarget (1.0f);
+    settleGain (c, static_cast<int> (kSampleRate * 0.2));
+
+    c.setConnected (false);
+    c.setHostPressureTarget (0.0f);
+    REQUIRE (settleGain (c, static_cast<int> (kSampleRate * 0.5))
+             == Catch::Approx (1.0f));
+
+    c.setConnected (true);
+    REQUIRE (c.processSample() == Catch::Approx (0.0f).margin (1.0e-4f));
+}
+
+TEST_CASE ("PressureController keeps current disconnected MIDI and clears stale connected MIDI",
+           "[send][PressureController][midi][reconnect][regression]")
+{
+    sendbloom::PressureController c;
+    c.prepare (kSampleRate);
+    c.setConnected (true);
+    c.setFirmFeel (true);
+    c.setMidiPressureTarget (1.0f);
+    settleGain (c, static_cast<int> (kSampleRate * 0.2));
+
+    c.setConnected (false); // transition clears the old connected CC1 value
+    c.setMidiPressureTarget (0.0f); // current CC1 observed while disconnected
+    settleGain (c, static_cast<int> (kSampleRate * 0.5));
+    c.setConnected (true);
+    REQUIRE (c.processSample() == Catch::Approx (0.0f).margin (1.0e-4f));
+
+    c.setConnected (false);
+    c.setMidiPressureTarget (1.0f); // a current disconnected CC1 value is authoritative
+    settleGain (c, static_cast<int> (kSampleRate * 0.5));
+    c.setConnected (true);
+    REQUIRE (c.processSample()
+             == Catch::Approx (sendbloom::ParameterCurves::sendGain (1.0f, true)).margin (1.0e-4f));
+}
+
+TEST_CASE ("PressureController combines host and MIDI pressure by maximum",
+           "[send][PressureController][midi]")
+{
+    sendbloom::PressureController c;
+    c.prepare (kSampleRate);
+    c.setConnected (true);
+    c.setFirmFeel (true);
+    c.setHostPressureTarget (0.25f);
+    c.setMidiPressureTarget (0.75f);
+    auto gain = settleGain (c, static_cast<int> (kSampleRate * 0.5));
+    REQUIRE (gain
+             == Catch::Approx (sendbloom::ParameterCurves::sendGain (0.75f, true)).margin (1.0e-4f));
+
+    c.setHostPressureTarget (0.9f);
+    gain = settleGain (c, static_cast<int> (kSampleRate * 0.5));
+    REQUIRE (gain
+             == Catch::Approx (sendbloom::ParameterCurves::sendGain (0.9f, true)).margin (1.0e-4f));
+}
+
+TEST_CASE ("PressureController applies Firm Soft changes made while disconnected",
+           "[send][PressureController][reconnect]")
+{
+    sendbloom::PressureController c;
+    c.prepare (kSampleRate);
+    c.setConnected (false);
+    c.setHostPressureTarget (0.5f);
+    c.setFirmFeel (false);
+    settleGain (c, static_cast<int> (kSampleRate * 0.5));
+
+    c.setConnected (true);
+    REQUIRE (c.processSample()
+             == Catch::Approx (sendbloom::ParameterCurves::sendGain (0.5f, false)).margin (1.0e-4f));
+}
+
+TEST_CASE ("Project restore initializes connected and disconnected pressure modes",
+           "[send][PressureController][state][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    for (const bool connected : { false, true })
+    {
+        sendbloom::PluginProcessor source;
+        source.getAPVTS().getParameter (sendConnected)->setValueNotifyingHost (
+            connected ? 1.0f : 0.0f);
+        source.getAPVTS().getParameter (sendAmount)->setValueNotifyingHost (0.75f);
+        source.getAPVTS().getParameter (sendFeel)->setValueNotifyingHost (1.0f); // Soft
+
+        juce::MemoryBlock state;
+        source.getStateInformation (state);
+
+        sendbloom::PluginProcessor restored;
+        restored.setStateInformation (state.getData(), static_cast<int> (state.getSize()));
+        restored.prepareToPlay (kSampleRate, 512);
+
+        const auto gain = restored.pressureController.processSample();
+        INFO ("connected " << connected);
+        if (connected)
+            REQUIRE (gain
+                     == Catch::Approx (sendbloom::ParameterCurves::sendGain (0.75f, false))
+                            .margin (1.0e-4f));
+        else
+            REQUIRE (gain == Catch::Approx (1.0f));
+    }
 }
 
 // SEND-14 in-range: pressure semantics are sample-rate based and must match across

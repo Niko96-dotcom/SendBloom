@@ -66,11 +66,10 @@ public:
                        float rt60,
                        float darkMix) noexcept
     {
+        updateCoeffs (rt60, darkMix);
+
         for (int i = 0; i < n; ++i)
-        {
-            updateCoeffs (rt60, darkMix);
             out[i] = processAuthentic (in[i]);
-        }
     }
 
     void reset() noexcept

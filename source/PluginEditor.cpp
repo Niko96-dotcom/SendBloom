@@ -1,5 +1,4 @@
 #include "PluginEditor.h"
-#include "FactoryPresets.h"
 #include "ParameterCurves.h"
 #include "ui/PedalFaceplatePaint.h"
 
@@ -14,12 +13,9 @@ namespace
 constexpr int kEditorWidth = 420;
 constexpr int kEditorHeight = 780;
 
-juce::String upperPresetName (int index)
+juce::String upperPresetName (PluginProcessor& processor, int index)
 {
-    if (index == 0)
-        return "INITIAL PATCH";
-
-    return FactoryPresets::getPresetName (index).toUpperCase();
+    return processor.getProgramName (index).toUpperCase();
 }
 
 juce::String formatInputGainDb (double norm)
@@ -50,8 +46,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     titleLabel.setVisible (false);
     addAndMakeVisible (titleLabel);
 
-    for (int i = 0; i < FactoryPresets::kNumPresets; ++i)
-        presetBox.addItem (upperPresetName (i), i + 1);
+    for (int i = 0; i < processorRef.getNumPrograms(); ++i)
+        presetBox.addItem (upperPresetName (processorRef, i), i + 1);
 
     presetBox.setSelectedId (processorRef.getCurrentProgram() + 1, juce::dontSendNotification);
     presetBox.onChange = [this]
@@ -161,8 +157,7 @@ void PluginEditor::paint (juce::Graphics& g)
                              pressurePad.getDisplayAmount());
 
     // The photographed face owns the preset field; the editor supplies its live text.
-    const auto presetName = presetBox.getSelectedId() != 1 ? presetBox.getText()
-                                                           : juce::String ("INITIAL PATCH");
+    const auto presetName = processorRef.getCurrentProgramDisplayName().toUpperCase();
     g.setColour (juce::Colours::black);
     g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
     g.drawText (presetName, ui::facelayout::kPresetText,
@@ -291,6 +286,10 @@ void PluginEditor::setAdvancedExpandedForSnapshot (bool shouldExpand)
 
 void PluginEditor::timerCallback()
 {
+    const auto programId = processorRef.getCurrentProgram() + 1;
+    if (presetBox.getSelectedId() != programId)
+        presetBox.setSelectedId (programId, juce::dontSendNotification);
+
     repaint();
 }
 

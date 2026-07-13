@@ -54,7 +54,14 @@ public:
     float process (float inputEnvelope, float thresholdDb) noexcept
     {
         const auto openThresh = juce::Decibels::decibelsToGain (thresholdDb);
-        const auto closeThresh = juce::Decibels::decibelsToGain (thresholdDb - kHysteresisDb);
+        return processLinear (inputEnvelope, openThresh);
+    }
+
+    float processLinear (float inputEnvelope, float openThreshold) noexcept
+    {
+        constexpr auto kCloseThresholdRatio = 0.7943282347f; // -2 dB
+        const auto openThresh = juce::jmax (0.0f, openThreshold);
+        const auto closeThresh = openThresh * kCloseThresholdRatio;
 
         // Trigger + hold state machine. Opening is instant; closing waits out the
         // hold so brief dropouts don't retrigger, but a genuine mute closes.

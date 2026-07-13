@@ -65,11 +65,12 @@ inline std::vector<float> renderCoreImpulse (sendbloom::SchroederTankCore& core,
                                              int numSamples)
 {
     std::vector<float> out (static_cast<size_t> (numSamples), 0.0f);
+    core.setParameters (rt60, darkMix);
 
     for (int i = 0; i < numSamples; ++i)
     {
         const auto in = i == 0 ? 1.0f : 0.0f;
-        out[static_cast<size_t> (i)] = core.processSample (in, rt60, darkMix);
+        out[static_cast<size_t> (i)] = core.processSample (in);
     }
 
     return out;

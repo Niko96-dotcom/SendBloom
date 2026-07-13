@@ -118,11 +118,37 @@ TEST_CASE ("Gate control follows preset changes and has no inert preset action b
 
     REQUIRE (gateButton != nullptr);
 
-    processor.setCurrentProgram (0); // PostHard
+    processor.setCurrentProgram (1); // Sparkle Verb: PostHard
     juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
     REQUIRE (gateButton->getToggleState());
 
-    processor.setCurrentProgram (3); // Dry Dub Sends: PreSoft
+    processor.setCurrentProgram (4); // Dry Dub Sends: PreSoft
     juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
     REQUIRE_FALSE (gateButton->getToggleState());
+}
+
+TEST_CASE ("Editor program selector follows project state restore",
+           "[ui][editor][preset][state][regression]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+
+    juce::ComboBox* presetBox = nullptr;
+    for (auto* child : editor.getChildren())
+        if (auto* combo = dynamic_cast<juce::ComboBox*> (child))
+            presetBox = combo;
+
+    REQUIRE (presetBox != nullptr);
+    REQUIRE (presetBox->getSelectedId() == 1); // Init
+
+    sendbloom::PluginProcessor source;
+    source.setCurrentProgram (7); // Gated Room
+    juce::MemoryBlock state;
+    source.getStateInformation (state);
+    processor.setStateInformation (state.getData(), static_cast<int> (state.getSize()));
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (80);
+
+    REQUIRE (processor.getCurrentProgramDisplayName() == "Gated Room");
+    REQUIRE (presetBox->getSelectedId() == 8);
 }

@@ -27,18 +27,34 @@ const std::array<PresetResource, FactoryPresets::kNumPresets> kPresetResources {
     { "Hot Clip",        BinaryData::Hot_Clip_xml,        BinaryData::Hot_Clip_xmlSize },
 } };
 
-bool applyEmbeddedXml (juce::AudioProcessorValueTreeState& apvts, const PresetResource& preset)
+juce::ValueTree parseEmbeddedXml (const char* data, int size)
 {
-    const auto xml = SafeXml::parseDocument (preset.xml, static_cast<size_t> (preset.xmlSize));
+    const auto xml = SafeXml::parseDocument (data, static_cast<size_t> (size));
 
-    if (xml == nullptr || ! xml->hasTagName (apvts.state.getType()))
-        return false;
+    if (xml == nullptr)
+        return {};
 
-    apvts.replaceState (juce::ValueTree::fromXml (*xml));
-    return true;
+    return juce::ValueTree::fromXml (*xml);
+}
+
+bool containsParameter (const juce::ValueTree& state, const juce::String& parameterID)
+{
+    if (state.getProperty ("id").toString() == parameterID && state.hasProperty ("value"))
+        return true;
+
+    for (int i = 0; i < state.getNumChildren(); ++i)
+        if (containsParameter (state.getChild (i), parameterID))
+            return true;
+
+    return false;
 }
 
 } // namespace
+
+juce::ValueTree FactoryPresets::makeInitState()
+{
+    return parseEmbeddedXml (BinaryData::Init_xml, BinaryData::Init_xmlSize);
+}
 
 juce::String FactoryPresets::getPresetName (int index)
 {
@@ -54,20 +70,34 @@ juce::ValueTree FactoryPresets::makePresetState (int index)
         return {};
 
     const auto& preset = kPresetResources[static_cast<size_t> (index)];
-    const auto xml = SafeXml::parseDocument (preset.xml, static_cast<size_t> (preset.xmlSize));
-
-    if (xml == nullptr)
-        return {};
-
-    return juce::ValueTree::fromXml (*xml);
+    return parseEmbeddedXml (preset.xml, preset.xmlSize);
 }
 
-void FactoryPresets::applyPreset (juce::AudioProcessorValueTreeState& apvts, int index)
+bool FactoryPresets::applyState (juce::AudioProcessorValueTreeState& apvts,
+                                 const juce::ValueTree& state)
+{
+    if (! state.isValid() || state.getType() != apvts.state.getType())
+        return false;
+
+    for (const auto* id : ParameterIDs::all)
+        if (! containsParameter (state, id))
+            return false;
+
+    apvts.replaceState (state.createCopy());
+    return true;
+}
+
+bool FactoryPresets::applyInit (juce::AudioProcessorValueTreeState& apvts)
+{
+    return applyState (apvts, makeInitState());
+}
+
+bool FactoryPresets::applyPreset (juce::AudioProcessorValueTreeState& apvts, int index)
 {
     if (index < 0 || index >= kNumPresets)
-        return;
+        return false;
 
-    applyEmbeddedXml (apvts, kPresetResources[static_cast<size_t> (index)]);
+    return applyState (apvts, makePresetState (index));
 }
 
 } // namespace sendbloom

@@ -67,7 +67,8 @@ std::vector<float> renderCoreSequence (sendbloom::SchroederTankCore& core,
     for (size_t i = 0; i < input.size(); ++i)
     {
         const auto mix = i < darkMixPerSample.size() ? darkMixPerSample[i] : darkMixPerSample.back();
-        out[i] = core.processSample (input[i], rt60, mix);
+        core.setParameters (rt60, mix);
+        out[i] = core.processSample (input[i]);
     }
 
     return out;
@@ -126,23 +127,26 @@ TEST_CASE ("Bright mode advances predelay line during silence",
         sendbloom::SchroederTankCore core;
         core.prepare (sampleRate, 512);
 
+        core.setParameters (rt60, 1.0f);
         for (size_t i = 0; i < predelaySamples * 2; ++i)
-            core.processSample (1.0f, rt60, 1.0f);
+            core.processSample (1.0f);
 
         if (runBrightSilence)
         {
+            core.setParameters (rt60, 0.0f);
             for (size_t i = 0; i < brightSilenceSamples; ++i)
-                core.processSample (0.0f, rt60, 0.0f);
+                core.processSample (0.0f);
 
             for (size_t i = 0; i < tankDecaySamples; ++i)
-                core.processSample (0.0f, rt60, 0.0f);
+                core.processSample (0.0f);
         }
 
         auto peak = 0.0f;
-        peak = std::max (peak, std::abs (core.processSample (1.0f, rt60, 1.0f)));
+        core.setParameters (rt60, 1.0f);
+        peak = std::max (peak, std::abs (core.processSample (1.0f)));
 
         for (size_t i = 1; i < earlyWindow; ++i)
-            peak = std::max (peak, std::abs (core.processSample (0.0f, rt60, 1.0f)));
+            peak = std::max (peak, std::abs (core.processSample (0.0f)));
 
         return peak;
     };
@@ -198,11 +202,13 @@ TEST_CASE ("Dark re-enable after bright silence emits no pre-55 ms stale burst",
     core.prepare (sampleRate, 512);
 
     // Prime stale content while dark, then bright silence long enough to flush if clocking.
+    core.setParameters (rt60, 1.0f);
     for (size_t i = 0; i < predelaySamples; ++i)
-        core.processSample (1.0f, rt60, 1.0f);
+        core.processSample (1.0f);
 
+    core.setParameters (rt60, 0.0f);
     for (size_t i = 0; i < brightSilenceSamples; ++i)
-        core.processSample (0.0f, rt60, 0.0f);
+        core.processSample (0.0f);
 
     const auto out = renderCoreSequence (core, input, darkMix, rt60);
 

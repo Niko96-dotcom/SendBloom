@@ -46,9 +46,13 @@ public:
         lfoPhase = 0.0f;
     }
 
-    float processSample (float input, float rt60Seconds, float darkMix) noexcept
+    void setParameters (float rt60Seconds, float darkMix) noexcept
     {
         updateCoeffs (rt60Seconds, darkMix);
+    }
+
+    float processSample (float input) noexcept
+    {
         return processTank (input);
     }
 

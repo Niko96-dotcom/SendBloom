@@ -13,7 +13,8 @@
 namespace sendbloom
 {
 
-class PluginProcessor : public juce::AudioProcessor
+class PluginProcessor : public juce::AudioProcessor,
+                        private juce::AudioProcessorValueTreeState::Listener
 {
 public:
     PluginProcessor();
@@ -41,6 +42,8 @@ public:
     void setCurrentProgram (int index) override;
     const juce::String getProgramName (int index) override;
     void changeProgramName (int index, const juce::String& newName) override;
+    bool isCurrentProgramCustom() const noexcept { return currentProgramCustom_.load(); }
+    juce::String getCurrentProgramDisplayName() const;
 
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
@@ -67,7 +70,9 @@ public:
 
 private:
     std::atomic<bool> clipHoldFlag { false };
-    int currentProgramIndex { 0 };
+    std::atomic<int> currentProgramIndex_ { 0 };
+    std::atomic<bool> currentProgramCustom_ { false };
+    std::atomic<bool> programStateUpdateInProgress_ { false };
     int preparedMaxBlock_ { 0 };
     std::vector<float> monoScratch_;
     std::vector<float> envelopeScratch_;
@@ -75,19 +80,19 @@ private:
     std::vector<float> wetGainScratch_;
     std::vector<float> sendGainScratch_;
     std::vector<float> distnScratch_;
-    std::vector<float> thresholdDbScratch_;
+    std::vector<float> thresholdLinearScratch_;
     std::vector<float> bypassWetScratch_;
     std::vector<float> outputGainScratch_;
-    void applyCc1AtSample (const juce::MidiBuffer& midiMessages,
-                           int samplePosition,
-                           bool connected) noexcept;
-    int findNextCc1SampleAfter (const juce::MidiBuffer& midiMessages,
-                                int afterSample,
-                                int numSamples) const noexcept;
+    void applyPressureMidiAtSample (const juce::MidiBuffer& midiMessages,
+                                    int samplePosition) noexcept;
+    int findNextPressureMidiSampleAfter (const juce::MidiBuffer& midiMessages,
+                                         int afterSample,
+                                         int numSamples) const noexcept;
     void processSpan (juce::AudioBuffer<float>& buffer,
                       int offset,
                       int span,
                       const ParameterSnapshot& snap) noexcept;
+    void parameterChanged (const juce::String& parameterID, float newValue) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

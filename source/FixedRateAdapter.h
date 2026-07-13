@@ -95,13 +95,12 @@ private:
                            float darkMix) noexcept
     {
         const int nInternal = converters.upsample (in, n, internalScratch.data());
+        core.setParameters (rt60, darkMix);
 
         for (int i = 0; i < nInternal; ++i)
         {
             internalProcessBuf[static_cast<size_t> (i)] = static_cast<double> (
-                core.processSample (static_cast<float> (internalScratch[static_cast<size_t> (i)]),
-                                    rt60,
-                                    darkMix));
+                core.processSample (static_cast<float> (internalScratch[static_cast<size_t> (i)])));
         }
 
         std::fill (out, out + n, 0.0f);

@@ -85,8 +85,9 @@ public:
                        bool gatePreSoft,
                        float thresholdDb) noexcept
     {
+        const auto thresholdLinear = juce::Decibels::decibelsToGain (thresholdDb);
         processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix,
-                      nullptr, distnBlend, nullptr, sendGain, nullptr, thresholdDb, gatePreSoft);
+                      nullptr, distnBlend, nullptr, sendGain, nullptr, thresholdLinear, gatePreSoft);
     }
 
     void processBlock (const float* monoIn,
@@ -100,11 +101,12 @@ public:
                        bool gatePreSoft,
                        float thresholdDb) noexcept
     {
+        const auto thresholdLinear = juce::Decibels::decibelsToGain (thresholdDb);
         processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix,
-                      nullptr, distnBlend, sendGains, 1.0f, nullptr, thresholdDb, gatePreSoft);
+                      nullptr, distnBlend, sendGains, 1.0f, nullptr, thresholdLinear, gatePreSoft);
     }
 
-    /** ADR-V1-06: per-sample distn / send / threshold arrays (RT-06). */
+    /** ADR-V1-06: per-sample distn / send / linear-threshold arrays (RT-06). */
     void processBlock (const float* monoIn,
                        const float* envelopeIn,
                        float* wetOut,
@@ -113,11 +115,11 @@ public:
                        float darkMix,
                        const float* distnBlends,
                        const float* sendGains,
-                       const float* thresholdDbs,
+                       const float* thresholdLinears,
                        bool gatePreSoft) noexcept
     {
         processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix,
-                      distnBlends, 0.0f, sendGains, 1.0f, thresholdDbs, 0.0f, gatePreSoft);
+                      distnBlends, 0.0f, sendGains, 1.0f, thresholdLinears, 0.0f, gatePreSoft);
     }
 
 private:
@@ -131,8 +133,8 @@ private:
                        float constantDistn,
                        const float* sendGains,
                        float constantSendGain,
-                       const float* thresholdDbs,
-                       float constantThresholdDb,
+                       const float* thresholdLinears,
+                       float constantThresholdLinear,
                        bool gatePreSoft) noexcept
     {
         if (numSamples > maxBlockSize_)
@@ -146,10 +148,10 @@ private:
         {
             return sendGains != nullptr ? sendGains[static_cast<size_t> (i)] : constantSendGain;
         };
-        const auto sampleThreshold = [thresholdDbs, constantThresholdDb] (int i) noexcept
+        const auto sampleThreshold = [thresholdLinears, constantThresholdLinear] (int i) noexcept
         {
-            return thresholdDbs != nullptr ? thresholdDbs[static_cast<size_t> (i)]
-                                          : constantThresholdDb;
+            return thresholdLinears != nullptr ? thresholdLinears[static_cast<size_t> (i)]
+                                               : constantThresholdLinear;
         };
 
         gate.setProfile (gatePreSoft ? GateProfile::PreSoft : GateProfile::PostHard);
@@ -158,7 +160,7 @@ private:
         {
             // Advance the single gate once per sample here so its state stays
             // coherent; apply pre now, cache the gain for the post node below.
-            const auto g = gate.process (envelopeIn[i], sampleThreshold (i));
+            const auto g = gate.processLinear (envelopeIn[i], sampleThreshold (i));
             gateGainScratch_[static_cast<size_t> (i)] = g;
 
             auto wet = monoIn[i];

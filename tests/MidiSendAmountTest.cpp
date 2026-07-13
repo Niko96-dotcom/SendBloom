@@ -127,7 +127,7 @@ TEST_CASE ("MIDI CC1 increases reverb-input energy when connected without APVTS 
     REQUIRE (pressedEnergy->getEnergy() > quietEnergy->getEnergy() + 1.0);
 }
 
-TEST_CASE ("MIDI CC1 ignored when send disconnected", "[midi][send][MIDI-01]")
+TEST_CASE ("MIDI CC1 remains modulation-only when send disconnected", "[midi][send][MIDI-01]")
 {
     using namespace sendbloom::ParameterIDs;
 

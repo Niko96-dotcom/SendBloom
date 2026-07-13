@@ -433,7 +433,7 @@ TEST_CASE ("setCurrentProgram loads embedded XML preset values", "[release][pres
     for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
     {
         sendbloom::PluginProcessor fromProgram;
-        fromProgram.setCurrentProgram (preset);
+        fromProgram.setCurrentProgram (preset + 1);
 
         sendbloom::PluginProcessor fromXml;
         const auto xml = juce::parseXML (juce::String (presetXml[preset].data,

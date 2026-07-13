@@ -270,6 +270,105 @@ TEST_CASE ("v1 host and MIDI pressure combine via max",
     REQUIRE (energyCombined > energyMidi * 0.5);
 }
 
+TEST_CASE ("v1 disconnected CC1 replaces stale pressure before reconnect",
+           "[v1][contract][midi][reconnect][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    configureConnectedRest (plugin, 512);
+
+    auto tracker = std::make_unique<EnergyTrackingReverb>();
+    auto* raw = tracker.get();
+    plugin.chain.setReverbEngineForTests (std::move (tracker));
+    plugin.chain.prepare (kSampleRate, 512);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent (juce::MidiMessage::controllerEvent (1, 1, 127), 0);
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    *plugin.getAPVTS().getRawParameterValue (sendConnected) = 0.0f;
+    midi.clear();
+    midi.addEvent (juce::MidiMessage::controllerEvent (1, 1, 0), 0);
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    midi.clear();
+    for (int block = 0; block < 40; ++block)
+    {
+        fillTone (buffer);
+        plugin.processBlock (buffer, midi);
+    }
+
+    *plugin.getAPVTS().getRawParameterValue (sendConnected) = 1.0f;
+    raw->resetEnergy();
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    REQUIRE (raw->getEnergy() < 1.0e-3);
+}
+
+TEST_CASE ("v1 disconnected current CC1 is available on reconnect",
+           "[v1][contract][midi][reconnect][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    configureConnectedRest (plugin, 512);
+    *plugin.getAPVTS().getRawParameterValue (sendConnected) = 0.0f;
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent (juce::MidiMessage::controllerEvent (1, 1, 127), 0);
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    *plugin.getAPVTS().getRawParameterValue (sendConnected) = 1.0f;
+    midi.clear();
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    REQUIRE (plugin.pressureController.processSample()
+             > sendbloom::ParameterCurves::sendGain (0.8f, true));
+}
+
+TEST_CASE ("v1 reset-all-controllers releases MIDI pressure deterministically",
+           "[v1][contract][midi][reset][regression]")
+{
+    sendbloom::PluginProcessor plugin;
+    configureConnectedRest (plugin, 512);
+
+    auto tracker = std::make_unique<EnergyTrackingReverb>();
+    auto* raw = tracker.get();
+    plugin.chain.setReverbEngineForTests (std::move (tracker));
+    plugin.chain.prepare (kSampleRate, 512);
+
+    juce::AudioBuffer<float> buffer (2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent (juce::MidiMessage::controllerEvent (1, 1, 127), 0);
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    midi.clear();
+    midi.addEvent (juce::MidiMessage::allControllersOff (1), 0);
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+
+    midi.clear();
+    for (int block = 0; block < 40; ++block)
+    {
+        fillTone (buffer);
+        plugin.processBlock (buffer, midi);
+    }
+
+    raw->resetEnergy();
+    fillTone (buffer);
+    plugin.processBlock (buffer, midi);
+    REQUIRE (raw->getEnergy() < 1.0e-3);
+}
+
 TEST_CASE ("v1 MIDI CC1 remains finite across block sizes",
            "[v1][contract][midi][MIDI-10]")
 {

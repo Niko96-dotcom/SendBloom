@@ -74,6 +74,7 @@ target_link_libraries(SharedCode INTERFACE r8brain)
 
 juce_add_binary_data(SendBloomPresets
     SOURCES
+        resources/presets/Init.xml
         resources/presets/Sparkle_Verb.xml
         resources/presets/Cut_Sample_Gate.xml
         resources/presets/Spacerock_Burn.xml

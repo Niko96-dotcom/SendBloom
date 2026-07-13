@@ -7,12 +7,51 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <set>
 
-TEST_CASE ("Factory presets exposes eight programs", "[preset][PRST-01]")
+namespace
+{
+
+constexpr int kFactoryProgramOffset = 1;
+
+void setNormalizedParameter (sendbloom::PluginProcessor& plugin,
+                             const char* parameterID,
+                             float normalizedValue)
+{
+    auto* parameter = plugin.getAPVTS().getParameter (parameterID);
+    REQUIRE (parameter != nullptr);
+    parameter->setValueNotifyingHost (normalizedValue);
+}
+
+} // namespace
+
+TEST_CASE ("Program model exposes Init followed by all eight factory presets", "[preset][PRST-01]")
 {
     sendbloom::PluginProcessor plugin;
-    REQUIRE (plugin.getNumPrograms() == sendbloom::FactoryPresets::kNumPresets);
-    REQUIRE (plugin.getProgramName (0) == "Sparkle Verb");
-    REQUIRE (plugin.getProgramName (7) == "Hot Clip");
+    REQUIRE (plugin.getNumPrograms() == sendbloom::FactoryPresets::kNumPresets + 1);
+    REQUIRE (plugin.getProgramName (0) == "Init");
+    REQUIRE (plugin.getProgramName (1) == "Sparkle Verb");
+    REQUIRE (plugin.getProgramName (8) == "Hot Clip");
+}
+
+TEST_CASE ("Init state is real and differs from Sparkle Verb", "[preset][PRST-01][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    plugin.setCurrentProgram (0);
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (size)->load()
+             == Catch::Approx (0.5f).margin (1.0e-6f));
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (level)->load()
+             == Catch::Approx (0.5f).margin (1.0e-6f));
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (distn)->load()
+             == Catch::Approx (0.0f).margin (1.0e-6f));
+
+    plugin.setCurrentProgram (1);
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (size)->load()
+             == Catch::Approx (0.35f).margin (1.0e-6f));
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (level)->load()
+             == Catch::Approx (0.6f).margin (1.0e-6f));
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (distn)->load()
+             == Catch::Approx (0.1f).margin (1.0e-6f));
 }
 
 TEST_CASE ("Factory preset XML resources embedded in bundle", "[preset][PRST-01]")
@@ -30,7 +69,7 @@ TEST_CASE ("Each factory preset loads distinct parameter values", "[preset][PRST
 
     for (int i = 0; i < sendbloom::FactoryPresets::kNumPresets; ++i)
     {
-        plugin.setCurrentProgram (i);
+        plugin.setCurrentProgram (i + kFactoryProgramOffset);
         sizes[static_cast<size_t> (i)] = plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::size)->load();
         REQUIRE (sizes[static_cast<size_t> (i)] >= 0.0f);
         REQUIRE (sizes[static_cast<size_t> (i)] <= 1.0f);
@@ -46,13 +85,16 @@ TEST_CASE ("Factory preset state round-trip preserves all parameters", "[preset]
     using namespace sendbloom::ParameterIDs;
 
     sendbloom::PluginProcessor source;
-    source.setCurrentProgram (3);
+    source.setCurrentProgram (3 + kFactoryProgramOffset);
 
     juce::MemoryBlock state;
     source.getStateInformation (state);
 
     sendbloom::PluginProcessor restored;
     restored.setStateInformation (state.getData(), static_cast<int> (state.getSize()));
+    REQUIRE (restored.getCurrentProgram() == source.getCurrentProgram());
+    REQUIRE_FALSE (restored.isCurrentProgramCustom());
+    REQUIRE (restored.getCurrentProgramDisplayName() == "Dry Dub Sends");
 
     const auto& src = source.getAPVTS();
     const auto& dst = restored.getAPVTS();
@@ -69,7 +111,7 @@ TEST_CASE ("Factory preset state round-trip preserves all parameters", "[preset]
 TEST_CASE ("Preset XML matches programmatic factory state", "[preset][PRST-02]")
 {
     sendbloom::PluginProcessor pluginFromCode;
-    pluginFromCode.setCurrentProgram (0);
+    pluginFromCode.setCurrentProgram (kFactoryProgramOffset);
 
     const auto xml = juce::parseXML (juce::String (BinaryData::Sparkle_Verb_xml,
                                                    static_cast<int> (BinaryData::Sparkle_Verb_xmlSize)));
@@ -97,7 +139,7 @@ TEST_CASE ("All factory presets round-trip through get/setStateInformation", "[p
     for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
     {
         sendbloom::PluginProcessor source;
-        source.setCurrentProgram (preset);
+        source.setCurrentProgram (preset + kFactoryProgramOffset);
 
         juce::MemoryBlock state;
         source.getStateInformation (state);
@@ -131,14 +173,14 @@ TEST_CASE ("Factory presets match specification 9.7 send resting matrix (SEND-11
     };
 
     constexpr RestingExpectation kMatrix[] = {
-        { 0, "Sparkle Verb", false },
-        { 1, "Cut Sample Gate", false },
-        { 2, "Spacerock Burn", false },
-        { 3, "Dry Dub Sends", true },
-        { 4, "Dark Bloom", false },
-        { 5, "Firm Pressure", true },
-        { 6, "Gated Room", false },
-        { 7, "Hot Clip", true },
+        { 1, "Sparkle Verb", false },
+        { 2, "Cut Sample Gate", false },
+        { 3, "Spacerock Burn", false },
+        { 4, "Dry Dub Sends", true },
+        { 5, "Dark Bloom", false },
+        { 6, "Firm Pressure", true },
+        { 7, "Gated Room", false },
+        { 8, "Hot Clip", true },
     };
 
     REQUIRE (sendbloom::FactoryPresets::kNumPresets == 8);
@@ -165,7 +207,8 @@ TEST_CASE ("Factory presets match specification 9.7 send resting matrix (SEND-11
         }
 
         // UX-03: program load matches BinaryData XML parse for send resting state.
-        const auto xmlState = sendbloom::FactoryPresets::makePresetState (row.index);
+        const auto xmlState = sendbloom::FactoryPresets::makePresetState (
+            row.index - kFactoryProgramOffset);
         REQUIRE (xmlState.isValid());
         sendbloom::PluginProcessor fromXml;
         fromXml.getAPVTS().replaceState (xmlState);
@@ -174,4 +217,80 @@ TEST_CASE ("Factory presets match specification 9.7 send resting matrix (SEND-11
         REQUIRE (fromXml.getAPVTS().getRawParameterValue (sendAmount)->load()
                  == Catch::Approx (amount).margin (1e-4f));
     }
+}
+
+TEST_CASE ("Editing a factory program marks its display as Custom", "[preset][state][regression]")
+{
+    sendbloom::PluginProcessor plugin;
+    plugin.setCurrentProgram (1);
+    REQUIRE_FALSE (plugin.isCurrentProgramCustom());
+    REQUIRE (plugin.getCurrentProgramDisplayName() == "Sparkle Verb");
+
+    setNormalizedParameter (plugin, sendbloom::ParameterIDs::size, 0.9f);
+
+    REQUIRE (plugin.getCurrentProgram() == 1);
+    REQUIRE (plugin.isCurrentProgramCustom());
+    REQUIRE (plugin.getCurrentProgramDisplayName() == "Custom");
+}
+
+TEST_CASE ("Save and load preserves custom program identity", "[preset][state][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor source;
+    source.setCurrentProgram (2);
+    setNormalizedParameter (source, size, 0.91f);
+
+    juce::MemoryBlock state;
+    source.getStateInformation (state);
+
+    sendbloom::PluginProcessor restored;
+    restored.setStateInformation (state.getData(), static_cast<int> (state.getSize()));
+
+    REQUIRE (restored.getCurrentProgram() == 2);
+    REQUIRE (restored.isCurrentProgramCustom());
+    REQUIRE (restored.getCurrentProgramDisplayName() == "Custom");
+    REQUIRE (restored.getAPVTS().getRawParameterValue (size)->load()
+             == Catch::Approx (0.91f).margin (1.0e-5f));
+}
+
+TEST_CASE ("Restored program metadata is rejected when parameters do not match",
+           "[preset][state][regression]")
+{
+    auto state = sendbloom::FactoryPresets::makePresetState (0);
+    REQUIRE (state.isValid());
+    state.setProperty ("program_index", 8, nullptr);
+    state.setProperty ("program_custom", false, nullptr);
+
+    const auto xml = state.createXml();
+    REQUIRE (xml != nullptr);
+    juce::MemoryBlock block;
+    juce::AudioProcessor::copyXmlToBinary (*xml, block);
+
+    sendbloom::PluginProcessor restored;
+    restored.setStateInformation (block.getData(), static_cast<int> (block.getSize()));
+
+    REQUIRE (restored.getCurrentProgram() == 8);
+    REQUIRE (restored.isCurrentProgramCustom());
+    REQUIRE (restored.getCurrentProgramDisplayName() == "Custom");
+}
+
+TEST_CASE ("Invalid preset state leaves the previous program untouched",
+           "[preset][state][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor plugin;
+    plugin.setCurrentProgram (1);
+    const auto beforeSize = plugin.getAPVTS().getRawParameterValue (size)->load();
+
+    REQUIRE_FALSE (sendbloom::FactoryPresets::applyPreset (plugin.getAPVTS(), -1));
+    REQUIRE_FALSE (sendbloom::FactoryPresets::applyState (
+        plugin.getAPVTS(), juce::ValueTree { "WrongRoot" }));
+
+    juce::ValueTree incomplete { plugin.getAPVTS().state.getType() };
+    REQUIRE_FALSE (sendbloom::FactoryPresets::applyState (plugin.getAPVTS(), incomplete));
+    REQUIRE (plugin.getAPVTS().getRawParameterValue (size)->load()
+             == Catch::Approx (beforeSize).margin (1.0e-6f));
+    REQUIRE (plugin.getCurrentProgram() == 1);
 }

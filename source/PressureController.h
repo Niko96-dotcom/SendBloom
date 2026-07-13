@@ -33,6 +33,19 @@ public:
 
     void setConnected (bool connected) noexcept
     {
+        if (connected == connected_)
+            return;
+
+        if (! connected)
+        {
+            midiTarget_ = 0.0f;
+            receivedMidiWhileDisconnected_ = false;
+        }
+        else if (! receivedMidiWhileDisconnected_)
+        {
+            midiTarget_ = 0.0f;
+        }
+
         connected_ = connected;
     }
 
@@ -44,6 +57,9 @@ public:
     void setMidiPressureTarget (float normalized) noexcept
     {
         midiTarget_ = juce::jlimit (0.0f, 1.0f, normalized);
+
+        if (! connected_)
+            receivedMidiWhileDisconnected_ = true;
     }
 
     void setFirmFeel (bool firm) noexcept
@@ -53,14 +69,11 @@ public:
 
     float processSample() noexcept
     {
-        if (! connected_)
-            return 1.0f;
-
         const auto rawTarget = std::max (hostTarget_, midiTarget_);
         const auto coeff = rawTarget > smoothedPressure_ ? attackCoeff_ : releaseCoeff_;
         smoothedPressure_ += coeff * (rawTarget - smoothedPressure_);
 
-        return ParameterCurves::sendGain (smoothedPressure_, firmFeel_);
+        return connected_ ? ParameterCurves::sendGain (smoothedPressure_, firmFeel_) : 1.0f;
     }
 
 private:
@@ -81,6 +94,7 @@ private:
     float smoothedPressure_ { 0.0f };
     bool connected_ { false };
     bool firmFeel_ { true };
+    bool receivedMidiWhileDisconnected_ { false };
 };
 
 } // namespace sendbloom

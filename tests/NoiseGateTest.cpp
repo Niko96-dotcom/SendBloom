@@ -67,3 +67,23 @@ TEST_CASE ("NoiseGate opens above threshold", "[gate][NoiseGate]")
     const auto gain = gate.process (1.0f, -40.0f);
     REQUIRE (gain > 0.9f);
 }
+
+TEST_CASE ("NoiseGate linear threshold path matches dB path",
+           "[gate][NoiseGate][performance][regression]")
+{
+    sendbloom::NoiseGate dbGate;
+    sendbloom::NoiseGate linearGate;
+    dbGate.prepare (48000.0, sendbloom::GateProfile::PreSoft);
+    linearGate.prepare (48000.0, sendbloom::GateProfile::PreSoft);
+
+    constexpr float thresholdDb = -43.0f;
+    const auto thresholdLinear = juce::Decibels::decibelsToGain (thresholdDb);
+
+    for (int i = 0; i < 10000; ++i)
+    {
+        const auto envelope = (i % 700) < 250 ? 0.02f : 0.00001f;
+        const auto dbGain = dbGate.process (envelope, thresholdDb);
+        const auto linearGain = linearGate.processLinear (envelope, thresholdLinear);
+        REQUIRE (linearGain == Catch::Approx (dbGain).margin (1.0e-7f));
+    }
+}

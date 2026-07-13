@@ -78,7 +78,8 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     std::vector<float> sendUnity (kN, 1.0f);
     std::vector<float> distn (kN, 0.0f);
     std::vector<float> distnVarying (kN, 0.0f);
-    std::vector<float> thresh (kN, kThresholdDb);
+    std::vector<float> thresh (
+        kN, juce::Decibels::decibelsToGain (kThresholdDb));
     std::vector<float> outSilent (kN, 0.0f);
     std::vector<float> outUnity (kN, 0.0f);
     std::vector<float> outDirty (kN, 0.0f);
@@ -145,14 +146,14 @@ TEST_CASE ("v1 processSpan fills per-sample control scratches for RT-06/07",
 
     REQUIRE (body.find ("sendGainScratch_") != std::string::npos);
     REQUIRE (body.find ("distnScratch_") != std::string::npos);
-    REQUIRE (body.find ("thresholdDbScratch_") != std::string::npos);
+    REQUIRE (body.find ("thresholdLinearScratch_") != std::string::npos);
     REQUIRE (body.find ("wetGainScratch_") != std::string::npos);
     REQUIRE (body.find ("outputGainScratch_") != std::string::npos);
     REQUIRE (body.find ("bypassWetScratch_") != std::string::npos);
     REQUIRE (body.find ("getNextInputGainLinear") != std::string::npos);
 
     REQUIRE (body.find ("distnScratch_.data()") != std::string::npos);
-    REQUIRE (body.find ("thresholdDbScratch_.data()") != std::string::npos);
+    REQUIRE (body.find ("thresholdLinearScratch_.data()") != std::string::npos);
     REQUIRE (body.find ("sendGainScratch_.data()") != std::string::npos);
 }
 

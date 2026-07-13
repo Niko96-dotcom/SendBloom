@@ -10,6 +10,9 @@
 #include "OutputStage.h"
 #include "SafeXml.h"
 
+#include <cmath>
+#include <optional>
+
 namespace sendbloom
 {
 
@@ -17,6 +20,60 @@ namespace
 {
 
 constexpr auto kLegacyAuthenticColorId = "authentic_color";
+const juce::Identifier kProgramIndexProperty { "program_index" };
+const juce::Identifier kProgramCustomProperty { "program_custom" };
+
+juce::ValueTree stateForProgram (int programIndex)
+{
+    if (programIndex == 0)
+        return FactoryPresets::makeInitState();
+
+    return FactoryPresets::makePresetState (programIndex - 1);
+}
+
+std::optional<float> findParameterValue (const juce::ValueTree& state,
+                                         const juce::String& parameterID)
+{
+    if (state.getProperty ("id").toString() == parameterID && state.hasProperty ("value"))
+        return state.getProperty ("value").toString().getFloatValue();
+
+    for (int i = 0; i < state.getNumChildren(); ++i)
+        if (const auto value = findParameterValue (state.getChild (i), parameterID))
+            return value;
+
+    return std::nullopt;
+}
+
+bool stateMatchesProgram (const juce::ValueTree& state, int programIndex)
+{
+    const auto expected = stateForProgram (programIndex);
+
+    if (! state.isValid() || ! expected.isValid())
+        return false;
+
+    for (const auto* id : ParameterIDs::all)
+    {
+        const auto actualValue = findParameterValue (state, id);
+        const auto expectedValue = findParameterValue (expected, id);
+
+        if (! actualValue.has_value() || ! expectedValue.has_value()
+            || std::abs (*actualValue - *expectedValue) > 1.0e-5f)
+            return false;
+    }
+
+    return true;
+}
+
+int findMatchingProgram (const juce::ValueTree& state)
+{
+    constexpr int kNumPrograms = FactoryPresets::kNumPresets + 1;
+
+    for (int program = 0; program < kNumPrograms; ++program)
+        if (stateMatchesProgram (state, program))
+            return program;
+
+    return -1;
+}
 
 void removeRetiredParameters (juce::ValueTree state)
 {
@@ -45,9 +102,16 @@ PluginProcessor::PluginProcessor()
        apvts (*this, nullptr, "SendBloomParams", createParameterLayout())
 {
     setLatencySamples (0);
+
+    for (const auto* id : ParameterIDs::all)
+        apvts.addParameterListener (id, this);
 }
 
-PluginProcessor::~PluginProcessor() = default;
+PluginProcessor::~PluginProcessor()
+{
+    for (const auto* id : ParameterIDs::all)
+        apvts.removeParameterListener (id, this);
+}
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
@@ -102,27 +166,47 @@ double PluginProcessor::getTailLengthSeconds() const
 
 int PluginProcessor::getNumPrograms()
 {
-    return FactoryPresets::kNumPresets;
+    return FactoryPresets::kNumPresets + 1;
 }
 
 int PluginProcessor::getCurrentProgram()
 {
-    return currentProgramIndex;
+    return currentProgramIndex_.load();
 }
 
 void PluginProcessor::setCurrentProgram (int index)
 {
-    if (index < 0 || index >= FactoryPresets::kNumPresets)
+    if (index < 0 || index >= getNumPrograms())
         return;
 
-    currentProgramIndex = index;
-    FactoryPresets::applyPreset (apvts, index);
+    programStateUpdateInProgress_.store (true);
+    const auto applied = index == 0 ? FactoryPresets::applyInit (apvts)
+                                    : FactoryPresets::applyPreset (apvts, index - 1);
+    programStateUpdateInProgress_.store (false);
+
+    if (! applied)
+        return;
+
+    currentProgramIndex_.store (index);
+    currentProgramCustom_.store (false);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
 }
 
 const juce::String PluginProcessor::getProgramName (int index)
 {
-    return FactoryPresets::getPresetName (index);
+    if (index == 0)
+        return "Init";
+
+    return FactoryPresets::getPresetName (index - 1);
+}
+
+juce::String PluginProcessor::getCurrentProgramDisplayName() const
+{
+    if (currentProgramCustom_.load())
+        return "Custom";
+
+    const auto index = currentProgramIndex_.load();
+    return index == 0 ? juce::String ("Init") : FactoryPresets::getPresetName (index - 1);
 }
 
 void PluginProcessor::changeProgramName (int index, const juce::String& newName)
@@ -144,7 +228,7 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     wetGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     sendGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     distnScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
-    thresholdDbScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    thresholdLinearScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     bypassWetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     outputGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
@@ -169,7 +253,7 @@ void PluginProcessor::releaseResources()
     wetGainScratch_.clear();
     sendGainScratch_.clear();
     distnScratch_.clear();
-    thresholdDbScratch_.clear();
+    thresholdLinearScratch_.clear();
     bypassWetScratch_.clear();
     outputGainScratch_.clear();
 }
@@ -193,13 +277,12 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
   #endif
 }
 
-void PluginProcessor::applyCc1AtSample (const juce::MidiBuffer& midiMessages,
-                                        int samplePosition,
-                                        bool connected) noexcept
+void PluginProcessor::applyPressureMidiAtSample (const juce::MidiBuffer& midiMessages,
+                                                 int samplePosition) noexcept
 {
     // ADR-V1-03: MIDI is realtime modulation only — never touch APVTS / host notify.
-    if (! connected)
-        return;
+    bool resetControllers = false;
+    std::optional<float> cc1Value;
 
     for (const auto metadata : midiMessages)
     {
@@ -208,17 +291,21 @@ void PluginProcessor::applyCc1AtSample (const juce::MidiBuffer& midiMessages,
 
         const auto message = metadata.getMessage();
 
-        if (! message.isController() || message.getControllerNumber() != 1)
-            continue;
-
-        const auto norm = static_cast<float> (message.getControllerValue()) / 127.0f;
-        pressureController.setMidiPressureTarget (norm);
+        if (message.isResetAllControllers())
+            resetControllers = true;
+        else if (message.isController() && message.getControllerNumber() == 1)
+            cc1Value = static_cast<float> (message.getControllerValue()) / 127.0f;
     }
+
+    if (resetControllers)
+        pressureController.setMidiPressureTarget (0.0f);
+    else if (cc1Value.has_value())
+        pressureController.setMidiPressureTarget (*cc1Value);
 }
 
-int PluginProcessor::findNextCc1SampleAfter (const juce::MidiBuffer& midiMessages,
-                                             int afterSample,
-                                             int numSamples) const noexcept
+int PluginProcessor::findNextPressureMidiSampleAfter (const juce::MidiBuffer& midiMessages,
+                                                      int afterSample,
+                                                      int numSamples) const noexcept
 {
     int next = numSamples;
 
@@ -226,7 +313,8 @@ int PluginProcessor::findNextCc1SampleAfter (const juce::MidiBuffer& midiMessage
     {
         const auto message = metadata.getMessage();
 
-        if (! message.isController() || message.getControllerNumber() != 1)
+        if (! message.isResetAllControllers()
+            && (! message.isController() || message.getControllerNumber() != 1))
             continue;
 
         if (metadata.samplePosition > afterSample && metadata.samplePosition < next)
@@ -258,18 +346,18 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     pressureController.setFirmFeel (snap.sendFirmFeel);
 
     const auto numSamples = buffer.getNumSamples();
-    const auto connected = snap.sendConnected;
     int offset = 0;
 
     while (offset < numSamples)
     {
         // RT-04 / MIDI-04/05: apply CC1 at this sample, then cut span before the next CC1.
-        applyCc1AtSample (midiMessages, offset, connected);
+        applyPressureMidiAtSample (midiMessages, offset);
 
         const auto remaining = numSamples - offset;
-        const auto nextCc1 = findNextCc1SampleAfter (midiMessages, offset, numSamples);
-        const auto distanceToNextCc1 = nextCc1 - offset;
-        const auto span = juce::jmin (remaining, preparedMaxBlock_, kControlQuantum, distanceToNextCc1);
+        const auto nextPressureMidi = findNextPressureMidiSampleAfter (midiMessages, offset, numSamples);
+        const auto distanceToNextPressureMidi = nextPressureMidi - offset;
+        const auto span = juce::jmin (remaining, preparedMaxBlock_, kControlQuantum,
+                                     distanceToNextPressureMidi);
         processSpan (buffer, offset, span, snap);
         offset += span;
     }
@@ -305,9 +393,8 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         wetGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextLevelWetGain();
         sendGainScratch_[static_cast<size_t> (sample)] = pressureController.processSample();
         distnScratch_[static_cast<size_t> (sample)] = distnBlend;
-        const auto thresholdNorm = smoothedBank.getNextInputThresholdNorm();
-        thresholdDbScratch_[static_cast<size_t> (sample)] =
-            ParameterCurves::inputThresholdDb (thresholdNorm);
+        thresholdLinearScratch_[static_cast<size_t> (sample)] =
+            smoothedBank.getNextInputThresholdLinear();
         bypassWetScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextBypassWetMix();
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
         const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
@@ -331,7 +418,7 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
     // ADR-V1-06 / RT-06: send, distn, and threshold consumed per sample.
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), span,
                         spanRt60, spanDark,
-                        distnScratch_.data(), sendGainScratch_.data(), thresholdDbScratch_.data(),
+                        distnScratch_.data(), sendGainScratch_.data(), thresholdLinearScratch_.data(),
                         gatePreSoft);
 
     // ADR-V1-10: build output-gained engaged path first, then crossfade against
@@ -389,7 +476,13 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 
 void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    if (auto xml = apvts.copyState().createXml())
+    auto state = apvts.copyState();
+    const auto programIndex = currentProgramIndex_.load();
+    const auto isCustom = currentProgramCustom_.load() || ! stateMatchesProgram (state, programIndex);
+    state.setProperty (kProgramIndexProperty, programIndex, nullptr);
+    state.setProperty (kProgramCustomProperty, isCustom, nullptr);
+
+    if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
 }
 
@@ -407,8 +500,32 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         {
             auto state = juce::ValueTree::fromXml (*xml);
             removeRetiredParameters (state);
+
+            const auto hasProgramMetadata = state.hasProperty (kProgramIndexProperty);
+            auto programIndex = hasProgramMetadata
+                                  ? static_cast<int> (state.getProperty (kProgramIndexProperty))
+                                  : findMatchingProgram (state);
+            const auto storedCustom = static_cast<bool> (
+                state.getProperty (kProgramCustomProperty, false));
+
+            if (programIndex < 0 || programIndex >= getNumPrograms())
+                programIndex = 0;
+
+            const auto isCustom = storedCustom || ! stateMatchesProgram (state, programIndex);
+
+            programStateUpdateInProgress_.store (true);
             apvts.replaceState (state);
+            programStateUpdateInProgress_.store (false);
+            currentProgramIndex_.store (programIndex);
+            currentProgramCustom_.store (isCustom);
+            smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
         }
+}
+
+void PluginProcessor::parameterChanged (const juce::String&, float)
+{
+    if (! programStateUpdateInProgress_.load())
+        currentProgramCustom_.store (true);
 }
 
 } // namespace sendbloom

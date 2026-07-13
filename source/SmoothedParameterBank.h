@@ -14,7 +14,7 @@ public:
         inputGainLinear.reset (sampleRate, 0.020);
         outputGainLinear.reset (sampleRate, 0.020);
         sizeNorm.reset (sampleRate, 0.050);
-        inputThresholdNorm.reset (sampleRate, 0.050);
+        inputThresholdLinear.reset (sampleRate, 0.050);
         levelWetGain.reset (sampleRate, 0.020);
         distnBlend.reset (sampleRate, 0.020);
         // sendGain smoothing removed — PressureController owns attack/release (ADR-V1-04)
@@ -27,7 +27,7 @@ public:
         inputGainLinear.setTargetValue (juce::Decibels::decibelsToGain (snap.inputGainDb));
         outputGainLinear.setTargetValue (snap.outputGainLinear);
         sizeNorm.setTargetValue (snap.sizeNorm);
-        inputThresholdNorm.setTargetValue (snap.inputThresholdNorm);
+        inputThresholdLinear.setTargetValue (snap.inputThresholdLinear);
         levelWetGain.setTargetValue (snap.wetGain);
         distnBlend.setTargetValue (snap.distnBlend);
         darkModeTarget.setTargetValue (snap.darkMode ? 1.0f : 0.0f);
@@ -39,7 +39,7 @@ public:
         inputGainLinear.setCurrentAndTargetValue (inputGainLinear.getTargetValue());
         outputGainLinear.setCurrentAndTargetValue (outputGainLinear.getTargetValue());
         sizeNorm.setCurrentAndTargetValue (sizeNorm.getTargetValue());
-        inputThresholdNorm.setCurrentAndTargetValue (inputThresholdNorm.getTargetValue());
+        inputThresholdLinear.setCurrentAndTargetValue (inputThresholdLinear.getTargetValue());
         levelWetGain.setCurrentAndTargetValue (levelWetGain.getTargetValue());
         distnBlend.setCurrentAndTargetValue (distnBlend.getTargetValue());
         darkModeTarget.setCurrentAndTargetValue (darkModeTarget.getTargetValue());
@@ -49,7 +49,7 @@ public:
     float getNextInputGainLinear() noexcept { return inputGainLinear.getNextValue(); }
     float getNextOutputGainLinear() noexcept { return outputGainLinear.getNextValue(); }
     float getNextSizeNorm() noexcept { return sizeNorm.getNextValue(); }
-    float getNextInputThresholdNorm() noexcept { return inputThresholdNorm.getNextValue(); }
+    float getNextInputThresholdLinear() noexcept { return inputThresholdLinear.getNextValue(); }
     float getNextLevelWetGain() noexcept { return levelWetGain.getNextValue(); }
     float getNextDistnBlend() noexcept { return distnBlend.getNextValue(); }
     float getNextDarkModeTarget() noexcept { return darkModeTarget.getNextValue(); }
@@ -61,7 +61,7 @@ private:
     juce::SmoothedValue<float> inputGainLinear;
     juce::SmoothedValue<float> outputGainLinear;
     juce::SmoothedValue<float> sizeNorm;
-    juce::SmoothedValue<float> inputThresholdNorm;
+    juce::SmoothedValue<float> inputThresholdLinear;
     juce::SmoothedValue<float> levelWetGain;
     juce::SmoothedValue<float> distnBlend;
     juce::SmoothedValue<float> darkModeTarget;

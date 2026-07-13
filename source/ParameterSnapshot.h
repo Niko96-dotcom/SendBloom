@@ -13,6 +13,7 @@ struct ParameterSnapshot
     float inputGainDb {};
     float inputThresholdNorm {};
     float inputThresholdDb {};
+    float inputThresholdLinear {};
     float sizeNorm {};
     float rt60Seconds {};
     float levelNorm {};
@@ -39,6 +40,7 @@ struct ParameterSnapshot
 
         s.inputThresholdNorm = apvts.getRawParameterValue (ParameterIDs::inputThreshold)->load();
         s.inputThresholdDb = ParameterCurves::inputThresholdDb (s.inputThresholdNorm);
+        s.inputThresholdLinear = juce::Decibels::decibelsToGain (s.inputThresholdDb);
 
         s.sizeNorm = apvts.getRawParameterValue (ParameterIDs::size)->load();
         s.rt60Seconds = ParameterCurves::sizeToRT60 (s.sizeNorm);

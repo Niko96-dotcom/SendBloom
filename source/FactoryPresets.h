@@ -11,9 +11,13 @@ class FactoryPresets
 public:
     static constexpr int kNumPresets = 8;
 
+    static juce::ValueTree makeInitState();
     static juce::String getPresetName (int index);
     static juce::ValueTree makePresetState (int index);
-    static void applyPreset (juce::AudioProcessorValueTreeState& apvts, int index);
+    static bool applyState (juce::AudioProcessorValueTreeState& apvts,
+                            const juce::ValueTree& state);
+    static bool applyInit (juce::AudioProcessorValueTreeState& apvts);
+    static bool applyPreset (juce::AudioProcessorValueTreeState& apvts, int index);
 };
 
 } // namespace sendbloom

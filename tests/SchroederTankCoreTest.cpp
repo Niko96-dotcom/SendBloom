@@ -114,6 +114,29 @@ TEST_CASE ("SchroederTankCore has no host-path mode identifiers", "[verb][Schroe
     REQUIRE (source.find ("authenticColor") == std::string::npos);
 }
 
+TEST_CASE ("Shipping fixed-rate adapter updates reverb coefficients once per control span",
+           "[verb][SchroederTankCore][performance][regression]")
+{
+    const auto coreSource = readSourceFile ("source/SchroederTankCore.h");
+    const auto adapterSource = readSourceFile ("source/FixedRateAdapter.h");
+    REQUIRE_FALSE (coreSource.empty());
+    REQUIRE_FALSE (adapterSource.empty());
+
+    const auto processStart = coreSource.find ("float processSample (float input)");
+    const auto processEnd = coreSource.find ("void reset", processStart);
+    REQUIRE (processStart != std::string::npos);
+    REQUIRE (processEnd != std::string::npos);
+    const auto processBody = coreSource.substr (processStart, processEnd - processStart);
+    REQUIRE (processBody.find ("updateCoeffs") == std::string::npos);
+
+    const auto adapterSet = adapterSource.find ("core.setParameters (rt60, darkMix)");
+    const auto adapterLoop = adapterSource.find ("for (int i = 0; i < nInternal; ++i)");
+    REQUIRE (adapterSet != std::string::npos);
+    REQUIRE (adapterLoop != std::string::npos);
+    REQUIRE (adapterSet < adapterLoop);
+    REQUIRE (adapterSource.find ("core.processSample (", adapterLoop) != std::string::npos);
+}
+
 TEST_CASE ("SchroederTankCore uses unscaled delay table at 32768 Hz", "[verb][SchroederTankCore][CORE-02]")
 {
     sendbloom::SchroederTankCore core;

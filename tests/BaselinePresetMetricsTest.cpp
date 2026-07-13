@@ -55,7 +55,7 @@ struct PresetMetrics
 PresetMetrics renderPresetMetrics (int presetIndex)
 {
     sendbloom::PluginProcessor plugin;
-    plugin.setCurrentProgram (presetIndex);
+    plugin.setCurrentProgram (presetIndex + 1);
     plugin.prepareToPlay (kSampleRate, kBlockSize);
 
     juce::AudioBuffer<float> buffer (2, kBlockSize);

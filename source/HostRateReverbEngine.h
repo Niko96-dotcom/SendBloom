@@ -21,8 +21,21 @@ public:
                          float rt60Seconds,
                          float darkMix) noexcept override
     {
-        const auto out = core.processSample (input, rt60Seconds, darkMix);
+        core.setParameters (rt60Seconds, darkMix);
+        const auto out = core.processSample (input);
         return juce::jlimit (-4.0f, 4.0f, out);
+    }
+
+    void processBlock (const float* input,
+                       float* output,
+                       int numSamples,
+                       float rt60Seconds,
+                       float darkMix) noexcept override
+    {
+        core.setParameters (rt60Seconds, darkMix);
+
+        for (int i = 0; i < numSamples; ++i)
+            output[i] = juce::jlimit (-4.0f, 4.0f, core.processSample (input[i]));
     }
 
     void reset() noexcept

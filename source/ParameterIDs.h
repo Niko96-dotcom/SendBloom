@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 // Immutable APVTS parameter ID strings — do not rename after release.
 namespace sendbloom::ParameterIDs
 {
@@ -17,5 +19,21 @@ inline constexpr const char* sendAmount      = "send_amount";
 inline constexpr const char* sendFeel        = "send_feel";
 inline constexpr const char* extendedStereo  = "extended_stereo";
 inline constexpr const char* bypass          = "bypass";
+
+inline constexpr std::array<const char*, 13> all {
+    inputGain,
+    inputThreshold,
+    size,
+    level,
+    distn,
+    outputGain,
+    darkMode,
+    gatePrePost,
+    sendConnected,
+    sendAmount,
+    sendFeel,
+    extendedStereo,
+    bypass,
+};
 
 } // namespace sendbloom::ParameterIDs
