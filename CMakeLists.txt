@@ -118,4 +118,5 @@ target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 
 include(Tests)
 target_compile_definitions(Tests PRIVATE SENDBLOOM_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_definitions(Tests PRIVATE SENDBLOOM_ENABLE_DIAGNOSTICS=1)
 include(GitHubENV)

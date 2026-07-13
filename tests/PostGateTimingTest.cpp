@@ -29,7 +29,7 @@ TEST_CASE ("post gate wet drops within 15 ms of silence onset", "[gate][integrat
     {
         const auto input = 0.5f;
         const auto env = chain.getEnvelope().process (std::abs (input));
-        const auto wet = chain.processSample (input, env, rt60, 0.0f, true, 0.3f, 1.0f, false, kThresholdDb);
+        const auto wet = chain.processSample (input, env, rt60, 0.0f, 0.3f, 1.0f, false, kThresholdDb);
         peakWet = std::max (peakWet, std::abs (wet));
     }
 
@@ -41,7 +41,7 @@ TEST_CASE ("post gate wet drops within 15 ms of silence onset", "[gate][integrat
     for (int i = 0; i < 2000; ++i)
     {
         const auto env = chain.getEnvelope().process (0.0f);
-        const auto wet = chain.processSample (0.0f, env, rt60, 0.0f, true, 0.3f, 1.0f, false, kThresholdDb);
+        const auto wet = chain.processSample (0.0f, env, rt60, 0.0f, 0.3f, 1.0f, false, kThresholdDb);
         ++silenceSamples;
 
         if (silenceSamples <= kFifteenMsSamples && std::abs (wet) < 0.02f * peakWet)

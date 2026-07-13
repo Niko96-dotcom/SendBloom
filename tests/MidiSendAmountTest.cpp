@@ -16,7 +16,7 @@ class EnergyTrackingReverb final : public sendbloom::IReverbEngine
 public:
     void prepare (double, int) noexcept override {}
 
-    float processSample (float input, float, float, bool) noexcept override
+    float processSample (float input, float, float) noexcept override
     {
         const auto increment = static_cast<double> (std::abs (input));
         auto current = energy.load (std::memory_order_relaxed);

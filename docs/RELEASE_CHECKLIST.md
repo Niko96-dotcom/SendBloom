@@ -12,7 +12,7 @@ Historical results are not RC promotion evidence. Re-run via `scripts/verify-v1.
 
 - [x] Legal metadata audit passes (`bash scripts/check-legal-metadata.sh`) — also invoked by `verify-v1.sh`
 - [x] Release AU + VST3 build — `Builds`, 2026-07-12 remediation worktree
-- [x] Full discovered Catch2 suite — 265 discovered, 264 passed, 1 explicit unavailable Zip API skip, 0 failed, 2026-07-12
+- [x] Full runtime-discovered Catch2 suite — current suite passes with 1 explicit unavailable Zip API skip and 0 failures, 2026-07-13
 - [x] pluginval strictness **10** on the fresh Release VST3 — final `SUCCESS`, 2026-07-12
 - [x] Clean-room positioning documented (`docs/CLEAN_ROOM.md`)
 - [x] `tests/ReleaseTruthTest.cpp` tracked and included in test target
@@ -41,25 +41,25 @@ Historical results are not RC promotion evidence. Re-run via `scripts/verify-v1.
 - [x] Clean-room statement published (`docs/CLEAN_ROOM.md`)
 - [x] No EEPROM, bytecode, firmware, or proprietary reverse-engineering claims in product-facing docs
 
-## 32k Color Truth (VERB-05)
+## Fixed-Rate Reverb Truth (VERB-05)
 
-When **32k Color** (`authentic_color`) is enabled:
+SendBloom has one production reverb path at every host sample rate:
 
-- **ProperSRC sandwich** per [ADR-003](architecture/ADR-003-proper-32k-src.md): host-rate block → r8brain upsample to **32,768 Hz** → `SchroederTankCore` at fixed delay-table lengths → r8brain downsample to host rate (`FixedRateAdapter`, `Authentic32Mode::ProperSRC`).
+- **ProperSRC sandwich** per [ADR-003](architecture/ADR-003-proper-32k-src.md): host-rate block → r8brain conversion to **32,768 Hz** → `SchroederTankCore` at fixed delay-table lengths → r8brain conversion back to host rate (`FixedRateAdapter`).
 - Per-comb RT60 feedback uses each comb's own delay reference.
-- Bright authentic damping uses `kAuthenticBrightDampingHz` (darker than host-rate bright).
-- Damping and RT60 may be quantized to 9-bit steps.
-- This is **original software** — not firmware-derived, not bytecode, not hardware cloning.
+- DARK remains the only production reverb-voicing switch, interpolating predelay and damping.
+- Production damping and RT60 are smooth and are not quantized to speculative 9-bit steps.
+- The fixed rate is an engineering approximation used for host-rate-independent behavior. It is **original software** — not a verified hardware sample rate, **not firmware-derived**, not bytecode, and not hardware cloning.
 
-**Legacy diagnostics only:** `Authentic32Mode::LegacyAccumulator` retains the old `processAuthentic` accumulator + host-rate anti-image SVF (`kAuthenticAntiImageLpHz`) for A/B regression — not the production path.
+**Diagnostics only:** `Authentic32Mode::LegacyAccumulator` retains the old `processAuthentic` accumulator + host-rate anti-image SVF for A/B regression, and `HostRateReverbEngine` remains available for developer comparison. Neither is referenced by the production tank.
 
 ## RC1 Safety Freeze
 
-- [x] Fresh plugin load ships with `authentic_color` off (APVTS default `false`)
-- [x] All 8 factory presets ship with `authentic_color=0`
-- [x] **Host-rate Schroeder tank** is the production default for RC1
-- ProperSRC validated via Phase 18 acceptance gates (`bash scripts/enab-acceptance-gates.sh`); **32k Color remains off by default** until product explicitly enables default-on
-- When **32k Color** is enabled, the ProperSRC path described in **32k Color Truth (VERB-05)** above applies — not production-default until default-on is explicitly approved
+- [x] `authentic_color` is absent from the APVTS parameter layout and generic host automation
+- [x] All 8 factory presets omit `authentic_color`; old beta state entries are tolerated and discarded on load
+- [x] **ProperSRC at 32,768 Hz** is the sole production reverb engine
+- [x] Host-rate selection, engine crossfade, selector smoothing, and speculative 9-bit production quantization are absent
+- ProperSRC remains covered by the Phase 18 acceptance gates (`bash scripts/enab-acceptance-gates.sh`)
 
 ## Multi-DAW Smoke (TEST-07) — human_needed
 

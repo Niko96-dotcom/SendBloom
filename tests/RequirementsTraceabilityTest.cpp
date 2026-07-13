@@ -77,13 +77,13 @@ TEST_CASE ("TEST-04 pressure send preserves tank energy at 500 ms", "[traceabili
     {
         const auto input = 0.5f;
         const auto env = chain.getEnvelope().process (std::abs (input));
-        wet.push_back (chain.processSample (input, env, rt60, 0.0f, true, 0.0f, 1.0f, true, -40.0f));
+        wet.push_back (chain.processSample (input, env, rt60, 0.0f, 0.0f, 1.0f, true, -40.0f));
     }
 
     for (int i = 0; i < 24000; ++i)
     {
         const auto env = chain.getEnvelope().process (0.0f);
-        wet.push_back (chain.processSample (0.0f, env, rt60, 0.0f, true, 0.0f, 0.0f, true, -40.0f));
+        wet.push_back (chain.processSample (0.0f, env, rt60, 0.0f, 0.0f, 0.0f, true, -40.0f));
     }
 
     const auto tailAt500ms = std::vector<float> (wet.end() - 480, wet.end() - 480 + 240);

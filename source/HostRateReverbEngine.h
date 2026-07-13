@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(SENDBLOOM_ENABLE_DIAGNOSTICS) && SENDBLOOM_ENABLE_DIAGNOSTICS
+
 #include "IReverbEngine.h"
 #include "SchroederTankCore.h"
 #include <juce_dsp/juce_dsp.h>
@@ -17,10 +19,8 @@ public:
 
     float processSample (float input,
                          float rt60Seconds,
-                         float darkMix,
-                         bool authenticColor) noexcept override
+                         float darkMix) noexcept override
     {
-        juce::ignoreUnused (authenticColor);
         const auto out = core.processSample (input, rt60Seconds, darkMix);
         return juce::jlimit (-4.0f, 4.0f, out);
     }
@@ -35,3 +35,5 @@ private:
 };
 
 } // namespace sendbloom
+
+#endif

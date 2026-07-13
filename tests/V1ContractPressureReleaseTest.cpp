@@ -22,7 +22,7 @@ class EnergyTrackingReverb final : public sendbloom::IReverbEngine
 public:
     void prepare (double, int) noexcept override {}
 
-    float processSample (float input, float, float, bool) noexcept override
+    float processSample (float input, float, float) noexcept override
     {
         energy.fetch_add (static_cast<double> (std::abs (input)), std::memory_order_relaxed);
         return input;

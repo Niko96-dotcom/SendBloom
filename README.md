@@ -11,14 +11,14 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 ## Features
 
 - Parallel dry/wet routing — dry path never gated or distorted
-- Schroeder tank reverb with optional **32k Color** — when enabled, bandlimited host-rate ↔ 32,768 Hz conversion via r8brain ProperSRC (`FixedRateAdapter`); tank runs at fixed delay-table lengths with per-comb feedback calibration, damping, and optional 9-bit parameter quantization; original software, not firmware-derived. Legacy accumulator stepping exists only for diagnostics regression (`LegacyAccumulatorPath`). **For RC1, 32k Color is off by default** — the host-rate Schroeder tank is the production path
+- One fixed-rate Schroeder reverb engine — every host rate is bandlimited-converted to and from a **32,768 Hz** tank via r8brain ProperSRC (`FixedRateAdapter`). There is no sample-rate, fidelity, or color control, and no speculative parameter quantization. The rate is an original engineering approximation, not a verified hardware specification or firmware-derived implementation; the legacy accumulator and host-rate engines are retained only for diagnostics.
 - Wet-only overdrive blended independently via `distn`
 - Dual gate profiles: Pre (hum suppression) and Post (≤15 ms wet chop)
 - Pressure send pad and MIDI CC1 momentary control
 - Optional Extended Stereo wet return in the Advanced drawer
 - 8 factory presets with host save/load round-trip
 - Pedal-style UI with clip LED and advanced drawer
-- Zero reported latency, mono-first authentic mode
+- Zero reported latency, mono-first wet return
 - Catch2 test suite + pluginval strictness 10 in CI
 
 ## Signal routing
@@ -27,7 +27,7 @@ SendBloom uses a parallel pedal topology:
 
 - **Dry path:** Unity copy of the mono-summed input, taken **before** input gain. Never gated or distorted.
 - **Wet path:** Mono sum → `InputStage` (input gain + soft clip) → gated reverb chain → wet return.
-- **Output:** Authentic mode writes dual-mono (identical L/R) unless Extended Stereo is enabled.
+- **Output:** The engaged path writes dual-mono (identical L/R) unless Extended Stereo is enabled.
 
 ## Build
 

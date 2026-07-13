@@ -1,19 +1,19 @@
 # ADR-003: Proper 32 kHz SRC Architecture and PDC Policy
 
-**Status:** ACCEPTED (Path B / low-latency ProperSRC)  
-**Date:** 2026-07-09  
+**Status:** ACCEPTED (fixed production engine / Path B low-latency ProperSRC)
+**Date:** 2026-07-13
 **Supersedes:** VERB-05 accumulator description for the production ProperSRC path; prior Policy A ~100 ms default-r8brain measurement
 
 ## Context
 
-SendBloom's FV-1-style reverb character depends on running the Schroeder tank at the hardware reference rate of **32,768 Hz** while the host delivers audio at **44.1–96 kHz**. Milestone v1 promised **zero reported plugin latency** (CHN-04). RC1 ships with `authentic_color` defaulting off.
+SendBloom runs its Schroeder tank at a fixed **32,768 Hz** while the host delivers audio at **44.1–96 kHz**. This is the project's strongest current engineering approximation for host-rate-independent digital-pedal behavior; it is not a published or verified hardware specification. Milestone v1 promises **zero reported plugin latency** (CHN-04).
 
-Two paths exist inside `FixedRateAdapter`:
+The production adapter exposes one path. Additional modes compile only into diagnostics:
 
 | Mode | Path | Wet-only SRC delay (host domain) |
 |------|------|----------------------------------|
-| `LegacyAccumulator` | Hold/decimate without bandlimited SRC | 0 samples (but HF imaging) |
-| `ProperSRC` | r8brain upsample → `SchroederTankCore` @ 32 kHz → r8brain downsample | ~181–372 samples (~3.9–4.1 ms) with `kProperSrcQuality` |
+| Production `ProperSRC` | r8brain conversion → `SchroederTankCore` @ 32,768 Hz → r8brain conversion | ~181–372 samples (~3.9–4.1 ms) with `kProperSrcQuality` |
+| Diagnostic `LegacyAccumulator` | Hold/decimate without bandlimited SRC | 0 samples (but HF imaging) |
 
 ## Decision
 
@@ -26,6 +26,8 @@ Host-rate block
   → RateConverterPair downsample (32,768 Hz → host)
   → Host-rate wet output
 ```
+
+`SchroederTank32` always invokes this ProperSRC block path. The shipping parameter layout contains no engine selector, and the production chain contains no host/fixed crossfade. DARK is the sole reverb-voicing switch. RT60 and damping remain smooth; the legacy path's 9-bit quantization is diagnostic only.
 
 ### 2. Library — r8brain-free-src (MIT)
 
@@ -63,10 +65,10 @@ Naively summing the two integers (prior ADR) mixed sample domains and inflated t
 
 | Condition | Reported latency | Rationale |
 |-----------|------------------|-----------|
-| Any mode | `setLatencySamples(0)` | Preserves CHN-04; wet-only delay ~2.5 ms is musically acceptable for parallel reverb |
+| Production ProperSRC | `setLatencySamples(0)` | Preserves CHN-04; wet-only delay ~4 ms is musically acceptable for parallel reverb |
 | Diagnostics | `getRoundTripLatencySamples()` / `SrcLatencyTable` | LAT-01 still measures real priming |
 
-Policy A (report SRC delay when authentic on) and Policy B (delay dry by SRC amount) remain available if listening tests reject Path B.
+Policy A (report SRC delay) and Policy B (delay dry by SRC amount) remain available if listening tests reject Path B.
 
 ## Why accumulator / hold is insufficient
 

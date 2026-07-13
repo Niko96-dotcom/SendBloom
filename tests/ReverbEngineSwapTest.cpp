@@ -21,7 +21,7 @@ std::vector<float> renderChainImpulse (sendbloom::GatedBloomChain& chain, int nu
     {
         const auto in = i == 0 ? 1.0f : 0.0f;
         const auto env = chain.getEnvelope().process (std::abs (in));
-        out[static_cast<size_t> (i)] = chain.processSample (in, env, rt60, 0.0f, false,
+        out[static_cast<size_t> (i)] = chain.processSample (in, env, rt60, 0.0f,
                                                              0.0f, 1.0f, true, -40.0f);
     }
 

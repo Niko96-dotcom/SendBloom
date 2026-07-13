@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EnvelopeDetector.h"
-#include "Fdn8Reverb.h"
 #include "IReverbEngine.h"
 #include "NoiseGate.h"
 #include "PressureSend.h"
@@ -36,25 +35,12 @@ public:
         gateGainScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
     }
 
+#if defined(SENDBLOOM_ENABLE_DIAGNOSTICS) && SENDBLOOM_ENABLE_DIAGNOSTICS
     void setReverbEngineForTests (std::unique_ptr<IReverbEngine> engine) noexcept
     {
         reverb = std::move (engine);
     }
-
-    void requestEngineCrossfade (bool targetAuthentic) noexcept
-    {
-        reverb->requestEngineCrossfade (targetAuthentic);
-    }
-
-    bool isCrossfading() const noexcept
-    {
-        return reverb != nullptr && reverb->isCrossfading();
-    }
-
-    int getSrcRoundTripLatencySamples() const noexcept
-    {
-        return reverb != nullptr ? reverb->getSrcRoundTripLatencySamples() : 0;
-    }
+#endif
 
     EnvelopeDetector& getEnvelope() noexcept { return envelope; }
     const EnvelopeDetector& getEnvelope() const noexcept { return envelope; }
@@ -63,7 +49,6 @@ public:
                          float inputEnvelope,
                          float rt60Seconds,
                          float darkModeMix,
-                         bool authenticColor,
                          float distnBlend,
                          float sendGain,
                          bool gatePreSoft,
@@ -80,7 +65,7 @@ public:
             wet *= gateGain;
 
         wet = PressureSend::process (wet, sendGain);
-        wet = reverb->processSample (wet, rt60Seconds, darkModeMix, authenticColor);
+        wet = reverb->processSample (wet, rt60Seconds, darkModeMix);
         wet = overdrive.process (wet, distnBlend);
 
         if (! gatePreSoft)
@@ -95,13 +80,12 @@ public:
                        int numSamples,
                        float rt60Seconds,
                        float darkMix,
-                       bool authenticColor,
                        float distnBlend,
                        float sendGain,
                        bool gatePreSoft,
                        float thresholdDb) noexcept
     {
-        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
+        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix,
                       nullptr, distnBlend, nullptr, sendGain, nullptr, thresholdDb, gatePreSoft);
     }
 
@@ -111,13 +95,12 @@ public:
                        int numSamples,
                        float rt60Seconds,
                        float darkMix,
-                       bool authenticColor,
                        float distnBlend,
                        const float* sendGains,
                        bool gatePreSoft,
                        float thresholdDb) noexcept
     {
-        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
+        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix,
                       nullptr, distnBlend, sendGains, 1.0f, nullptr, thresholdDb, gatePreSoft);
     }
 
@@ -128,13 +111,12 @@ public:
                        int numSamples,
                        float rt60Seconds,
                        float darkMix,
-                       bool authenticColor,
                        const float* distnBlends,
                        const float* sendGains,
                        const float* thresholdDbs,
                        bool gatePreSoft) noexcept
     {
-        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix, authenticColor,
+        processBlock (monoIn, envelopeIn, wetOut, numSamples, rt60Seconds, darkMix,
                       distnBlends, 0.0f, sendGains, 1.0f, thresholdDbs, 0.0f, gatePreSoft);
     }
 
@@ -145,7 +127,6 @@ private:
                        int numSamples,
                        float rt60Seconds,
                        float darkMix,
-                       bool authenticColor,
                        const float* distnBlends,
                        float constantDistn,
                        const float* sendGains,
@@ -171,15 +152,6 @@ private:
                                           : constantThresholdDb;
         };
 
-        if (! authenticColor && ! reverb->isCrossfading())
-        {
-            for (int i = 0; i < numSamples; ++i)
-                wetOut[i] = processSample (monoIn[i], envelopeIn[i], rt60Seconds, darkMix, false,
-                                           sampleDistn (i), sampleSendGain (i), gatePreSoft,
-                                           sampleThreshold (i));
-            return;
-        }
-
         gate.setProfile (gatePreSoft ? GateProfile::PreSoft : GateProfile::PostHard);
 
         for (int i = 0; i < numSamples; ++i)
@@ -198,7 +170,7 @@ private:
         }
 
         reverb->processBlock (wetSendScratch_.data(), reverbScratch_.data(), numSamples,
-                              rt60Seconds, darkMix, true);
+                              rt60Seconds, darkMix);
 
         for (int i = 0; i < numSamples; ++i)
         {

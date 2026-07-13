@@ -34,7 +34,7 @@ void requireFiniteWetOut (const std::vector<float>& wetOut, int numSamples)
 
 } // namespace
 
-TEST_CASE ("GatedBloomChain authentic block at 44100 Hz produces finite output",
+TEST_CASE ("GatedBloomChain fixed-rate block at 44100 Hz produces finite output",
            "[integration][TEST-09][block]")
 {
     sendbloom::GatedBloomChain chain;
@@ -50,12 +50,12 @@ TEST_CASE ("GatedBloomChain authentic block at 44100 Hz produces finite output",
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
 
     chain.processBlock (mono.data(), envelope.data(), wetOut.data(), kNumSamples,
-                        rt60, 0.0f, true, 0.3f, 1.0f, true, kThresholdDb);
+                        rt60, 0.0f, 0.3f, 1.0f, true, kThresholdDb);
 
     requireFiniteWetOut (wetOut, kNumSamples);
 }
 
-TEST_CASE ("GatedBloomChain authentic block at 96000 Hz produces finite output",
+TEST_CASE ("GatedBloomChain fixed-rate block at 96000 Hz produces finite output",
            "[integration][TEST-09][block]")
 {
     sendbloom::GatedBloomChain chain;
@@ -71,12 +71,12 @@ TEST_CASE ("GatedBloomChain authentic block at 96000 Hz produces finite output",
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
 
     chain.processBlock (mono.data(), envelope.data(), wetOut.data(), kNumSamples,
-                        rt60, 0.0f, true, 0.3f, 1.0f, true, kThresholdDb);
+                        rt60, 0.0f, 0.3f, 1.0f, true, kThresholdDb);
 
     requireFiniteWetOut (wetOut, kNumSamples);
 }
 
-TEST_CASE ("PluginProcessor single block with authentic_color on produces finite stereo output",
+TEST_CASE ("PluginProcessor fixed-rate reverb block produces finite stereo output",
            "[integration][TEST-09][block]")
 {
     using namespace sendbloom::ParameterIDs;
@@ -88,7 +88,6 @@ TEST_CASE ("PluginProcessor single block with authentic_color on produces finite
     *apvts.getRawParameterValue (inputGain) = 1.0f;
     *apvts.getRawParameterValue (outputGain) = 0.0f;
     *apvts.getRawParameterValue (bypass) = 0.0f;
-    *apvts.getRawParameterValue (authenticColor) = 1.0f;
     *apvts.getRawParameterValue (level) = 0.5f;
     *apvts.getRawParameterValue (distn) = 0.3f;
     *apvts.getRawParameterValue (size) = 0.5f;

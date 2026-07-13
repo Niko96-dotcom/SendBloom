@@ -96,8 +96,7 @@ TEST_CASE ("FixedRateAdapter ProperSRC pre-clears output before downsample",
                           out.data(),
                           n,
                           rt60,
-                          0.0f,
-                          sendbloom::Authentic32Mode::ProperSRC);
+                          0.0f);
 
     for (const auto sample : out)
         REQUIRE (sample != Catch::Approx (kSentinel));
@@ -125,8 +124,7 @@ TEST_CASE ("ProperSRC unwritten downsample tail remains zero",
                           out.data(),
                           n,
                           rt60,
-                          0.0f,
-                          sendbloom::Authentic32Mode::ProperSRC);
+                          0.0f);
 
     for (int i = written; i < n; ++i)
         REQUIRE (out[static_cast<size_t> (i)] == 0.0f);

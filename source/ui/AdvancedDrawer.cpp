@@ -7,7 +7,6 @@ namespace sendbloom::ui
 AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& thresholdId,
                                 const juce::String& sendFeelId,
-                                const juce::String& authenticColorId,
                                 const juce::String& extendedStereoId,
                                 const juce::String& sendConnectedId)
 {
@@ -40,12 +39,6 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                                    "when off, reverb stays always-on.");
     addChildComponent (pressureModeToggle);
 
-    colorToggle.setTooltip ("Experimental — off by default until validated. "
-                            "Steps the tank at 32,768 Hz with fixed delay-table lengths, "
-                            "per-comb feedback, damping, and 9-bit quantization. "
-                            "Original software — not firmware-derived. "
-                            "host-rate reverb is the production default.");
-    addChildComponent (colorToggle);
     addChildComponent (extendedStereoToggle);
 
     extendedStereoToggle.setTooltip ("Preserve the original left/right dry image while sharing "
@@ -57,8 +50,6 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
         apvts, sendFeelId, sendFeelBox);
     pressureModeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
         apvts, sendConnectedId, pressureModeToggle);
-    colorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
-        apvts, authenticColorId, colorToggle);
     extendedStereoAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (
         apvts, extendedStereoId, extendedStereoToggle);
 }
@@ -87,8 +78,7 @@ void AdvancedDrawer::paint (juce::Graphics& g)
 
     g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
     g.drawText ("PRESSURE MODE", 14, 124, 108, 20, juce::Justification::centredLeft, false);
-    g.drawText ("32K COLOR", 14, 150, 108, 20, juce::Justification::centredLeft, false);
-    g.drawText ("EXTENDED STEREO", 14, 176, 108, 20, juce::Justification::centredLeft, false);
+    g.drawText ("EXTENDED STEREO", 14, 150, 108, 20, juce::Justification::centredLeft, false);
 }
 
 void AdvancedDrawer::setExpanded (bool shouldExpand)
@@ -98,7 +88,6 @@ void AdvancedDrawer::setExpanded (bool shouldExpand)
     sendFeelLabel.setVisible (expanded);
     sendFeelBox.setVisible (expanded);
     pressureModeToggle.setVisible (expanded);
-    colorToggle.setVisible (expanded);
     extendedStereoToggle.setVisible (expanded);
     setVisible (expanded);
     resized();
@@ -114,8 +103,7 @@ void AdvancedDrawer::resized()
     sendFeelBox.setBounds (84, 63, 68, 26);
 
     pressureModeToggle.setBounds (126, 122, 24, 22);
-    colorToggle.setBounds (126, 148, 24, 22);
-    extendedStereoToggle.setBounds (126, 174, 24, 22);
+    extendedStereoToggle.setBounds (126, 148, 24, 22);
 }
 
 } // namespace sendbloom::ui

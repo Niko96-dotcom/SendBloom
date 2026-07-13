@@ -94,11 +94,11 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     for (int i = 0; i < 2000; ++i)
     {
         const auto e = chain.getEnvelope().process (0.5f);
-        chain.processSample (0.5f, e, rt60, 0.0f, false, 0.0f, 1.0f, true, kThresholdDb);
+        chain.processSample (0.5f, e, rt60, 0.0f, 0.0f, 1.0f, true, kThresholdDb);
     }
 
     chain.processBlock (mono.data(), env.data(), outUnity.data(), kN,
-                        rt60, 0.0f, false, distn.data(), sendUnity.data(), thresh.data(), true);
+                        rt60, 0.0f, distn.data(), sendUnity.data(), thresh.data(), true);
 
     double unityEnergy = 0.0;
 
@@ -108,7 +108,7 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     REQUIRE (unityEnergy > 1.0e-3);
 
     chain.processBlock (mono.data(), env.data(), outSilent.data(), kN,
-                        rt60, 0.0f, false, distn.data(), sendVarying.data(), thresh.data(), true);
+                        rt60, 0.0f, distn.data(), sendVarying.data(), thresh.data(), true);
 
     double early = 0.0;
     double late = 0.0;
@@ -123,7 +123,7 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     REQUIRE (late > 1.0e-3);
 
     chain.processBlock (mono.data(), env.data(), outDirty.data(), kN,
-                        rt60, 0.0f, false, distnVarying.data(), sendUnity.data(), thresh.data(), true);
+                        rt60, 0.0f, distnVarying.data(), sendUnity.data(), thresh.data(), true);
 
     double dirtyDelta = 0.0;
 

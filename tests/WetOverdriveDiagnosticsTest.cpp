@@ -42,7 +42,7 @@ std::vector<float> renderTailThroughChain (sendbloom::GatedBloomChain& chain,
     for (size_t i = 0; i < input.size(); ++i)
     {
         const auto env = chain.getEnvelope().process (std::abs (input[i]));
-        wet[i] = chain.processSample (input[i], env, rt60, 0.0f, false,
+        wet[i] = chain.processSample (input[i], env, rt60, 0.0f,
                                       distnBlend, 1.0f, true, -40.0f);
     }
 
@@ -218,7 +218,7 @@ TEST_CASE ("WetOverdrive no NaN Inf during reverb OD chain", "[od][WetOverdrive]
     for (size_t i = 0; i < input.size(); ++i)
     {
         const auto env = chain.getEnvelope().process (std::abs (input[i]));
-        const auto wet = chain.processSample (input[i], env, rt60, 0.0f, false,
+        const auto wet = chain.processSample (input[i], env, rt60, 0.0f,
                                               1.0f, 1.0f, true, -40.0f);
         REQUIRE (std::isfinite (wet));
     }

@@ -118,19 +118,6 @@ float renderMonoDryRms (float inputGainNorm, float levelNorm)
     return bufferRms (buffer, 0, 256, 256);
 }
 
-std::vector<float> renderImpulse (sendbloom::SchroederTank32& tank, bool authentic, int numSamples)
-{
-    std::vector<float> out (static_cast<size_t> (numSamples), 0.0f);
-
-    for (int i = 0; i < numSamples; ++i)
-    {
-        const auto in = i == 0 ? 1.0f : 0.0f;
-        out[static_cast<size_t> (i)] = tank.processSample (in, 1.5f, 0.0f, authentic);
-    }
-
-    return out;
-}
-
 constexpr auto kSafeRenderSamples = 24000uz;
 constexpr auto kSafeTailCount = 2400uz;
 constexpr auto kSafeTailStart = kSafeRenderSamples - kSafeTailCount;
@@ -156,7 +143,7 @@ std::vector<float> makeGuitarPluck (size_t totalSamples) noexcept
     return signal;
 }
 
-std::vector<float> renderHostRateChain (const std::vector<float>& input) noexcept
+std::vector<float> renderFixedRateChain (const std::vector<float>& input) noexcept
 {
     sendbloom::GatedBloomChain chain;
     chain.prepare (kSampleRate, kSafeBlockSize);
@@ -167,7 +154,7 @@ std::vector<float> renderHostRateChain (const std::vector<float>& input) noexcep
     for (size_t i = 0; i < input.size(); ++i)
     {
         const auto env = chain.getEnvelope().process (std::abs (input[i]));
-        wet[i] = chain.processSample (input[i], env, rt60, 0.0f, false,
+        wet[i] = chain.processSample (input[i], env, rt60, 0.0f,
                                       0.0f, 1.0f, true, -40.0f);
     }
 
@@ -291,12 +278,13 @@ TEST_CASE ("PluginProcessor drives GatedBloomChain at block level",
     REQUIRE (spanBody.find ("chain.processSample") == std::string::npos);
 }
 
-TEST_CASE ("32k Color docs describe software model not firmware claims", "[release][verb][authentic]")
+TEST_CASE ("fixed 32768 Hz docs describe software model not firmware claims", "[release][verb][fixed-rate]")
 {
     const auto root = findRepoRoot();
     const auto readme = readTextFile (root.getChildFile ("README.md"));
     const auto checklist = readTextFile (root.getChildFile ("docs/RELEASE_CHECKLIST.md"));
     const auto tankSource = readTextFile (root.getChildFile ("source/SchroederTank32.h"));
+    const auto adapterSource = readTextFile (root.getChildFile ("source/FixedRateAdapter.h"));
     const auto legacySource = readTextFile (root.getChildFile ("source/LegacyAccumulatorPath.h"));
 
     REQUIRE (readme.find ("firmware-derived") != std::string::npos);
@@ -305,7 +293,8 @@ TEST_CASE ("32k Color docs describe software model not firmware claims", "[relea
     REQUIRE (readme.find ("bytecode") == std::string::npos);
     REQUIRE (checklist.find ("not firmware-derived") != std::string::npos);
     REQUIRE (tankSource.find ("FixedRateAdapter") != std::string::npos);
-    REQUIRE (tankSource.find ("ProperSRC") != std::string::npos);
+    REQUIRE (tankSource.find ("HostRateReverbEngine") == std::string::npos);
+    REQUIRE (adapterSource.find ("processProperSrc") != std::string::npos);
     REQUIRE (legacySource.find ("processAuthentic") != std::string::npos);
     const bool hasInternalRate = legacySource.find ("kInternalRate") != std::string::npos
                               || tankSource.find ("SchroederTank32DelayTable") != std::string::npos;
@@ -360,7 +349,7 @@ TEST_CASE ("input_gain colors wet path only; dry tap stays pre-gain", "[release]
     REQUIRE (wetHigh > wetLow * 1.2f);
 }
 
-TEST_CASE ("Authentic mode outputs dual-mono for asymmetric stereo input", "[release][io][mono]")
+TEST_CASE ("Engaged mode outputs dual-mono for asymmetric stereo input", "[release][io][mono]")
 {
     using namespace sendbloom::ParameterIDs;
 
@@ -395,22 +384,12 @@ TEST_CASE ("Authentic mode outputs dual-mono for asymmetric stereo input", "[rel
         REQUIRE (buffer.getSample (0, i) == Catch::Approx (buffer.getSample (1, i)).margin (1e-5f));
 }
 
-TEST_CASE ("authentic_color produces distinct response from host-rate path", "[release][verb][authentic]")
+TEST_CASE ("production tank has no runtime host-rate selection", "[release][verb][fixed-rate]")
 {
-    sendbloom::SchroederTank32 hostTank;
-    sendbloom::SchroederTank32 authTank;
-    hostTank.prepare (kSampleRate, 512);
-    authTank.prepare (kSampleRate, 512);
-
-    const auto hostIr = renderImpulse (hostTank, false, 16384);
-    const auto authIr = renderImpulse (authTank, true, 16384);
-
-    float maxDiff = 0.0f;
-
-    for (size_t i = 512; i < hostIr.size(); ++i)
-        maxDiff = std::max (maxDiff, std::abs (hostIr[i] - authIr[i]));
-
-    REQUIRE (maxDiff > 1.0e-4f);
+    const auto source = readTextFile (findRepoRoot().getChildFile ("source/SchroederTank32.h"));
+    REQUIRE (source.find ("FixedRateAdapter") != std::string::npos);
+    REQUIRE (source.find ("HostRateReverbEngine") == std::string::npos);
+    REQUIRE (source.find ("EngineCrossfade") == std::string::npos);
 }
 
 TEST_CASE ("DampedComb RT60 feedback depends on comb delay reference", "[release][verb][comb]")
@@ -472,7 +451,7 @@ TEST_CASE ("setCurrentProgram loads embedded XML preset values", "[release][pres
 
         for (const auto* id : { inputGain, inputThreshold, size, level, distn, outputGain,
                                 darkMode, gatePrePost, sendConnected, sendAmount, sendFeel,
-                                authenticColor, extendedStereo, bypass })
+                                extendedStereo, bypass })
         {
             REQUIRE (programApvts.getRawParameterValue (id)->load()
                      == Catch::Approx (xmlApvts.getRawParameterValue (id)->load()).margin (1e-4f));
@@ -480,38 +459,28 @@ TEST_CASE ("setCurrentProgram loads embedded XML preset values", "[release][pres
     }
 }
 
-TEST_CASE ("fresh plugin load defaults authentic_color off", "[release][safe]")
+TEST_CASE ("fresh plugin load exposes no authentic_color parameter", "[release][safe]")
 {
-    using namespace sendbloom::ParameterIDs;
-
     sendbloom::PluginProcessor plugin;
-    const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
-
-    REQUIRE (authentic != nullptr);
-    REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
+    REQUIRE (plugin.getAPVTS().getParameter ("authentic_color") == nullptr);
 }
 
-TEST_CASE ("all factory presets recall authentic_color off", "[release][safe]")
+TEST_CASE ("all factory presets omit authentic_color", "[release][safe]")
 {
-    using namespace sendbloom::ParameterIDs;
-
     for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
     {
-        sendbloom::PluginProcessor plugin;
-        plugin.setCurrentProgram (preset);
-
+        const auto state = sendbloom::FactoryPresets::makePresetState (preset);
+        const auto xml = state.createXml();
+        REQUIRE (xml != nullptr);
         INFO ("preset index " << preset);
-
-        const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
-        REQUIRE (authentic != nullptr);
-        REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
+        REQUIRE_FALSE (xml->toString().contains ("authentic_color"));
     }
 }
 
-TEST_CASE ("host-rate default path no HF imaging at 48 kHz", "[release][safe]")
+TEST_CASE ("fixed ProperSRC path has no HF imaging at 48 kHz", "[release][safe]")
 {
     const auto input = makeGuitarPluck (kSafeRenderSamples);
-    const auto wet = renderHostRateChain (input);
+    const auto wet = renderFixedRateChain (input);
 
     for (const auto sample : wet)
         REQUIRE (std::isfinite (sample));

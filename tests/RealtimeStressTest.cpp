@@ -23,7 +23,7 @@ void fillNoise (juce::AudioBuffer<float>& buffer, int blockIndex)
 
 } // namespace
 
-TEST_CASE ("processBlock survives 10k varying block stress with authentic color on",
+TEST_CASE ("processBlock survives 10k varying block stress with fixed ProperSRC",
            "[realtime][integration][stress][TEST-09]")
 {
     using namespace sendbloom::ParameterIDs;
@@ -35,7 +35,6 @@ TEST_CASE ("processBlock survives 10k varying block stress with authentic color 
     *apvts.getRawParameterValue (inputGain) = 1.0f;
     *apvts.getRawParameterValue (outputGain) = 0.0f;
     *apvts.getRawParameterValue (bypass) = 0.0f;
-    *apvts.getRawParameterValue (authenticColor) = 1.0f;
     *apvts.getRawParameterValue (level) = 0.6f;
     *apvts.getRawParameterValue (distn) = 0.4f;
     *apvts.getRawParameterValue (size) = 0.5f;
@@ -139,7 +138,6 @@ TEST_CASE ("processBlock tolerates larger-than-prepared block size",
     *apvts.getRawParameterValue (inputGain) = 1.0f;
     *apvts.getRawParameterValue (outputGain) = 0.0f;
     *apvts.getRawParameterValue (bypass) = 0.0f;
-    *apvts.getRawParameterValue (authenticColor) = 1.0f;
     *apvts.getRawParameterValue (level) = 0.5f;
 
     juce::AudioBuffer<float> buffer (2, 1024);
@@ -153,98 +151,10 @@ TEST_CASE ("processBlock tolerates larger-than-prepared block size",
             REQUIRE (std::isfinite (buffer.getSample (ch, i)));
 }
 
-TEST_CASE ("processBlock survives 1000 authentic_color toggles",
-           "[realtime][integration][stress][XFADE-02]")
-{
-    using namespace sendbloom::ParameterIDs;
-
-    sendbloom::PluginProcessor plugin;
-    plugin.prepareToPlay (48000.0, 1024);
-
-    auto& apvts = plugin.getAPVTS();
-    *apvts.getRawParameterValue (inputGain) = 1.0f;
-    *apvts.getRawParameterValue (outputGain) = 0.0f;
-    *apvts.getRawParameterValue (bypass) = 0.0f;
-    *apvts.getRawParameterValue (authenticColor) = 0.0f;
-    *apvts.getRawParameterValue (level) = 0.5f;
-    *apvts.getRawParameterValue (size) = 0.75f;
-
-    juce::MidiBuffer midi;
-    float peak = 0.0f;
-    int toggleCount = 0;
-
-    for (int toggleIndex = 0; toggleIndex < 1000; ++toggleIndex)
-    {
-        *apvts.getRawParameterValue (authenticColor) =
-            toggleIndex % 2 == 0 ? 1.0f : 0.0f;
-
-        const auto blockSize =
-            kBlockSizes[static_cast<size_t> (toggleIndex) % kBlockSizes.size()];
-        juce::AudioBuffer<float> buffer (2, blockSize);
-        fillNoise (buffer, toggleIndex);
-
-        REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
-        ++toggleCount;
-
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-        {
-            for (int i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                const auto s = buffer.getSample (ch, i);
-                REQUIRE (std::isfinite (s));
-                peak = std::max (peak, std::abs (s));
-            }
-        }
-
-        float maxAdjacentDelta = 0.0f;
-        for (int i = 1; i < buffer.getNumSamples(); ++i)
-        {
-            maxAdjacentDelta = std::max (
-                maxAdjacentDelta,
-                std::abs (buffer.getSample (0, i) - buffer.getSample (0, i - 1)));
-        }
-        REQUIRE (maxAdjacentDelta < 1.0f);
-    }
-
-    REQUIRE (toggleCount == 1000);
-    REQUIRE (peak < 4.0f);
-}
-
-TEST_CASE ("processBlock stress with authentic color toggling",
-           "[realtime][integration][stress][TEST-09]")
-{
-    using namespace sendbloom::ParameterIDs;
-
-    sendbloom::PluginProcessor plugin;
-    plugin.prepareToPlay (44100.0, 512);
-
-    auto& apvts = plugin.getAPVTS();
-    *apvts.getRawParameterValue (inputGain) = 1.0f;
-    *apvts.getRawParameterValue (outputGain) = 0.0f;
-    *apvts.getRawParameterValue (bypass) = 0.0f;
-    *apvts.getRawParameterValue (authenticColor) = 1.0f;
-    *apvts.getRawParameterValue (level) = 0.5f;
-    *apvts.getRawParameterValue (size) = 0.75f;
-
-    juce::MidiBuffer midi;
-
-    for (int block = 0; block < 2000; ++block)
-    {
-        const auto blockSize = kBlockSizes[static_cast<size_t> (block) % kBlockSizes.size()];
-        juce::AudioBuffer<float> buffer (2, blockSize);
-        fillNoise (buffer, block);
-
-        if (block % 50 == 0)
-            *apvts.getRawParameterValue (authenticColor) = (block / 50) % 2 == 0 ? 1.0f : 0.0f;
-
-        REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
-    }
-}
-
-TEST_CASE ("10k stress with authentic, bypass, and oversized blocks stays finite (RT-14)",
+TEST_CASE ("10k stress with fixed ProperSRC, bypass, and oversized blocks stays finite (RT-14)",
            "[realtime][integration][stress][RT-14]")
 {
-    // RT-14 / D-10: churn authentic + bypass while occasionally exceeding preparedMaxBlock_.
+    // RT-14 / D-10: churn bypass while occasionally exceeding preparedMaxBlock_.
     using namespace sendbloom::ParameterIDs;
 
     constexpr int kPrepared = 512;
@@ -259,7 +169,6 @@ TEST_CASE ("10k stress with authentic, bypass, and oversized blocks stays finite
     *apvts.getRawParameterValue (inputGain) = 1.0f;
     *apvts.getRawParameterValue (outputGain) = 0.0f;
     *apvts.getRawParameterValue (bypass) = 0.0f;
-    *apvts.getRawParameterValue (authenticColor) = 0.0f;
     *apvts.getRawParameterValue (level) = 0.6f;
     *apvts.getRawParameterValue (distn) = 0.35f;
     *apvts.getRawParameterValue (size) = 0.55f;
@@ -279,9 +188,6 @@ TEST_CASE ("10k stress with authentic, bypass, and oversized blocks stays finite
 
         juce::AudioBuffer<float> buffer (2, blockSize);
         fillNoise (buffer, block);
-
-        if (block % 40 == 0)
-            *apvts.getRawParameterValue (authenticColor) = (block / 40) % 2 == 0 ? 1.0f : 0.0f;
 
         if (block % 60 == 0)
             *apvts.getRawParameterValue (bypass) = (block / 60) % 2 == 0 ? 1.0f : 0.0f;

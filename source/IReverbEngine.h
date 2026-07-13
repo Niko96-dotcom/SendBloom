@@ -12,25 +12,17 @@ public:
 
     virtual float processSample (float input,
                                  float rt60Seconds,
-                                 float darkMix,
-                                 bool authenticColor) noexcept = 0;
+                                 float darkMix) noexcept = 0;
 
     virtual void processBlock (const float* input,
                                float* output,
                                int numSamples,
                                float rt60Seconds,
-                               float darkMix,
-                               bool authenticColor) noexcept
+                               float darkMix) noexcept
     {
         for (int i = 0; i < numSamples; ++i)
-            output[i] = processSample (input[i], rt60Seconds, darkMix, authenticColor);
+            output[i] = processSample (input[i], rt60Seconds, darkMix);
     }
-
-    virtual bool isCrossfading() const noexcept { return false; }
-
-    virtual void requestEngineCrossfade (bool /*targetAuthentic*/) noexcept {}
-
-    virtual int getSrcRoundTripLatencySamples() const noexcept { return 0; }
 };
 
 } // namespace sendbloom

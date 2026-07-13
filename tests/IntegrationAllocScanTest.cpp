@@ -141,10 +141,9 @@ void requireNoAllocTokens (const std::string& strippedBody)
 TEST_CASE ("integrated processBlock bodies have no heap allocation tokens",
            "[realtime][TEST-09][static][integration]")
 {
-    constexpr std::array<const char*, 4> kSources {
+    constexpr std::array<const char*, 3> kSources {
         "source/GatedBloomChain.h",
         "source/SchroederTank32.h",
-        "source/EngineCrossfade.h",
         "source/PluginProcessor.cpp",
     };
 

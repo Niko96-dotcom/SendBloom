@@ -44,8 +44,7 @@ public:
 
     float processSample (float input,
                          float rt60Seconds,
-                         float darkMix,
-                         bool /*authenticColor*/) noexcept override
+                         float darkMix) noexcept override
     {
         const auto mix = juce::jlimit (0.0f, 1.0f, darkMix);
         const auto predelaySec = mix * kDarkPredelaySeconds;

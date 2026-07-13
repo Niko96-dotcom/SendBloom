@@ -31,18 +31,17 @@ std::vector<float> makeNoiseBlock (int numSamples)
 std::vector<float> renderSampleLoop (sendbloom::SchroederTank32& tank,
                                      const std::vector<float>& input,
                                      float rt60,
-                                     float darkMix,
-                                     bool authenticColor)
+                                     float darkMix)
 {
     std::vector<float> out (input.size(), 0.0f);
     for (size_t i = 0; i < input.size(); ++i)
-        out[i] = tank.processSample (input[i], rt60, darkMix, authenticColor);
+        out[i] = tank.processSample (input[i], rt60, darkMix);
     return out;
 }
 
 } // namespace
 
-TEST_CASE ("SchroederTank32 processBlock host path matches sample loop", "[verb][SchroederTank32][INTEG-01][processBlock]")
+TEST_CASE ("SchroederTank32 fixed-rate processBlock matches sample loop", "[verb][SchroederTank32][INTEG-01][processBlock]")
 {
     sendbloom::SchroederTank32 blockTank;
     sendbloom::SchroederTank32 sampleTank;
@@ -53,9 +52,9 @@ TEST_CASE ("SchroederTank32 processBlock host path matches sample loop", "[verb]
     const auto input = makeImpulseBlock (kBlockLen);
 
     std::vector<float> blockOut (static_cast<size_t> (kBlockLen), 0.0f);
-    blockTank.processBlock (input.data(), blockOut.data(), kBlockLen, rt60, 0.0f, false);
+    blockTank.processBlock (input.data(), blockOut.data(), kBlockLen, rt60, 0.0f);
 
-    const auto sampleOut = renderSampleLoop (sampleTank, input, rt60, 0.0f, false);
+    const auto sampleOut = renderSampleLoop (sampleTank, input, rt60, 0.0f);
 
     REQUIRE (sendbloom::test::reverb::maxAbsDiff (blockOut, sampleOut) < 1.0e-5f);
 }
@@ -69,7 +68,7 @@ TEST_CASE ("SchroederTank32 processBlock ProperSRC stays finite", "[verb][Schroe
     const auto input = makeNoiseBlock (kBlockLen);
 
     std::vector<float> blockOut (static_cast<size_t> (kBlockLen), 0.0f);
-    tank.processBlock (input.data(), blockOut.data(), kBlockLen, rt60, 0.0f, true);
+    tank.processBlock (input.data(), blockOut.data(), kBlockLen, rt60, 0.0f);
 
     auto peak = 0.0f;
     for (const auto sample : blockOut)
@@ -107,14 +106,12 @@ TEST_CASE ("SchroederTank32 processBlock diagnostics mode changes output", "[ver
                                  properOut.data() + offset,
                                  n,
                                  rt60,
-                                 0.0f,
-                                 true);
+                                 0.0f);
         legacyTank.processBlock (inBlock.data(),
                                  legacyOut.data() + offset,
                                  n,
                                  rt60,
-                                 0.0f,
-                                 true);
+                                 0.0f);
     }
 
     auto properPeak = 0.0f;

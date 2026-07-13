@@ -89,7 +89,7 @@ std::vector<float> renderAdapterImpulseOnPrepared (sendbloom::FixedRateAdapter& 
         if (globalSample == 0)
             inBlock[0] = 1.0f;
 
-        adapter.processBlock (inBlock.data(), outBlock.data(), n, rt60, 0.0f, mode);
+        adapter.processBlockForDiagnostics (inBlock.data(), outBlock.data(), n, rt60, 0.0f, mode);
 
         for (int i = 0; i < n && static_cast<int> (ir.size()) < totalSamples; ++i)
             ir.push_back (outBlock[static_cast<size_t> (i)]);
@@ -160,7 +160,7 @@ std::vector<float> renderAdapterInput (sendbloom::Authentic32Mode mode,
         for (int i = 0; i < n; ++i)
             inBlock[static_cast<size_t> (i)] = input[offset + static_cast<size_t> (i)];
 
-        adapter.processBlock (inBlock.data(), outBlock.data(), n, rt60, 0.0f, mode);
+        adapter.processBlockForDiagnostics (inBlock.data(), outBlock.data(), n, rt60, 0.0f, mode);
 
         for (int i = 0; i < n; ++i)
             out[offset + static_cast<size_t> (i)] = outBlock[static_cast<size_t> (i)];
@@ -344,7 +344,7 @@ TEST_CASE ("LegacyAccumulatorPath matches SchroederTank32 authentic impulse rend
             inBlock[static_cast<size_t> (i)] = (offset + i) == 0 ? 1.0f : 0.0f;
 
         legacy.processBlock (inBlock.data(), legacyOutBlock.data(), n, rt60, 0.0f);
-        tank.processBlock (inBlock.data(), tankOutBlock.data(), n, rt60, 0.0f, true);
+        tank.processBlock (inBlock.data(), tankOutBlock.data(), n, rt60, 0.0f);
 
         for (int i = 0; i < n; ++i)
         {
@@ -391,7 +391,7 @@ TEST_CASE ("LegacyAccumulatorPath burst input produces tank-matched tail energy"
             inBlock[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
 
         legacy.processBlock (inBlock.data(), legacyOutBlock.data(), n, rt60, 0.0f);
-        tank.processBlock (inBlock.data(), tankOutBlock.data(), n, rt60, 0.0f, true);
+        tank.processBlock (inBlock.data(), tankOutBlock.data(), n, rt60, 0.0f);
 
         for (int i = 0; i < n; ++i)
         {
@@ -431,7 +431,7 @@ TEST_CASE ("FixedRateAdapter routes Authentic32Mode Off vs LegacyAccumulator",
         for (int i = 0; i < n; ++i)
             in[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
 
-        adapter.processBlock (in.data(),
+        adapter.processBlockForDiagnostics (in.data(),
                               offOut.data() + offset,
                               n,
                               rt60,
@@ -448,7 +448,7 @@ TEST_CASE ("FixedRateAdapter routes Authentic32Mode Off vs LegacyAccumulator",
         for (int i = 0; i < n; ++i)
             in[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
 
-        adapter.processBlock (in.data(),
+        adapter.processBlockForDiagnostics (in.data(),
                               legacyOut.data() + offset,
                               n,
                               rt60,
@@ -465,7 +465,7 @@ TEST_CASE ("FixedRateAdapter routes Authentic32Mode Off vs LegacyAccumulator",
         for (int i = 0; i < n; ++i)
             in[static_cast<size_t> (i)] = (offset + i) < 480 ? 1.0f : 0.0f;
 
-        adapter.processBlock (in.data(),
+        adapter.processBlockForDiagnostics (in.data(),
                               properOut.data() + offset,
                               n,
                               rt60,
@@ -564,7 +564,7 @@ TEST_CASE ("FixedRateAdapter ProperSRC tolerates variable block sizes",
             if (globalSample == 0)
                 inBlock[0] = 1.0f;
 
-            adapter.processBlock (inBlock.data(),
+            adapter.processBlockForDiagnostics (inBlock.data(),
                                   outBlock.data(),
                                   n,
                                   rt60,
@@ -661,7 +661,7 @@ TEST_CASE ("FixedRateAdapter ProperSRC realtime stress with random block sizes",
             for (int i = 0; i < n; ++i)
                 inBlock[static_cast<size_t> (i)] = noiseDist (rng);
 
-            adapter.processBlock (inBlock.data(),
+            adapter.processBlockForDiagnostics (inBlock.data(),
                                   outBlock.data(),
                                   n,
                                   rt60,

@@ -78,10 +78,6 @@ private:
     std::vector<float> thresholdDbScratch_;
     std::vector<float> bypassWetScratch_;
     std::vector<float> outputGainScratch_;
-    /** Last authentic_color snapshot that requested an engine crossfade (ADR-V1-07). */
-    bool requestedAuthenticColor_ { false };
-
-    void updateReportedLatency (bool targetAuthenticOn) noexcept;
     void applyCc1AtSample (const juce::MidiBuffer& midiMessages,
                            int samplePosition,
                            bool connected) noexcept;

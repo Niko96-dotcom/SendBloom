@@ -26,7 +26,6 @@ constexpr double kHostRate = 48000.0;
 std::vector<float> renderEngineImpulse (sendbloom::IReverbEngine& engine,
                                         float rt60,
                                         float darkMix,
-                                        bool authenticColor,
                                         int numSamples)
 {
     std::vector<float> out (static_cast<size_t> (numSamples), 0.0f);
@@ -34,7 +33,7 @@ std::vector<float> renderEngineImpulse (sendbloom::IReverbEngine& engine,
     for (int i = 0; i < numSamples; ++i)
     {
         const auto in = i == 0 ? 1.0f : 0.0f;
-        out[static_cast<size_t> (i)] = engine.processSample (in, rt60, darkMix, authenticColor);
+        out[static_cast<size_t> (i)] = engine.processSample (in, rt60, darkMix);
     }
 
     return out;
@@ -43,7 +42,6 @@ std::vector<float> renderEngineImpulse (sendbloom::IReverbEngine& engine,
 std::vector<float> renderTankImpulse (sendbloom::SchroederTank32& tank,
                                       float rt60,
                                       float darkMix,
-                                      bool authentic,
                                       int numSamples)
 {
     std::vector<float> out (static_cast<size_t> (numSamples), 0.0f);
@@ -51,7 +49,7 @@ std::vector<float> renderTankImpulse (sendbloom::SchroederTank32& tank,
     for (int i = 0; i < numSamples; ++i)
     {
         const auto in = i == 0 ? 1.0f : 0.0f;
-        out[static_cast<size_t> (i)] = tank.processSample (in, rt60, darkMix, authentic);
+        out[static_cast<size_t> (i)] = tank.processSample (in, rt60, darkMix);
     }
 
     return out;
@@ -131,7 +129,7 @@ TEST_CASE ("SchroederTankCore uses unscaled delay table at 32768 Hz", "[verb][Sc
     REQUIRE (sendbloom::SchroederTank32DelayTable::kSeriesApfDelays[0] == 167);
 }
 
-TEST_CASE ("HostRateReverbEngine matches SchroederTank32 host path impulse", "[verb][HostRate][parity]")
+TEST_CASE ("fixed-rate SchroederTank32 differs from diagnostic host-rate engine", "[verb][HostRate][diagnostics]")
 {
     sendbloom::HostRateReverbEngine engine;
     sendbloom::SchroederTank32 tank;
@@ -141,10 +139,10 @@ TEST_CASE ("HostRateReverbEngine matches SchroederTank32 host path impulse", "[v
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
     constexpr int numSamples = 48000;
 
-    const auto engineIr = renderEngineImpulse (engine, rt60, 0.0f, false, numSamples);
-    const auto tankIr = renderTankImpulse (tank, rt60, 0.0f, false, numSamples);
+    const auto engineIr = renderEngineImpulse (engine, rt60, 0.0f, numSamples);
+    const auto tankIr = renderTankImpulse (tank, rt60, 0.0f, numSamples);
 
-    REQUIRE (maxAbsDiff (engineIr, tankIr) < 1.0e-5f);
+    REQUIRE (maxAbsDiff (engineIr, tankIr) > 1.0e-4f);
 }
 
 TEST_CASE ("HostRateReverbEngine RT60 within tolerance at size 0.25", "[verb][HostRate][rt60]")
@@ -154,7 +152,7 @@ TEST_CASE ("HostRateReverbEngine RT60 within tolerance at size 0.25", "[verb][Ho
 
     constexpr float sizeNorm = 0.25f;
     const auto target = sendbloom::ParameterCurves::sizeToRT60 (sizeNorm);
-    const auto ir = renderEngineImpulse (engine, target, 0.0f, false,
+    const auto ir = renderEngineImpulse (engine, target, 0.0f,
                                          static_cast<int> (kHostRate * target * 3.0));
     const auto measured = measureRT60 (ir, kHostRate);
 
@@ -168,7 +166,7 @@ TEST_CASE ("HostRateReverbEngine RT60 within tolerance at size 0.5", "[verb][Hos
 
     constexpr float sizeNorm = 0.5f;
     const auto target = sendbloom::ParameterCurves::sizeToRT60 (sizeNorm);
-    const auto ir = renderEngineImpulse (engine, target, 0.0f, false,
+    const auto ir = renderEngineImpulse (engine, target, 0.0f,
                                          static_cast<int> (kHostRate * target * 3.0));
     const auto measured = measureRT60 (ir, kHostRate);
 
@@ -212,7 +210,7 @@ TEST_CASE ("HostRateReverbEngine RT60 within tolerance at size 1.0", "[verb][Hos
 
     constexpr float sizeNorm = 1.0f;
     const auto target = sendbloom::ParameterCurves::sizeToRT60 (sizeNorm);
-    const auto ir = renderEngineImpulse (engine, target, 0.0f, false,
+    const auto ir = renderEngineImpulse (engine, target, 0.0f,
                                          static_cast<int> (kHostRate * target * 2.5));
     const auto measured = measureRT60 (ir, kHostRate);
 

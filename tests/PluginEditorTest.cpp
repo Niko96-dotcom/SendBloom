@@ -5,6 +5,24 @@
 #include <catch2/catch_test_macros.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+namespace
+{
+
+bool containsButtonText (juce::Component& component, const juce::String& text)
+{
+    if (auto* button = dynamic_cast<juce::Button*> (&component))
+        if (button->getButtonText() == text)
+            return true;
+
+    for (auto* child : component.getChildren())
+        if (containsButtonText (*child, text))
+            return true;
+
+    return false;
+}
+
+} // namespace
+
 TEST_CASE ("PluginEditor instantiates at pedal dimensions", "[ui][editor]")
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -62,6 +80,17 @@ TEST_CASE ("Clip hold flag accessible from processor", "[ui][clip]")
 {
     sendbloom::PluginProcessor plugin;
     REQUIRE_FALSE (plugin.isClipHoldActive());
+}
+
+TEST_CASE ("Advanced drawer omits 32k Color and keeps Extended Stereo", "[ui][editor][advanced]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+    editor.setAdvancedExpandedForSnapshot (true);
+
+    REQUIRE_FALSE (containsButtonText (editor, "32k Color"));
+    REQUIRE (containsButtonText (editor, "Extended Stereo"));
 }
 
 TEST_CASE ("Gate control follows preset changes and has no inert preset action buttons",

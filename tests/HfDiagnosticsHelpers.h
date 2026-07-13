@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ChainTestHelpers.h"
+#include <HostRateReverbEngine.h>
 #include <ParameterCurves.h>
 #include <SchroederTank32.h>
 #include <algorithm>
@@ -23,7 +24,7 @@ inline constexpr auto kTailCount = 2400uz;
 inline constexpr float kNarrowbandDominanceMaxRatio = 10.0f;
 // Authentic bright 10k+ RMS must stay within this factor of host-rate reverb on guitar pluck.
 // Measured full-chain guitar_pluck ratio ~1.456; tank-only ProperSRC vs host ~1.32.
-// Raised from accumulator-era 1.4 to 1.5 for ProperSRC authentic coloration + production wet path.
+// Raised from accumulator-era 1.4 to 1.5 for ProperSRC coloration + production wet path.
 inline constexpr float kAuthenticVsHostRmsAbove10kMaxRatio = 1.5f;
 // Imaging whistle band (14-15 kHz) tail power ceiling on authentic guitar pluck.
 inline constexpr float kImagingBandPeakRmsMax = 0.0022f;
@@ -126,9 +127,10 @@ inline std::vector<float> renderTankPath (sendbloom::SchroederTank32& tank,
 {
     tank.prepare (sampleRate, blockSize);
     applyPathDiagnostics (tank, path);
+    sendbloom::HostRateReverbEngine hostRateEngine;
+    hostRateEngine.prepare (sampleRate, blockSize);
 
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
-    const auto authentic = path != ReverbPath::HostRate;
 
     std::vector<float> out (input.size(), 0.0f);
     std::vector<float> inBlock (static_cast<size_t> (blockSize), 0.0f);
@@ -138,7 +140,10 @@ inline std::vector<float> renderTankPath (sendbloom::SchroederTank32& tank,
     {
         const int n = static_cast<int> (std::min (static_cast<size_t> (blockSize), input.size() - offset));
         std::copy_n (input.begin() + static_cast<std::ptrdiff_t> (offset), n, inBlock.begin());
-        tank.processBlock (inBlock.data(), outBlock.data(), n, rt60, 0.0f, authentic);
+        if (path == ReverbPath::HostRate)
+            hostRateEngine.processBlock (inBlock.data(), outBlock.data(), n, rt60, 0.0f);
+        else
+            tank.processBlock (inBlock.data(), outBlock.data(), n, rt60, 0.0f);
         std::copy_n (outBlock.begin(), n, out.begin() + static_cast<std::ptrdiff_t> (offset));
     }
 

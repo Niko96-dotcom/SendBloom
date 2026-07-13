@@ -18,10 +18,10 @@ const juce::AudioParameterFloat* findFloatParam (sendbloom::PluginProcessor& plu
 
 } // namespace
 
-TEST_CASE ("createParameterLayout exposes 14 parameters", "[parm][layout]")
+TEST_CASE ("createParameterLayout exposes 13 parameters", "[parm][layout]")
 {
     sendbloom::PluginProcessor plugin;
-    REQUIRE (plugin.getParameters().size() == 14);
+    REQUIRE (plugin.getParameters().size() == 13);
 }
 
 TEST_CASE ("size and output_gain ranges and defaults", "[parm][layout]")

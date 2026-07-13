@@ -181,7 +181,7 @@ TEST_CASE ("GatedBloomChain wet overdrive path remains allocation-free at runtim
     for (int i = 0; i < 4096; ++i)
     {
         const auto env = chain.getEnvelope().process (0.2f);
-        const auto wet = chain.processSample (0.15f, env, rt60, 0.0f, false, 1.0f, 1.0f, true, -40.0f);
+        const auto wet = chain.processSample (0.15f, env, rt60, 0.0f, 1.0f, 1.0f, true, -40.0f);
         REQUIRE (std::isfinite (wet));
     }
 }

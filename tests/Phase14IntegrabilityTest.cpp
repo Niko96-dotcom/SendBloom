@@ -90,40 +90,14 @@ std::string extractProcessBlockBodyFromHeader (const std::string& source)
     return {};
 }
 
-void assertFreshLoadAuthenticColorOff (sendbloom::PluginProcessor& plugin)
-{
-    using namespace sendbloom::ParameterIDs;
-
-    const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
-    REQUIRE (authentic != nullptr);
-    REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
-}
-
-void assertAllFactoryPresetsRecallAuthenticColorOff()
-{
-    using namespace sendbloom::ParameterIDs;
-
-    for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
-    {
-        sendbloom::PluginProcessor plugin;
-        plugin.setCurrentProgram (preset);
-
-        INFO ("preset index " << preset);
-
-        const auto* authentic = plugin.getAPVTS().getRawParameterValue (authenticColor);
-        REQUIRE (authentic != nullptr);
-        REQUIRE (authentic->load() == Catch::Approx (0.0f).margin (1e-4f));
-    }
-}
-
 } // namespace
 
-TEST_CASE ("INTEG-04 parameter layout exposes exactly 14 shipping contract IDs",
+TEST_CASE ("INTEG-04 parameter layout exposes exactly 13 shipping contract IDs",
            "[integrability][INTEG-04]")
 {
     using namespace sendbloom::ParameterIDs;
 
-    const std::array<const char*, 14> expected {
+    const std::array<const char*, 13> expected {
         inputGain,
         inputThreshold,
         size,
@@ -135,12 +109,11 @@ TEST_CASE ("INTEG-04 parameter layout exposes exactly 14 shipping contract IDs",
         sendConnected,
         sendAmount,
         sendFeel,
-        authenticColor,
         extendedStereo,
         bypass,
     };
 
-    REQUIRE (expected.size() == 14);
+    REQUIRE (expected.size() == 13);
 
     for (const auto* id : expected)
     {
@@ -149,20 +122,15 @@ TEST_CASE ("INTEG-04 parameter layout exposes exactly 14 shipping contract IDs",
     }
 
     sendbloom::PluginProcessor plugin;
-    REQUIRE (plugin.getParameters().size() == 14);
+    REQUIRE (plugin.getParameters().size() == 13);
 }
 
-TEST_CASE ("INTEG-04 authentic_color defaults off in fresh parameter layout",
+TEST_CASE ("INTEG-04 authentic_color is absent from fresh parameter layout",
            "[integrability][INTEG-04]")
 {
-    using namespace sendbloom::ParameterIDs;
-
     sendbloom::PluginProcessor plugin;
-    const auto* param = plugin.getAPVTS().getParameter (authenticColor);
-    REQUIRE (param != nullptr);
-    REQUIRE (param->getDefaultValue() == Catch::Approx (0.0f).margin (1e-4f));
-    REQUIRE (plugin.getAPVTS().getRawParameterValue (authenticColor)->load()
-             == Catch::Approx (0.0f).margin (1e-4f));
+    REQUIRE (plugin.getAPVTS().getParameter ("authentic_color") == nullptr);
+    REQUIRE (plugin.getAPVTS().getRawParameterValue ("authentic_color") == nullptr);
 }
 
 TEST_CASE ("INTEG-04 ParameterIDs exposes no diagnostics APVTS naming",
@@ -177,9 +145,10 @@ TEST_CASE ("INTEG-04 ParameterIDs exposes no diagnostics APVTS naming",
     REQUIRE (header.find ("LegacyAccumulator") == std::string::npos);
     REQUIRE (header.find ("ProperSRC") == std::string::npos);
     REQUIRE (header.find ("authentic32") == std::string::npos);
+    REQUIRE (header.find ("authentic_color") == std::string::npos);
 }
 
-TEST_CASE ("INTEG-04 block integration keeps authentic_color as sole authentic APVTS route",
+TEST_CASE ("INTEG-04 block integration has no runtime reverb engine route",
            "[integrability][INTEG-04]")
 {
     const auto root = findRepoRoot();
@@ -203,18 +172,20 @@ TEST_CASE ("INTEG-04 block integration keeps authentic_color as sole authentic A
     REQUIRE (chainBody.find ("diagnosticsMode") == std::string::npos);
     REQUIRE (chainBody.find ("Authentic32Mode") == std::string::npos);
 
-    REQUIRE (processorSource.find ("getNextAuthenticColorTarget") != std::string::npos);
+    REQUIRE (processorSource.find ("getNextAuthenticColorTarget") == std::string::npos);
+    REQUIRE (processorSource.find ("requestEngineCrossfade") == std::string::npos);
+    REQUIRE (chainSource.find ("authenticColor") == std::string::npos);
 }
 
-TEST_CASE ("INTEG-04 fresh plugin load defaults authentic_color off",
+TEST_CASE ("INTEG-04 all factory presets omit authentic_color",
            "[integrability][INTEG-04][safe]")
 {
-    sendbloom::PluginProcessor plugin;
-    assertFreshLoadAuthenticColorOff (plugin);
-}
-
-TEST_CASE ("INTEG-04 all factory presets recall authentic_color off",
-           "[integrability][INTEG-04][safe]")
-{
-    assertAllFactoryPresetsRecallAuthenticColorOff();
+    for (int preset = 0; preset < sendbloom::FactoryPresets::kNumPresets; ++preset)
+    {
+        const auto state = sendbloom::FactoryPresets::makePresetState (preset);
+        const auto xml = state.createXml();
+        REQUIRE (xml != nullptr);
+        INFO ("preset index " << preset);
+        REQUIRE_FALSE (xml->toString().contains ("authentic_color"));
+    }
 }

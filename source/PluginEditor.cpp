@@ -42,7 +42,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       advancedDrawer (p.getAPVTS(),
                       ParameterIDs::inputThreshold,
                       ParameterIDs::sendFeel,
-                      ParameterIDs::authenticColor,
                       ParameterIDs::extendedStereo,
                       ParameterIDs::sendConnected)
 {

@@ -97,7 +97,7 @@ std::vector<float> renderAdapterImpulseDark (sendbloom::FixedRateAdapter& adapte
         if (globalSample == 0)
             inBlock[0] = 1.0f;
 
-        adapter.processBlock (inBlock.data(), outBlock.data(), n, rt60, darkMix, mode);
+        adapter.processBlockForDiagnostics (inBlock.data(), outBlock.data(), n, rt60, darkMix, mode);
 
         for (int i = 0; i < n; ++i)
             out[static_cast<size_t> (globalSample + i)] = outBlock[static_cast<size_t> (i)];

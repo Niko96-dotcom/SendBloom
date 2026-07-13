@@ -27,7 +27,6 @@ struct ParameterSnapshot
     bool gatePreSoft {};
     bool sendConnected {};
     bool sendFirmFeel {};
-    bool authenticColor {};
     bool extendedStereo {};
     bool bypassed {};
 
@@ -66,7 +65,6 @@ struct ParameterSnapshot
                        ? ParameterCurves::sendGain (s.sendAmountNorm, s.sendFirmFeel)
                        : 1.0f;
 
-        s.authenticColor = apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f;
         s.extendedStereo = apvts.getRawParameterValue (ParameterIDs::extendedStereo)->load() > 0.5f;
         s.bypassed = apvts.getRawParameterValue (ParameterIDs::bypass)->load() > 0.5f;
 

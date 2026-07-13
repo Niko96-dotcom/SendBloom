@@ -23,11 +23,10 @@ float processChainSample (sendbloom::GatedBloomChain& chain,
                           float distnBlend,
                           float sendGain,
                           bool gatePreSoft,
-                          float darkModeMix = 0.0f,
-                          bool authenticColor = false)
+                          float darkModeMix = 0.0f)
 {
     const auto env = chain.getEnvelope().process (std::abs (input));
-    return chain.processSample (input, env, rt60, darkModeMix, authenticColor,
+    return chain.processSample (input, env, rt60, darkModeMix,
                                 distnBlend, sendGain, gatePreSoft, kThresholdDb);
 }
 
@@ -190,20 +189,20 @@ TEST_CASE ("GatedBloomChain processBlock matches processSample loop",
     for (int i = 0; i < 2000; ++i)
     {
         const auto env = chainBlock.getEnvelope().process (0.5f);
-        chainBlock.processSample (0.5f, env, rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
-        chainSample.processSample (0.5f, env, rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+        chainBlock.processSample (0.5f, env, rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+        chainSample.processSample (0.5f, env, rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
     }
 
     std::vector<float> blockOut (static_cast<size_t> (kNumSamples));
     std::vector<float> sampleOut (static_cast<size_t> (kNumSamples));
 
     chainBlock.processBlock (monoIn.data(), envelope.data(), blockOut.data(), kNumSamples,
-                             rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+                             rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
 
     for (int i = 0; i < kNumSamples; ++i)
         sampleOut[static_cast<size_t> (i)] = chainSample.processSample (
             monoIn[static_cast<size_t> (i)], envelope[static_cast<size_t> (i)],
-            rt60, 0.0f, false, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+            rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
 
     float maxDiff = 0.0f;
     for (int i = 0; i < kNumSamples; ++i)
@@ -215,8 +214,8 @@ TEST_CASE ("GatedBloomChain processBlock matches processSample loop",
     REQUIRE (maxDiff < 1e-5f);
 }
 
-TEST_CASE ("GatedBloomChain authentic block produces finite output",
-           "[chain][GatedBloomChain][INTEG-02][authentic-block]")
+TEST_CASE ("GatedBloomChain fixed ProperSRC block produces finite output",
+           "[chain][GatedBloomChain][INTEG-02][proper-src-block]")
 {
     sendbloom::GatedBloomChain chain;
     chain.prepare (kSampleRate, kBlockSize);
@@ -240,7 +239,7 @@ TEST_CASE ("GatedBloomChain authentic block produces finite output",
         }
 
         chain.processBlock (monoBlock.data(), envBlock.data(), wetOut.data() + offset, n,
-                            rt60, 0.0f, true, 0.0f, 1.0f, true, kThresholdDb);
+                            rt60, 0.0f, 0.0f, 1.0f, true, kThresholdDb);
     }
 
     auto peak = 0.0f;

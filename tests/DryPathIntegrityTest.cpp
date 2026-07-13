@@ -58,7 +58,6 @@ RenderCapture renderWithDistn (float distnValue)
     const auto sendGain = snap.sendGain;
     const auto gatePreSoft = snap.gatePreSoft;
     const auto darkModeMix = snap.darkMode ? 1.0f : 0.0f;
-    const auto authenticColor = snap.authenticColor;
 
     RenderCapture capture;
     capture.output.reserve (static_cast<size_t> (kWarmupBlocks * kBlockSize));
@@ -90,7 +89,7 @@ RenderCapture renderWithDistn (float distnValue)
             const auto dryTap = inputHistory[historyIndex];
             const auto monoIn = inputStage.processSample (dryTap, inputGainLinear);
             const auto env = chain.getEnvelope().process (std::abs (monoIn));
-            const auto wet = chain.processSample (monoIn, env, rt60, darkModeMix, authenticColor,
+            const auto wet = chain.processSample (monoIn, env, rt60, darkModeMix,
                                                   distnBlend, sendGain, gatePreSoft, thresholdDb);
             const auto mixed = buffer.getSample (0, i);
 

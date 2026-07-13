@@ -62,7 +62,7 @@ std::vector<float> renderImpulseResponse (sendbloom::IReverbEngine& engine,
     for (int i = 0; i < numSamples; ++i)
     {
         const auto in = i == 0 ? 1.0f : 0.0f;
-        out[static_cast<size_t> (i)] = engine.processSample (in, rt60, darkMix, false);
+        out[static_cast<size_t> (i)] = engine.processSample (in, rt60, darkMix);
     }
 
     return out;
@@ -115,7 +115,7 @@ TEST_CASE ("Fdn8Reverb dark mode stays finite", "[verb][Fdn8][dark]")
     for (int i = 0; i < 24000; ++i)
     {
         const auto in = i == 0 ? 1.0f : 0.0f;
-        const auto out = fdn.processSample (in, rt60, 1.0f, false);
+        const auto out = fdn.processSample (in, rt60, 1.0f);
         REQUIRE (std::isfinite (out));
         REQUIRE (std::abs (out) < 8.0f);
     }

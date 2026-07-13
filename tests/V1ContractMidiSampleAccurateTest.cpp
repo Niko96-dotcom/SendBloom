@@ -22,7 +22,7 @@ public:
         perSampleAbs.assign (static_cast<size_t> (juce::jmax (1, maxBlock)), 0.0f);
     }
 
-    float processSample (float input, float, float, bool) noexcept override
+    float processSample (float input, float, float) noexcept override
     {
         const auto idx = sampleIndex++;
         energy.fetch_add (static_cast<double> (std::abs (input)), std::memory_order_relaxed);
@@ -34,10 +34,10 @@ public:
     }
 
     void processBlock (const float* input, float* output, int numSamples,
-                       float, float, bool) noexcept override
+                       float, float) noexcept override
     {
         for (int i = 0; i < numSamples; ++i)
-            output[i] = processSample (input[i], 0.0f, 0.0f, false);
+            output[i] = processSample (input[i], 0.0f, 0.0f);
     }
 
     void resetEnergy() noexcept

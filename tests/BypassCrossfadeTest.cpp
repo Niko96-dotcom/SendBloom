@@ -53,7 +53,7 @@ TEST_CASE ("plugin bypass mid-stream toggle keeps adjacent delta click-bounded",
            "[parm][bypass][v1][contract][CORE-17]")
 {
     // CORE-17: engage/disengage across a block; bound adjacent sample delta on
-    // unit-ish signals (same order as EngineCrossfade click metrics).
+    // unit-ish signals (the same order as the prior click metrics).
     constexpr double kSampleRate = 48000.0;
     constexpr int kBlockSize = 512;
     constexpr int kSettleBlocks = 8;

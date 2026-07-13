@@ -55,10 +55,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::StringArray { "Firm", "Soft" }, 0));
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
-        juce::ParameterID { authenticColor, 1 }, "Authentic Color",
-        juce::StringArray { "Off", "On" }, 0));
-
-    layout.add (std::make_unique<juce::AudioParameterChoice> (
         juce::ParameterID { extendedStereo, 1 }, "Extended Stereo",
         juce::StringArray { "Off", "On" }, 0));
 

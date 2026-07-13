@@ -59,7 +59,7 @@ TEST_CASE ("Factory preset state round-trip preserves all parameters", "[preset]
 
     for (const auto* id : { inputGain, inputThreshold, size, level, distn, outputGain,
                             darkMode, gatePrePost, sendConnected, sendAmount, sendFeel,
-                            authenticColor, extendedStereo, bypass })
+                            extendedStereo, bypass })
     {
         REQUIRE (dst.getRawParameterValue (id)->load()
                  == Catch::Approx (src.getRawParameterValue (id)->load()).margin (1e-4f));

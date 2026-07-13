@@ -111,7 +111,7 @@ TEST_CASE ("Discrete switch state restores after non-discrete host input", "[par
 {
     using namespace sendbloom::ParameterIDs;
 
-    for (const auto* id : { darkMode, sendConnected, authenticColor, extendedStereo, bypass })
+    for (const auto* id : { darkMode, sendConnected, extendedStereo, bypass })
     {
         sendbloom::PluginProcessor plugin;
         auto* parameter = plugin.getAPVTS().getParameter (id);
@@ -129,6 +129,40 @@ TEST_CASE ("Discrete switch state restores after non-discrete host input", "[par
         INFO ("parameter " << id);
         REQUIRE (parameter->getValue() == Catch::Approx (0.0f).margin (1.0e-6f));
     }
+}
+
+TEST_CASE ("legacy authentic_color state is tolerated and discarded", "[parm][state][legacy]")
+{
+    using namespace sendbloom::ParameterIDs;
+
+    sendbloom::PluginProcessor source;
+    source.getAPVTS().getParameter (size)->setValueNotifyingHost (0.8f);
+
+    auto legacyState = source.getAPVTS().copyState();
+    juce::ValueTree retiredParam { "PARAM" };
+    retiredParam.setProperty ("id", "authentic_color", nullptr);
+    retiredParam.setProperty ("value", 1.0f, nullptr);
+    legacyState.addChild (retiredParam, -1, nullptr);
+
+    const auto legacyXml = legacyState.createXml();
+    REQUIRE (legacyXml != nullptr);
+
+    juce::MemoryBlock legacyBlock;
+    juce::AudioProcessor::copyXmlToBinary (*legacyXml, legacyBlock);
+
+    sendbloom::PluginProcessor restored;
+    REQUIRE_NOTHROW (restored.setStateInformation (legacyBlock.getData(),
+                                                   static_cast<int> (legacyBlock.getSize())));
+    REQUIRE (restored.getAPVTS().getParameter ("authentic_color") == nullptr);
+    REQUIRE (restored.getAPVTS().getRawParameterValue (size)->load()
+             == Catch::Approx (0.8f).margin (1.0e-4f));
+
+    juce::MemoryBlock savedBlock;
+    restored.getStateInformation (savedBlock);
+    const auto savedXml = juce::AudioProcessor::getXmlFromBinary (savedBlock.getData(),
+                                                                  static_cast<int> (savedBlock.getSize()));
+    REQUIRE (savedXml != nullptr);
+    REQUIRE_FALSE (savedXml->toString().contains ("authentic_color"));
 }
 
 TEST_CASE ("getBypassParameter returns bypass param", "[parm][layout]")

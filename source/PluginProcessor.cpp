@@ -13,6 +13,26 @@
 namespace sendbloom
 {
 
+namespace
+{
+
+constexpr auto kLegacyAuthenticColorId = "authentic_color";
+
+void removeRetiredParameters (juce::ValueTree state)
+{
+    for (int i = state.getNumChildren(); --i >= 0;)
+    {
+        auto child = state.getChild (i);
+
+        if (child.getProperty ("id").toString() == kLegacyAuthenticColorId)
+            state.removeChild (i, nullptr);
+        else
+            removeRetiredParameters (child);
+    }
+}
+
+} // namespace
+
 PluginProcessor::PluginProcessor()
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -28,13 +48,6 @@ PluginProcessor::PluginProcessor()
 }
 
 PluginProcessor::~PluginProcessor() = default;
-
-void PluginProcessor::updateReportedLatency (bool /* targetAuthenticOn */) noexcept
-{
-    // ADR-003 Path B: always report zero host PDC (CHN-04). Wet-only ProperSRC
-    // delay (~3.9–4.1 ms) is accepted as musically fine for parallel reverb.
-    setLatencySamples (0);
-}
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
@@ -144,9 +157,6 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
         pressureController.setFirmFeel (snap.sendFirmFeel);
         pressureController.snapToTarget();
     }
-    requestedAuthenticColor_ =
-        apvts.getRawParameterValue (ParameterIDs::authenticColor)->load() > 0.5f;
-    updateReportedLatency (requestedAuthenticColor_);
 }
 
 void PluginProcessor::releaseResources()
@@ -247,14 +257,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // MIDI target persists across blocks until a CC1 event updates it (ADR-V1-03).
     pressureController.setFirmFeel (snap.sendFirmFeel);
 
-    // ADR-V1-07 / RT-08…11: one engine-crossfade request per authentic snapshot edge.
-    if (snap.authenticColor != requestedAuthenticColor_)
-    {
-        chain.requestEngineCrossfade (snap.authenticColor);
-        updateReportedLatency (snap.authenticColor);
-        requestedAuthenticColor_ = snap.authenticColor;
-    }
-
     const auto numSamples = buffer.getNumSamples();
     const auto connected = snap.sendConnected;
     int offset = 0;
@@ -295,8 +297,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
 
     float spanRt60 = 0.0f;
     float spanDark = 0.0f;
-    bool spanAuthentic = snap.authenticColor;
-
     for (int sample = 0; sample < span; ++sample)
     {
         const auto inputGain = smoothedBank.getNextInputGainLinear();
@@ -311,9 +311,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         bypassWetScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextBypassWetMix();
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
         const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
-        // authenticColorTarget smoother is no longer the request trigger (ADR-V1-07).
-        (void) smoothedBank.getNextAuthenticColorTarget();
-
         if (sample == 0)
         {
             spanRt60 = ParameterCurves::sizeToRT60 (sizeNorm);
@@ -333,7 +330,7 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
 
     // ADR-V1-06 / RT-06: send, distn, and threshold consumed per sample.
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), span,
-                        spanRt60, spanDark, spanAuthentic,
+                        spanRt60, spanDark,
                         distnScratch_.data(), sendGainScratch_.data(), thresholdDbScratch_.data(),
                         gatePreSoft);
 
@@ -407,7 +404,11 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
-            apvts.replaceState (juce::ValueTree::fromXml (*xml));
+        {
+            auto state = juce::ValueTree::fromXml (*xml);
+            removeRetiredParameters (state);
+            apvts.replaceState (state);
+        }
 }
 
 } // namespace sendbloom

@@ -4,4 +4,4 @@ This candidate establishes truthful Pressure Mode rest/press/release behavior, s
 
 The current remediation worktree is not a public RC release yet. CI on the exact eventual candidate, DAW smoke/soak, JUCE commercial entitlement, Developer ID signing, notarization, and correction of the stale pre-existing RC tag remain open.
 
-Known limitations: 32k Color remains off by default and Path A hardware comparison remains deferred. Extended Stereo is implemented and exposed in Advanced; the unimplemented Dirt OS control has been removed from the shipping parameter contract.
+The customer-facing 32k Color parameter has been removed. SendBloom now uses one permanently enabled, bandlimited 32,768 Hz ProperSRC reverb path at every DAW sample rate; old beta state containing `authentic_color` is tolerated and ignored. Speculative 9-bit parameter quantization is not part of the production path. Extended Stereo remains available in Advanced, and the unimplemented Dirt OS control remains outside the shipping parameter contract. Hardware comparison is still deferred.
