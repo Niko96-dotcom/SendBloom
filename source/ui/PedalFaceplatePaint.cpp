@@ -41,6 +41,17 @@ const PedalArtwork& artwork()
 const auto kInk = juce::Colour (0xff161413);
 const auto kOrange = juce::Colour (0xffe66c0b);
 
+// Registration marks (teal dots, since painted out of the art) sat on the
+// footswitch's fixed collar. Measured centroids in source-image pixels...
+const juce::Point<float> kFootUpDotA   { 397.2f, 473.9f };
+const juce::Point<float> kFootUpDotB   { 512.6f, 288.5f };
+const juce::Point<float> kFootDownDotA { 389.9f, 474.1f };
+const juce::Point<float> kFootDownDotB { 508.0f, 287.1f };
+// ...both aligned onto these fixed plate targets (editor coords), so the collar
+// is pinned and only the cap moves between raised and stomped.
+const juce::Point<float> kFootTargetA  { 234.4f, 660.9f };
+const juce::Point<float> kFootTargetB  { 262.4f, 616.0f };
+
 void drawImage (juce::Graphics& g, const juce::Image& image, juce::Rectangle<float> bounds,
                 juce::RectanglePlacement placement = juce::RectanglePlacement::centred)
 {
@@ -51,6 +62,50 @@ void drawImage (juce::Graphics& g, const juce::Image& image, juce::Rectangle<flo
     g.setOpacity (1.0f);
     g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
     g.drawImage (image, bounds, placement, false);
+}
+
+// Some parts are photographed in two states whose frames differ in size (a toggle
+// lever swings past the edge, so PRE and POST crop to different heights). A plain
+// centred blit then lands the fixed body in a different spot each state and the
+// part appears to hop. Instead, register both frames by a landmark on the *fixed*
+// body — the hex nut — so it stays pinned and only the moving part travels.
+// nutNorm is the nut centre as a fraction of the frame; nutWidthPx is its pixel
+// width, so both states share one on-screen scale.
+void drawNutAnchoredImage (juce::Graphics& g, const juce::Image& image,
+                           float nutNormX, float nutNormY, float nutWidthPx,
+                           juce::Point<float> targetNutCentre, float targetNutWidth)
+{
+    if (! image.isValid())
+        return;
+
+    const auto scale = targetNutWidth / nutWidthPx;
+    const auto w = static_cast<float> (image.getWidth())  * scale;
+    const auto h = static_cast<float> (image.getHeight()) * scale;
+    const juce::Rectangle<float> dest (targetNutCentre.x - nutNormX * w,
+                                       targetNutCentre.y - nutNormY * h,
+                                       w, h);
+
+    g.setOpacity (1.0f);
+    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+    g.drawImage (image, dest, juce::RectanglePlacement::stretchToFit, false);
+}
+
+// Two-point similarity registration: map a pair of landmarks (in source-image
+// pixels) onto fixed plate targets, correcting for the small translation, scale,
+// and rotation drift between two frames photographed apart. Used for the
+// footswitch, whose up/down shots were misaligned a few pixels at the collar.
+juce::AffineTransform registerByTwoPoints (juce::Point<float> s1, juce::Point<float> s2,
+                                           juce::Point<float> t1, juce::Point<float> t2)
+{
+    const auto s = s2 - s1;
+    const auto t = t2 - t1;
+    const auto scale = t.getDistanceFromOrigin() / s.getDistanceFromOrigin();
+    const auto angle = std::atan2 (t.y, t.x) - std::atan2 (s.y, s.x);
+
+    return juce::AffineTransform::translation (-s1.x, -s1.y)
+        .scaled (scale)
+        .rotated (angle)
+        .translated (t1.x, t1.y);
 }
 
 // The scene photograph keeps the pedal small inside a moody workbench shot. Crop the
@@ -208,40 +263,15 @@ void drawContactShadows (juce::Graphics& g)
     addRoundedShadow (g, kClipLens.toFloat().reduced (2.0f), 8.0f, 0.32f, 4, { 1, 3 });
     addRoundedShadow (g, kDarkButton.toFloat().reduced (5.0f), 16.0f, 0.36f, 8, lightOffset);
 
-    // The toggle's weight sits in its hex nut, low in the switch rect.
+    // The toggle's weight sits in its hex nut. Ground it with a contact shadow the
+    // size of the nut footprint, centred on the fixed nut position (see the
+    // nut-anchored draw) so the switch reads as seated in the plate, not floating.
     addEllipseShadow (g,
-                      { kGateSwitch.toFloat().getCentreX() - 25.0f,
-                        kGateSwitch.toFloat().getY() + 24.0f, 50.0f, 36.0f },
-                      0.34f, 7, lightOffset);
+                      { kGateSwitch.toFloat().getCentreX() - 26.0f, 470.0f - 22.0f,
+                        52.0f, 48.0f },
+                      0.38f, 8, lightOffset);
 
     // Footswitch shadow is dynamic (it tightens when stomped) — drawn per frame.
-}
-
-constexpr int kFootShadowMargin = 28;
-
-// Pre-render both footswitch shadows: raised (tall, soft) and stomped (tight,
-// hugging the plate). The per-frame paint just swaps the blit.
-const juce::Image& footShadowImage (bool pressed)
-{
-    static const auto render = [] (float alpha, int radius, juce::Point<int> offset)
-    {
-        constexpr int margin = kFootShadowMargin;
-        const auto foot = facelayout::kFootswitch;
-        juce::Image image (juce::Image::ARGB,
-                           foot.getWidth() + margin * 2, foot.getHeight() + margin * 2, true);
-        juce::Graphics g (image);
-        addEllipseShadow (g,
-                          juce::Rectangle<float> (static_cast<float> (margin), static_cast<float> (margin),
-                                                  static_cast<float> (foot.getWidth()),
-                                                  static_cast<float> (foot.getHeight()))
-                              .reduced (8.0f),
-                          alpha, radius, offset);
-        return image;
-    };
-
-    static const juce::Image raised = render (0.44f, 12, { 3, 8 });
-    static const juce::Image stomped = render (0.52f, 6, { 1, 3 });
-    return pressed ? stomped : raised;
 }
 
 constexpr int kDrawerShadowMargin = 26;
@@ -424,16 +454,29 @@ void paintPedalFaceplate (juce::Graphics& g,
         padPressed, padDisplayAmount, sendAmount);
 
     drawImage (g, dark ? art.darkOn : art.darkOff, kDarkButton.toFloat());
-    drawImage (g, postGate ? art.gatePost : art.gatePre, kGateSwitch.toFloat());
 
-    // Stomping seats the switch closer to the plate: its shadow tightens and the
-    // cap drops a couple of pixels.
+    // PRE (lever up) and POST (lever down) are the same switch; their frames differ
+    // in height only because the lever leaves the crop. Anchor by the hex nut —
+    // measured centre and pixel width per frame — so the body stays fixed on the
+    // plate and only the lever swings. (A centred blit used to hop the nut ~9px.)
+    const juce::Point<float> gateNutCentre { kGateSwitch.toFloat().getCentreX(), 470.0f };
+    constexpr float gateNutWidth = 50.0f;
+    if (postGate)
+        drawNutAnchoredImage (g, art.gatePost, 0.500f, 0.389f, 275.0f, gateNutCentre, gateNutWidth);
+    else
+        drawNutAnchoredImage (g, art.gatePre, 0.498f, 0.532f, 271.0f, gateNutCentre, gateNutWidth);
+
+    // No cast shadow under the footswitch: photographed head-on, a chromed stomp
+    // cap seats on its own bevelled edge, and any drawn halo just reads as a ring
+    // painted on the plate. The metal edge alone carries the depth.
+    // Register the up/down frames by the collar marks so the base stays pinned and
+    // only the cap drops when stomped (the down photo already carries that depth).
+    const auto footTf = footPressed
+        ? registerByTwoPoints (kFootDownDotA, kFootDownDotB, kFootTargetA, kFootTargetB)
+        : registerByTwoPoints (kFootUpDotA, kFootUpDotB, kFootTargetA, kFootTargetB);
     g.setOpacity (1.0f);
-    g.drawImageAt (footShadowImage (footPressed),
-                   kFootswitch.getX() - kFootShadowMargin,
-                   kFootswitch.getY() - kFootShadowMargin);
-    drawImage (g, footPressed ? art.footDown : art.footUp,
-               kFootswitch.toFloat().translated (0.0f, footPressed ? 2.0f : 0.0f));
+    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+    g.drawImageTransformed (footPressed ? art.footDown : art.footUp, footTf, false);
 
     drawGateMarkings (g, postGate);
     drawEngravedText (g, "CLIP", kClipLabel, 10.0f, kInk.withAlpha (0.94f));

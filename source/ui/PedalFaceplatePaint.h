@@ -20,7 +20,8 @@ namespace facelayout
     inline const juce::Rectangle<float> kPlate { 38.0f, 60.0f, 345.0f, 642.0f };
     constexpr float kPlateCornerRadius = 19.0f;
 
-    inline const juce::Rectangle<int> kLogo { 95, 74, 230, 46 };
+    // Full nameplate incl. its chrome rim (aspect ~4.8:1); sits between the top screws.
+    inline const juce::Rectangle<int> kLogo { 85, 70, 250, 52 };
 
     inline const juce::Rectangle<int> kPresetField { 54, 134, 232, 32 };
     inline const juce::Rectangle<int> kPresetText { 70, 134, 186, 32 };
