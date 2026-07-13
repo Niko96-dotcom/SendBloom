@@ -66,6 +66,14 @@ public:
         repaint();
     }
 
+    juce::String getDisplayValue() const
+    {
+        if (valueFormatter != nullptr)
+            return valueFormatter (slider.getValue());
+
+        return juce::String (slider.getValue(), 2);
+    }
+
 private:
     static juce::Image loadKnobImage (const void* imageData, size_t imageSize)
     {
@@ -135,14 +143,6 @@ private:
         }
         g.setColour ((showValue ? valueColour : labelColour).withAlpha (0.94f));
         g.drawText (text, strip, juce::Justification::centred, false);
-    }
-
-    juce::String getDisplayValue() const
-    {
-        if (valueFormatter != nullptr)
-            return valueFormatter (slider.getValue());
-
-        return juce::String (slider.getValue(), 2);
     }
 
     juce::String labelName;

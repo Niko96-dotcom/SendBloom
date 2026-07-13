@@ -75,7 +75,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         addAndMakeVisible (*knob);
 
     lvlKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
-    sizeKnob.setValueFormatter ([] (double value) { return juce::String (1.0 + value * 0.2, 2); });
+    sizeKnob.setComponentID (ParameterIDs::size);
+    sizeKnob.setValueFormatter ([] (double value)
+    {
+        const auto rt60 = ParameterCurves::sizeToRT60 (static_cast<float> (value));
+        return juce::String (rt60, 2) + " s";
+    });
     distnKnob.setValueFormatter ([] (double value) { return juce::String (value * 100.0, 2); });
     inKnob.setValueFormatter ([] (double value) { return formatInputGainDb (value); });
     outKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });

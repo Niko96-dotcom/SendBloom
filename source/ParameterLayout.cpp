@@ -20,7 +20,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { size, 1 }, "Size",
-        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.0f, 0.5f }, 0.5f));
+        juce::NormalisableRange<float> { 0.0f, 1.0f }, 0.5f));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { level, 1 }, "Level",

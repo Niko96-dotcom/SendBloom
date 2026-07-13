@@ -33,6 +33,10 @@ TEST_CASE ("size and output_gain ranges and defaults", "[parm][layout]")
     const auto sizeRange = sizeParam->getNormalisableRange();
     REQUIRE (sizeRange.start == Catch::Approx (0.0f));
     REQUIRE (sizeRange.end == Catch::Approx (1.0f));
+    REQUIRE (sizeRange.convertFrom0to1 (0.5f) == Catch::Approx (0.5f));
+    REQUIRE (sizeRange.convertTo0to1 (0.5f) == Catch::Approx (0.5f));
+    REQUIRE (static_cast<const juce::AudioProcessorParameter*> (sizeParam)->getDefaultValue()
+             == Catch::Approx (0.5f));
     REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::size)->load()
              == Catch::Approx (0.5f));
 
