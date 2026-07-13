@@ -185,6 +185,15 @@ void drawPlateLighting (juce::Graphics& g)
                                 kPlate.getRight() - 90.0f, kPlate.getCentreY(), false);
     g.setGradientFill (spill);
     g.fillRect (kPlate.withLeft (kPlate.getRight() - 90.0f));
+
+    // A soft clear-coat hotspot upper-left where the key light reflects off the
+    // glossy enamel — the highlight the eye reads as a curved, lacquered surface.
+    const juce::Point<float> hot (kPlate.getCentreX() - 58.0f, kPlate.getY() + 96.0f);
+    juce::ColourGradient gloss (juce::Colours::white.withAlpha (0.14f), hot.x, hot.y,
+                                juce::Colours::transparentWhite, hot.x, hot.y + 120.0f, true);
+    gloss.addColour (0.55, juce::Colours::transparentWhite);
+    g.setGradientFill (gloss);
+    g.fillEllipse (juce::Rectangle<float> (230.0f, 150.0f).withCentre (hot));
 }
 
 // Cross-head screws seat the plate into the chassis. Procedural, but at 14 px the
@@ -194,12 +203,25 @@ void drawScrew (juce::Graphics& g, juce::Point<float> centre, float radius, floa
     const juce::Rectangle<float> head (centre.x - radius, centre.y - radius,
                                        radius * 2.0f, radius * 2.0f);
 
-    addEllipseShadow (g, head.reduced (1.0f), 0.32f, 3, { 1, 2 });
+    // The head sits in a drilled countersink: a dark recessed ring around it, with
+    // the far (lower-right) side of the hole catching the least light.
+    const auto hole = head.expanded (2.4f);
+    juce::ColourGradient bore (juce::Colours::black.withAlpha (0.42f),
+                               hole.getRight(), hole.getBottom(),
+                               juce::Colours::black.withAlpha (0.10f),
+                               hole.getX(), hole.getY(), false);
+    g.setGradientFill (bore);
+    g.fillEllipse (hole);
 
-    juce::ColourGradient metal (juce::Colour (0xffdedbd4),
-                                centre.x - radius * 0.5f, centre.y - radius * 0.6f,
-                                juce::Colour (0xff716d66),
-                                centre.x + radius * 0.6f, centre.y + radius * 0.8f, true);
+    addEllipseShadow (g, head.reduced (1.0f), 0.30f, 3, lighting::shadowOffset (2.0f));
+
+    // Head metal, lit from the upper-left toward the light.
+    juce::ColourGradient metal (juce::Colour (0xffe6e3dc),
+                                centre.x + lighting::toLight.x * radius * 0.7f,
+                                centre.y + lighting::toLight.y * radius * 0.7f,
+                                juce::Colour (0xff6d6963),
+                                centre.x - lighting::toLight.x * radius,
+                                centre.y - lighting::toLight.y * radius, true);
     g.setGradientFill (metal);
     g.fillEllipse (head);
 
@@ -212,6 +234,11 @@ void drawScrew (juce::Graphics& g, juce::Point<float> centre, float radius, floa
     g.setColour (juce::Colours::white.withAlpha (0.30f));
     g.drawLine ({ centre - slot + juce::Point<float> (0.0f, 1.2f),
                   centre + slot + juce::Point<float> (0.0f, 1.2f) }, 0.8f);
+
+    // A single specular glint on the light-facing shoulder of the head.
+    const auto glint = centre + juce::Point<float> (lighting::toLight.x, lighting::toLight.y) * (radius * 0.5f);
+    g.setColour (juce::Colours::white.withAlpha (0.55f));
+    g.fillEllipse (juce::Rectangle<float> (radius * 0.5f, radius * 0.5f).withCentre (glint));
 }
 
 void drawPlateScrews (juce::Graphics& g)
@@ -247,21 +274,35 @@ void drawGrain (juce::Graphics& g, int width, int height)
 void drawContactShadows (juce::Graphics& g)
 {
     using namespace facelayout;
-    const juce::Point<int> lightOffset { 2, 5 };
+    using lighting::shadowOffset;
 
-    addRoundedShadow (g, kLogo.toFloat().reduced (3.0f), 9.0f, 0.30f, 5, { 1, 3 });
-    addRoundedShadow (g, kPresetField.toFloat().reduced (1.0f), 7.0f, 0.26f, 4, { 1, 3 });
-    addRoundedShadow (g, kPresetLoad.toFloat().reduced (1.0f), 7.0f, 0.30f, 4, { 1, 3 });
-    addRoundedShadow (g, kPresetSave.toFloat().reduced (1.0f), 7.0f, 0.30f, 4, { 1, 3 });
+    // The nameplate stands proudest of everything on the plate, so it throws the
+    // longest, softest shadow — that gap sells a screwed-on metal badge.
+    addRoundedShadow (g, kLogo.toFloat().reduced (3.0f), 10.0f, 0.34f, 7, shadowOffset (5.0f));
+    addRoundedShadow (g, kPresetField.toFloat().reduced (1.0f), 7.0f, 0.26f, 4, shadowOffset (3.0f));
+    addRoundedShadow (g, kPresetLoad.toFloat().reduced (1.0f), 7.0f, 0.30f, 4, shadowOffset (3.0f));
+    addRoundedShadow (g, kPresetSave.toFloat().reduced (1.0f), 7.0f, 0.30f, 4, shadowOffset (3.0f));
 
+    // Knobs get a soft cast shadow plus a tight ambient-occlusion seam right at the
+    // skirt — the close-contact darkening is what actually plants them (#3).
     for (const auto& knob : { kDistortionKnob, kSizeKnob, kLevelKnob })
-        addEllipseShadow (g, knob.withHeight (kKnobLarge).toFloat().reduced (5.0f), 0.38f, 9, { 2, 6 });
+    {
+        const auto body = knob.withHeight (kKnobLarge).toFloat().reduced (5.0f);
+        addEllipseShadow (g, body, 0.40f, 10, shadowOffset (7.0f));
+        addEllipseShadow (g, body.expanded (1.0f), 0.28f, 3, shadowOffset (1.5f));
+    }
 
     for (const auto& knob : { kInputKnob, kOutputKnob })
-        addEllipseShadow (g, knob.withHeight (kKnobSmall).toFloat().reduced (4.0f), 0.36f, 8, lightOffset);
+    {
+        const auto body = knob.withHeight (kKnobSmall).toFloat().reduced (4.0f);
+        addEllipseShadow (g, body, 0.38f, 9, shadowOffset (6.0f));
+        addEllipseShadow (g, body.expanded (1.0f), 0.26f, 3, shadowOffset (1.5f));
+    }
 
-    addRoundedShadow (g, kClipLens.toFloat().reduced (2.0f), 8.0f, 0.32f, 4, { 1, 3 });
-    addRoundedShadow (g, kDarkButton.toFloat().reduced (5.0f), 16.0f, 0.36f, 8, lightOffset);
+    addRoundedShadow (g, kClipLens.toFloat().reduced (2.0f), 8.0f, 0.32f, 4, shadowOffset (3.0f));
+
+    addRoundedShadow (g, kDarkButton.toFloat().reduced (5.0f), 16.0f, 0.36f, 8, shadowOffset (6.0f));
+    addRoundedShadow (g, kDarkButton.toFloat().reduced (4.0f), 16.0f, 0.26f, 3, shadowOffset (1.5f));
 
     // The toggle's weight sits in its hex nut. Ground it with a contact shadow the
     // size of the nut footprint, centred on the fixed nut position (see the
@@ -269,9 +310,10 @@ void drawContactShadows (juce::Graphics& g)
     addEllipseShadow (g,
                       { kGateSwitch.toFloat().getCentreX() - 26.0f, 470.0f - 22.0f,
                         52.0f, 48.0f },
-                      0.38f, 8, lightOffset);
+                      0.38f, 8, shadowOffset (6.0f));
 
-    // Footswitch shadow is dynamic (it tightens when stomped) — drawn per frame.
+    // Footswitch is deliberately shadow-free: it seats on its own bevelled metal
+    // edge (a drawn halo just reads as a ring on the plate).
 }
 
 constexpr int kDrawerShadowMargin = 26;
@@ -328,15 +370,20 @@ void drawPresetInnerShadow (juce::Graphics& g)
     g.fillRect (field.withTop (field.getBottom() - 1.5f));
 }
 
-// Screened labels sit in the plate's texture: a hairline highlight under the
-// glyphs sells the relief.
+// Labels are stamped into the enamel: the light-facing (upper-left) inner wall of
+// each glyph falls into shadow, and the opposite (lower-right) lip catches a
+// highlight. Drawing both around the ink reads as debossed, not printed.
 void drawEngravedText (juce::Graphics& g, const juce::String& text,
                        juce::Rectangle<int> area, float fontHeight, juce::Colour ink,
                        juce::Justification justification = juce::Justification::centred)
 {
     g.setFont (juce::FontOptions (fontHeight, juce::Font::bold));
-    g.setColour (juce::Colours::white.withAlpha (0.30f));
-    g.drawText (text, area.translated (0, 1), justification, false);
+
+    g.setColour (juce::Colours::white.withAlpha (0.32f));
+    g.drawText (text, area.translated (1, 1), justification, false);   // lit lower-right lip
+    g.setColour (juce::Colours::black.withAlpha (0.22f));
+    g.drawText (text, area.translated (-1, -1), justification, false); // shaded upper-left wall
+
     g.setColour (ink);
     g.drawText (text, area, justification, false);
 }
@@ -420,6 +467,20 @@ void drawClipLamp (juce::Graphics& g, const PedalArtwork& art, bool active, bool
     }
 
     drawImage (g, active ? art.clipOn : art.clipOff, lens);
+
+    // The lens is a glossy dome: a hot core when lit, and a small off-centre glass
+    // highlight (upper-left, with the key light) in either state.
+    if (active)
+    {
+        g.setColour (juce::Colours::white.withAlpha (darkRoom ? 0.85f : 0.7f));
+        g.fillEllipse (lens.reduced (lens.getWidth() * 0.34f));
+    }
+
+    const auto spec = lens.getCentre()
+                    + juce::Point<float> (lighting::toLight.x, lighting::toLight.y) * (lens.getWidth() * 0.22f);
+    g.setColour (juce::Colours::white.withAlpha (active ? 0.9f : 0.4f));
+    g.fillEllipse (juce::Rectangle<float> (lens.getWidth() * 0.2f,
+                                           lens.getWidth() * 0.2f).withCentre (spec));
 }
 
 } // namespace

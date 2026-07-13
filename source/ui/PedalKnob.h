@@ -111,20 +111,58 @@ private:
         g.drawImage (knobImage, bounds, juce::RectanglePlacement::centred, false);
     }
 
-    // Relight the rotated photo: the key light must stay fixed above the pedal, so
-    // the cap reads as a curved object instead of a flat spinning disc.
+    // Relight the rotated photo under the plate's fixed upper-left key light, so the
+    // cap reads as a curved, machined object instead of a flat spinning disc. The
+    // shading is drawn unrotated (component space), so the light stays put while the
+    // photo spins beneath it.
     void paintShading (juce::Graphics& g)
     {
-        const auto circle = slider.getBounds().toFloat().reduced (
-            slider.getBounds().toFloat().getWidth() * 0.06f);
+        const auto sb = slider.getBounds().toFloat();
+        const auto circle = sb.reduced (sb.getWidth() * 0.06f);
+        const auto c = circle.getCentre();
+        const auto r = circle.getWidth() * 0.5f;
 
-        juce::ColourGradient shade (juce::Colours::white.withAlpha (0.15f),
-                                    circle.getCentreX(), circle.getY(),
-                                    juce::Colours::black.withAlpha (0.22f),
-                                    circle.getCentreX(), circle.getBottom(), false);
-        shade.addColour (0.45, juce::Colours::transparentBlack);
-        g.setGradientFill (shade);
+        // Shared key light (see lighting::toLight): upper-left.
+        const juce::Point<float> L (-0.55f, -0.83f);
+        const juce::Point<float> lit  (c.x + L.x * r, c.y + L.y * r);
+        const juce::Point<float> dark (c.x - L.x * r, c.y - L.y * r);
+
+        juce::Graphics::ScopedSaveState clip (g);
+        juce::Path circ;
+        circ.addEllipse (circle);
+        g.reduceClipRegion (circ);
+
+        // Diagonal form light: bright toward the light, shaded away from it.
+        juce::ColourGradient form (juce::Colours::white.withAlpha (0.18f), lit.x, lit.y,
+                                   juce::Colours::black.withAlpha (0.30f), dark.x, dark.y, false);
+        form.addColour (0.5, juce::Colours::transparentBlack);
+        g.setGradientFill (form);
         g.fillEllipse (circle);
+
+        // Warm bounce: the orange plate reflects up the shaded lower-right rim.
+        juce::ColourGradient warm (juce::Colours::transparentBlack, c.x, c.y,
+                                   juce::Colour (0xffe66c0b).withAlpha (0.14f), dark.x, dark.y, false);
+        g.setGradientFill (warm);
+        g.fillEllipse (circle);
+
+        // Crisp specular hotspot on the light-facing shoulder. Kept out toward the
+        // rim (fades to nothing before the hub) so the cap's dark centre stays dark.
+        const juce::Point<float> spec (c.x + L.x * r * 0.56f, c.y + L.y * r * 0.56f);
+        juce::ColourGradient hot (juce::Colours::white.withAlpha (0.30f), spec.x, spec.y,
+                                  juce::Colours::transparentWhite, spec.x, spec.y + r * 0.46f, true);
+        g.setGradientFill (hot);
+        g.fillEllipse (circle);
+
+        // Machined rim: a bright arc where the light grazes the edge, a dark one
+        // opposite — the ambient-occlusion seam that plants the cap.
+        g.setColour (juce::Colours::white.withAlpha (0.20f));
+        juce::Path rimLit;
+        rimLit.addCentredArc (c.x, c.y, r - 1.0f, r - 1.0f, 0.0f, -2.5f, -0.4f, true);
+        g.strokePath (rimLit, juce::PathStrokeType (1.5f));
+        g.setColour (juce::Colours::black.withAlpha (0.32f));
+        juce::Path rimDark;
+        rimDark.addCentredArc (c.x, c.y, r - 1.0f, r - 1.0f, 0.0f, 0.6f, 2.7f, true);
+        g.strokePath (rimDark, juce::PathStrokeType (1.5f));
     }
 
     void paintCaption (juce::Graphics& g)

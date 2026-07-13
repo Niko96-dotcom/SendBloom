@@ -58,6 +58,22 @@ namespace facelayout
     inline const juce::Rectangle<int> kAdvancedDrawer { 214, 476, 168, 204 };
 } // namespace facelayout
 
+/** One key light for the whole plate so every highlight and shadow agrees — the
+    single strongest cue that the parts share a real surface. The light sits upper-
+    left; highlights face it, cast/contact shadows fall to the lower-right. */
+namespace lighting
+{
+    inline const juce::Point<float> toLight   { -0.55f, -0.83f }; // unit-ish, toward the light
+    inline const juce::Point<float> shadowDir {  0.55f,  0.83f }; // opposite: where shadows fall
+
+    /** Integer pixel offset for a shadow cast `distance` px from its caster. */
+    inline juce::Point<int> shadowOffset (float distance) noexcept
+    {
+        return { juce::roundToInt (shadowDir.x * distance),
+                 juce::roundToInt (shadowDir.y * distance) };
+    }
+} // namespace lighting
+
 /** True when footswitch pressed overlay should draw (press/amount — not connection alone). */
 bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, float sendAmountNorm) noexcept;
 
