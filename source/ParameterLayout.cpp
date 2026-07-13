@@ -15,8 +15,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f }, 0.5f));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { inputThreshold, 1 }, "Input Threshold",
-        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.0f, 0.5f }, 0.35f));
+        juce::ParameterID { inputThreshold, 1 }, "Gate Trim",
+        juce::NormalisableRange<float> { 0.0f, 1.0f }, 0.5f));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { size, 1 }, "Size",

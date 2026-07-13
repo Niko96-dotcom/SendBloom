@@ -211,7 +211,7 @@ These constrain implementation; full text lives in the master milestone spec:
 | ADR-V1-08 | Canonical Input −9/0/+9 |
 | ADR-V1-09 | Unity dry level; wet-only Level |
 | ADR-V1-10 | True bypass final crossfade |
-| ADR-V1-11 | PostHard 0.75 ms de-click ramp |
+| ADR-V1-11 | PostHard 0.75 ms de-click ramp (see 11a single movable gate + 5 ms hold + fast detector; 11b threshold→trim) |
 | ADR-V1-12 | Continuous fixed 55 ms dark tap |
 | ADR-V1-13 | Modulation time invariant |
 | ADR-V1-14 | SRC underfill pre-clear |

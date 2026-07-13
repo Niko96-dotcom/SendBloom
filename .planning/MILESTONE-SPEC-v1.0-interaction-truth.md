@@ -658,6 +658,47 @@ Replace the one-sample close with a `0.75 ms` deterministic ramp to zero.
 
 The hard-edited character comes from the detector and sub-millisecond envelope, not from a single-sample discontinuity.
 
+### ADR-V1-11a — Gate feel revision (single movable gate + hold)
+
+Amends 11 after the on-audio diagnostic showed the "hard close" was actually
+~30 ms from a hot sustained note: the low fixed threshold forced the detector to
+decay a large dynamic range before the close ramp could even begin. The chop was
+fast; the *decision* to chop was late.
+
+- **Single shared gate.** `preGate`/`postGate` are collapsed into one `NoiseGate`
+  whose profile follows the Gate switch (`setProfile`), so state carries across
+  toggles instead of two instances freezing stale open/closed state. This models
+  the hardware's one physical circuit that *moves* pre↔post.
+- **Opening ramp is linear ~`0.2 ms`** (was a one-pole toward unity, which rounded
+  the wet transient's front edge away). Closing stays the `0.75 ms` linear chop.
+- **Hold stage (`kHoldMs = 5 ms`).** Once the key falls below the close threshold
+  the gate stays open for the hold before closing. This lets the detector release
+  be fast (`2 ms`) without stuttering low notes: 5 ms clears the ~2.7 ms
+  below-threshold window between the peaks of an unclipped low E (82 Hz) with
+  margin (verified stutter-free down to INPT 0.35 in `GateCloseTimingDiagnostic`).
+- **Detector release `10 ms → 2 ms`** (attack `5 ms → 1 ms`) so the envelope
+  reaches the close threshold quickly after a mute.
+- **Hysteresis `3 dB → 2 dB` (`kHysteresisDb`)** for boundary sputter without
+  full chatter.
+
+CORE-11 is unchanged and still holds: it bounds the ramp "within 1 ms **after the
+close command**." The hold precedes the close command (the `isOpen→false`
+transition); it does not stretch the ramp. Net result: measured post-gate close
+on real audio is ~`15.6 ms` (worst case: instant mute of a hot sustained note),
+down from ~`30 ms`. `kHoldMs`, `kHysteresisDb`, and `ParameterCurves::kGateReferenceDb`
+are the ears-on tuning knobs.
+
+### ADR-V1-11b — Threshold demoted to a trim
+
+The hardware has no threshold knob; input level alone drives the guitar into a
+fixed gate. The `input_threshold` parameter is therefore demoted from an
+independent `-52..-18 dB` threshold to a `±6 dB` calibration trim around a fixed
+`-45 dB` reference (`ParameterCurves::kGateReferenceDb`), default centred (0 dB).
+Input gain stays the dominant sensitivity control because the detector envelope is
+measured post-input-gain — turning INPT up effectively lowers the threshold. The
+parameter is renamed "Gate Trim" for the DAW; the ID `input_threshold` is retained
+for state/preset compatibility.
+
 ## ADR-V1-12 — Predelay topology
 
 Use a fixed 55 ms dark delay tap that is always clocked.

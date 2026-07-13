@@ -1,3 +1,4 @@
+#include <EnvelopeDetector.h>
 #include <GatedBloomChain.h>
 #include <NoiseGate.h>
 #include <ParameterCurves.h>
@@ -10,6 +11,7 @@ namespace
 
 constexpr double kSampleRate = 48000.0;
 constexpr int kFifteenMsSamples = 720;
+constexpr int kThirtyMsSamples = 1440;
 
 } // namespace
 
@@ -79,4 +81,49 @@ TEST_CASE ("PostHard gate release budget under 15 ms", "[gate][NoiseGate][TEST-0
     REQUIRE (samplesToClosed < kFifteenMsSamples);
     REQUIRE (reachedFloor);
     REQUIRE (gate.getGain() == Catch::Approx (0.0f).margin (1e-4f));
+}
+
+// The two tests above measure only the final VCA ramp: they hand the gate an
+// envelope directly. The real "hard close" also has to wait for the shared
+// detector to fall below the close threshold. This test keeps the detector in
+// the loop (mirroring GatedBloomChain's 1 ms / 5 ms follower) so tuning the
+// detector release can't silently regress the perceived close speed.
+TEST_CASE ("PostHard system close incl. detector resolves within 30 ms",
+           "[gate][NoiseGate][detector][timing]")
+{
+    sendbloom::EnvelopeDetector detector;
+    detector.prepare (kSampleRate, 1.0f, 5.0f);
+
+    sendbloom::NoiseGate gate;
+    gate.prepare (kSampleRate, sendbloom::GateProfile::PostHard);
+
+    constexpr auto kThresholdDb = -40.0f;
+
+    // Settle a steady, well-above-threshold key; gate ends fully open.
+    for (int i = 0; i < 4800; ++i)
+        gate.process (detector.process (0.25f), kThresholdDb);
+
+    REQUIRE (gate.getIsOpen());
+    REQUIRE (gate.getGain() == Catch::Approx (1.0f).margin (1e-3f));
+
+    int samplesToFloor = 0;
+    bool closed = false;
+
+    for (int i = 0; i < kThirtyMsSamples; ++i)
+    {
+        gate.process (detector.process (0.0f), kThresholdDb);
+        ++samplesToFloor;
+
+        if (! gate.getIsOpen() && gate.getGain() <= 1.0e-4f)
+        {
+            closed = true;
+            break;
+        }
+    }
+
+    REQUIRE (closed);
+    REQUIRE (samplesToFloor < kThirtyMsSamples);
+    // Proves the detector really is in the loop: closing is not instantaneous the
+    // way it would be if we bypassed the follower (cf. the direct-ramp test above).
+    REQUIRE (samplesToFloor > kFifteenMsSamples / 2);
 }

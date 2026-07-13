@@ -34,10 +34,13 @@ TEST_CASE ("inputGainDb ADR-V1-08 anchors", "[curves][parm]")
     REQUIRE (inputGainDb (1.0f) == Catch::Approx (9.0f).margin (1e-4f));
 }
 
-TEST_CASE ("inputThresholdDb pow skew mapping", "[curves][parm]")
+TEST_CASE ("inputThresholdDb is a small gate trim around the reference", "[curves][parm]")
 {
-    REQUIRE (inputThresholdDb (0.0f) == Catch::Approx (-52.0f));
-    REQUIRE (inputThresholdDb (1.0f) == Catch::Approx (-18.0f));
+    // Demoted from an independent -52..-18 dB threshold to a +/-6 dB trim so that
+    // INPT is the dominant gate-sensitivity control (see kGateReferenceDb).
+    REQUIRE (inputThresholdDb (0.5f) == Catch::Approx (-45.0f)); // centre = reference
+    REQUIRE (inputThresholdDb (0.0f) == Catch::Approx (-51.0f)); // -6 dB trim
+    REQUIRE (inputThresholdDb (1.0f) == Catch::Approx (-39.0f)); // +6 dB trim
 }
 
 TEST_CASE ("sendGain Firm vs Soft differ at 0.5", "[curves][parm]")

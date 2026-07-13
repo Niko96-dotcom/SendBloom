@@ -17,14 +17,25 @@ TEST_CASE ("v1 PostHard close uses sub-ms ramp not one-sample snap",
     const auto openThresh = juce::Decibels::decibelsToGain (kThresholdDb);
     gate.process (openThresh * 2.0f, kThresholdDb);
     REQUIRE (gate.getIsOpen());
+    REQUIRE (gate.getGain() == Catch::Approx (1.0f).margin (1.0e-4f));
 
-    const float g0 = gate.getGain();
-    REQUIRE (g0 == Catch::Approx (1.0f).margin (1.0e-4f));
+    // Silence holds the gate open for kHoldMs before it issues the close command.
+    // CORE-11 measures the ramp from that command, so advance through the hold
+    // until isOpen flips, tracking the last open-sample gain (g0).
+    float g0 = gate.getGain();
+    int guard = 0;
+    const int holdGuard =
+        static_cast<int> (kSampleRate * (sendbloom::NoiseGate::kHoldMs + 2.0) * 0.001);
 
-    const float g1 = gate.process (0.0f, kThresholdDb); // first close sample
-    REQUIRE_FALSE (gate.getIsOpen());
+    while (gate.getIsOpen())
+    {
+        g0 = gate.getGain();
+        gate.process (0.0f, kThresholdDb);
+        REQUIRE (++guard < holdGuard);
+    }
 
-    // Intended failure: current floorGain==0 snap sets g1=0 immediately.
+    // First sample after the close command: a ramp step, not a one-sample snap.
+    const float g1 = gate.getGain();
     REQUIRE (g1 > 0.0f);
     REQUIRE (g1 < 1.0f);
     REQUIRE (std::abs (g0 - g1) <= 0.05f);

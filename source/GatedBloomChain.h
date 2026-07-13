@@ -22,14 +22,18 @@ public:
             reverb = std::make_unique<SchroederTank32>();
 
         reverb->prepare (sampleRate, maxBlockSize);
-        envelope.prepare (sampleRate, 5.0f, 10.0f);
-        preGate.prepare (sampleRate, GateProfile::PreSoft);
-        postGate.prepare (sampleRate, GateProfile::PostHard);
+        // Fast detector release so the post "hard close" isn't preceded by a long
+        // envelope decay before the gate decides to shut. The gate's hold stage
+        // (NoiseGate::kHoldMs) bridges the inter-peak dips of low notes so this
+        // fast release doesn't stutter a sustained chord.
+        envelope.prepare (sampleRate, 1.0f, 2.0f);
+        gate.prepare (sampleRate, GateProfile::PostHard);
         overdrive.prepare (sampleRate);
 
         maxBlockSize_ = maxBlockSize;
         wetSendScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
         reverbScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
+        gateGainScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
     }
 
     void setReverbEngineForTests (std::unique_ptr<IReverbEngine> engine) noexcept
@@ -65,17 +69,22 @@ public:
                          bool gatePreSoft,
                          float thresholdDb) noexcept
     {
+        // One shared gate whose profile follows the Gate switch; its running
+        // state carries across mode toggles (ADR-V1-11: single movable circuit).
+        gate.setProfile (gatePreSoft ? GateProfile::PreSoft : GateProfile::PostHard);
+        const auto gateGain = gate.process (inputEnvelope, thresholdDb);
+
         auto wet = input;
 
         if (gatePreSoft)
-            wet *= preGate.process (inputEnvelope, thresholdDb);
+            wet *= gateGain;
 
         wet = PressureSend::process (wet, sendGain);
         wet = reverb->processSample (wet, rt60Seconds, darkModeMix, authenticColor);
         wet = overdrive.process (wet, distnBlend);
 
         if (! gatePreSoft)
-            wet *= postGate.process (inputEnvelope, thresholdDb);
+            wet *= gateGain;
 
         return wet;
     }
@@ -171,12 +180,19 @@ private:
             return;
         }
 
+        gate.setProfile (gatePreSoft ? GateProfile::PreSoft : GateProfile::PostHard);
+
         for (int i = 0; i < numSamples; ++i)
         {
+            // Advance the single gate once per sample here so its state stays
+            // coherent; apply pre now, cache the gain for the post node below.
+            const auto g = gate.process (envelopeIn[i], sampleThreshold (i));
+            gateGainScratch_[static_cast<size_t> (i)] = g;
+
             auto wet = monoIn[i];
 
             if (gatePreSoft)
-                wet *= preGate.process (envelopeIn[i], sampleThreshold (i));
+                wet *= g;
 
             wetSendScratch_[static_cast<size_t> (i)] = PressureSend::process (wet, sampleSendGain (i));
         }
@@ -189,7 +205,7 @@ private:
             auto wet = overdrive.process (reverbScratch_[static_cast<size_t> (i)], sampleDistn (i));
 
             if (! gatePreSoft)
-                wet *= postGate.process (envelopeIn[i], sampleThreshold (i));
+                wet *= gateGainScratch_[static_cast<size_t> (i)];
 
             wetOut[i] = wet;
         }
@@ -197,12 +213,12 @@ private:
 
     std::unique_ptr<IReverbEngine> reverb;
     EnvelopeDetector envelope;
-    NoiseGate preGate;
-    NoiseGate postGate;
+    NoiseGate gate;
     WetOverdriveState overdrive;
     int maxBlockSize_ = 0;
     std::vector<float> wetSendScratch_;
     std::vector<float> reverbScratch_;
+    std::vector<float> gateGainScratch_;
 };
 
 } // namespace sendbloom

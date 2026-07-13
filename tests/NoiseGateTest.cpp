@@ -41,16 +41,21 @@ TEST_CASE ("NoiseGate hysteresis prevents chatter", "[gate][NoiseGate]")
     gate.prepare (48000.0, sendbloom::GateProfile::PostHard);
 
     const auto openThresh = juce::Decibels::decibelsToGain (-40.0f);
-    const auto closeThresh = juce::Decibels::decibelsToGain (-43.0f);
+    const auto closeThresh =
+        juce::Decibels::decibelsToGain (-40.0f - sendbloom::NoiseGate::kHysteresisDb);
     const auto mid = (openThresh + closeThresh) * 0.5f;
 
     gate.process (openThresh * 2.0f, -40.0f);
     REQUIRE (gate.getIsOpen());
 
-    gate.process (mid, -40.0f);
+    // Sitting between the close and open thresholds keeps it open (hysteresis).
+    for (int i = 0; i < 512; ++i)
+        gate.process (mid, -40.0f);
     REQUIRE (gate.getIsOpen());
 
-    gate.process (closeThresh * 0.5f, -40.0f);
+    // Dropping well below close for longer than the hold window closes it.
+    for (int i = 0; i < 2048; ++i)
+        gate.process (closeThresh * 0.5f, -40.0f);
     REQUIRE_FALSE (gate.getIsOpen());
 }
 

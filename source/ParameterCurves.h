@@ -35,10 +35,18 @@ inline float inputGainDb (float norm) noexcept
     return -9.0f + 18.0f * smoothstep (norm);
 }
 
+// Fixed reference gate threshold and the +/- trim range around it.
+inline constexpr float kGateReferenceDb = -45.0f;
+inline constexpr float kGateTrimDb = 6.0f;
+
 inline float inputThresholdDb (float norm) noexcept
 {
-    const auto t = std::pow (norm, 1.6f);
-    return -52.0f + t * (-18.0f - (-52.0f));
+    // The reference hardware has no threshold knob: the input-level control alone
+    // drives the guitar into a fixed gate. Here the input gain stays the dominant
+    // sensitivity control — it scales the detector envelope, so turning it up
+    // effectively lowers the threshold — and this parameter is only a small
+    // +/-6 dB calibration trim around a fixed reference, centred (0 dB) at norm 0.5.
+    return kGateReferenceDb + (norm - 0.5f) * 2.0f * kGateTrimDb;
 }
 
 inline float outputGainLinear (float gainDb) noexcept
