@@ -15,10 +15,32 @@ juce::Image loadImage (const void* data, size_t size)
     return juce::ImageFileFormat::loadFrom (data, size);
 }
 
+// Flatten a vector asset to pixels once, at a multiple of the rectangle it gets
+// drawn into. The faceplate repaints in full on every editor paint, so keeping
+// the artwork as pixels avoids re-tessellating the path set each frame; the
+// editor is fixed-size, so the oversample is what covers hi-DPI backing stores.
+juce::Image loadVectorImage (const void* data, size_t size, juce::Rectangle<int> target, int oversample = 4)
+{
+    std::unique_ptr<juce::Drawable> drawable (juce::Drawable::createFromImageData (data, size));
+
+    if (drawable == nullptr)
+        return {};
+
+    juce::Image image { juce::Image::ARGB,
+                        target.getWidth() * oversample,
+                        target.getHeight() * oversample,
+                        true };
+    juce::Graphics g { image };
+    drawable->drawWithin (g, image.getBounds().toFloat(), juce::RectanglePlacement::centred, 1.0f);
+    return image;
+}
+
 struct PedalArtwork
 {
     juce::Image background { loadImage (BinaryData::pedal_background_png, BinaryData::pedal_background_pngSize) };
-    juce::Image logo { loadImage (BinaryData::brand_logo_png, BinaryData::brand_logo_pngSize) };
+    juce::Image logo { loadVectorImage (BinaryData::brand_logo_svg,
+                                        static_cast<size_t> (BinaryData::brand_logo_svgSize),
+                                        facelayout::kLogo) };
     juce::Image preset { loadImage (BinaryData::preset_field_png, BinaryData::preset_field_pngSize) };
     juce::Image load { loadImage (BinaryData::preset_load_png, BinaryData::preset_load_pngSize) };
     juce::Image save { loadImage (BinaryData::preset_save_png, BinaryData::preset_save_pngSize) };

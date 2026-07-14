@@ -85,7 +85,7 @@ juce_add_binary_data(SendBloomPresets
         resources/presets/Hot_Clip.xml
         resources/ui/knob.png
         resources/ui/pedal_background.png
-        resources/ui/brand_logo.png
+        resources/ui/brand_logo.svg
         resources/ui/preset_field.png
         resources/ui/preset_load.png
         resources/ui/preset_save.png
