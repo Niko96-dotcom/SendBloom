@@ -115,6 +115,12 @@ target_compile_definitions(EditorSnapshot PRIVATE
     JUCE_MODAL_LOOPS_PERMITTED=1)
 target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 
+add_executable(SvgSnapshot tools/SvgSnapshot.cpp)
+target_compile_features(SvgSnapshot PRIVATE cxx_std_20)
+target_compile_definitions(SvgSnapshot PRIVATE
+    $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_link_libraries(SvgSnapshot PRIVATE SharedCode)
+
 # include(PamplejuceIPP)
 
 include(Tests)
