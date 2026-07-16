@@ -83,17 +83,9 @@ juce_add_binary_data(SendBloomPresets
         resources/presets/Firm_Pressure.xml
         resources/presets/Gated_Room.xml
         resources/presets/Hot_Clip.xml
-        resources/ui/knob.png
-        resources/ui/pedal_background.png
-        resources/ui/brand_logo.svg
-        resources/ui/preset_field.png
-        resources/ui/preset_load.png
-        resources/ui/preset_save.png
-        resources/ui/knob_input.png
-        resources/ui/knob_size.png
-        resources/ui/knob_level.png
-        resources/ui/knob_distortion.png
-        resources/ui/knob_output.png
+        resources/ui/knob_large_strip.png
+        resources/ui/knob_small_strip.png
+        resources/ui/pedal_background.jpg
         resources/ui/dark_off.png
         resources/ui/dark_on.png
         resources/ui/gate_pre.png

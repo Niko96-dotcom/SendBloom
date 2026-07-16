@@ -6,12 +6,23 @@
 namespace sendbloom::ui
 {
 
-/** Single source of truth for the 420x780 faceplate layout. The painter draws the
-    photographed artwork at these rectangles and the editor parks its invisible
-    hit-targets on the same ones, so art and interaction cannot drift apart.
+/** Exact 2x2 box average, alpha-weighted. Use this (not Graphics resampling)
+    to derive standard-DPI variants of the 2x renders: JUCE's high-quality
+    resampler low-pass filters a 2:1 downscale hard enough to erase the
+    ~2 px enamel stipple and film grain the art carries. */
+juce::Image boxHalveImage (const juce::Image& source);
 
-    The background photo is cropped so the pedal fills the frame; the usable white
-    plate spans roughly x 38..383, y 60..702 with its centreline at x = 210. */
+/** True when `g` maps logical px to >= 1.5 physical px (a hi-DPI backing
+    store), i.e. 2x art will be drawn near 1:1 rather than downscaled. */
+bool wantsHiResArt (juce::Graphics& g);
+
+/** Single source of truth for the 420x780 faceplate layout. The painter draws the
+    path-traced artwork (tools/render_ui.py) at these rectangles and the editor
+    parks its invisible hit-targets on the same ones, so art and interaction
+    cannot drift apart.
+
+    The background render fills the editor frame exactly; the usable white
+    plate spans x 38..383, y 60..702 with its centreline at x = 210. */
 namespace facelayout
 {
     constexpr int kFaceCentreX = 210;
@@ -23,7 +34,10 @@ namespace facelayout
     // Full nameplate incl. its chrome rim (aspect ~4.8:1); sits between the top screws.
     inline const juce::Rectangle<int> kLogo { 85, 70, 250, 52 };
 
-    inline const juce::Rectangle<int> kPresetField { 54, 134, 232, 32 };
+    // Taller than the photographed field was: the vector nameplate is a chunkier
+    // 5.5:1, so the rect follows the art rather than squashing it. Kept centred
+    // on y=150 so the preset text and the load/save buttons stay put.
+    inline const juce::Rectangle<int> kPresetField { 54, 129, 232, 42 };
     inline const juce::Rectangle<int> kPresetText { 70, 134, 186, 32 };
     inline const juce::Rectangle<int> kPresetLoad { 294, 136, 30, 29 };
     inline const juce::Rectangle<int> kPresetSave { 332, 136, 27, 29 };
@@ -85,7 +99,8 @@ void paintPedalFaceplate (juce::Graphics& g,
                           bool clipActive,
                           bool advancedExpanded,
                           bool padPressed = false,
-                          float padDisplayAmount = 0.0f);
+                          float padDisplayAmount = 0.0f,
+                          float footTravel = -1.0f);
 
 /** Drawn from the editor's paintOverChildren: dims the whole scene when dark mode
     is engaged (children included) and re-draws the emissive clip lamp above the

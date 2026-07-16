@@ -154,7 +154,8 @@ void PluginEditor::paint (juce::Graphics& g)
                              processorRef.isClipHoldActive(),
                              advancedDrawer.isExpanded(),
                              pressurePad.isPressed(),
-                             pressurePad.getDisplayAmount());
+                             pressurePad.getDisplayAmount(),
+                             pressurePad.getPressTravel());
 
     // The photographed face owns the preset field; the editor supplies its live text.
     const auto presetName = processorRef.getCurrentProgramDisplayName().toUpperCase();

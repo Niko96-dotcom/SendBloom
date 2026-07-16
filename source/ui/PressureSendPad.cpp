@@ -1,7 +1,18 @@
 #include "PressureSendPad.h"
+#include "PedalFaceplatePaint.h"
 
 namespace sendbloom::ui
 {
+
+namespace
+{
+// Smoothstep. Takes the linear ramp off both ends so the cap settles rather
+// than arriving at full speed.
+float ease (float t) noexcept
+{
+    return t * t * (3.0f - 2.0f * t);
+}
+} // namespace
 
 PressureSendPad::PressureSendPad (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& connectedParamId,
@@ -25,6 +36,7 @@ void PressureSendPad::mouseDown (const juce::MouseEvent& e)
     setConnected (true);
     beginAmountGesture();
     setAmountFromY (e.position.y);
+    startTimerHz (60); // drive the cap down
     if (auto* parent = getParentComponent())
         parent->repaint();
 }
@@ -59,15 +71,63 @@ void PressureSendPad::mouseUp (const juce::MouseEvent&)
 
 void PressureSendPad::timerCallback()
 {
-    const auto elapsed = juce::Time::getMillisecondCounterHiRes() - fadeStartTimeMs;
-    const auto progress = juce::jlimit (0.0, 1.0, elapsed / static_cast<double> (kBloomFadeMs));
-    displayAmount = fadeStartAmount * static_cast<float> (1.0 - progress);
+    const auto now = juce::Time::getMillisecondCounterHiRes();
+
+    if (fadeActive)
+    {
+        const auto progress = juce::jlimit (0.0, 1.0, (now - fadeStartTimeMs)
+                                                          / static_cast<double> (kBloomFadeMs));
+        displayAmount = fadeStartAmount * static_cast<float> (1.0 - progress);
+
+        if (progress >= 1.0)
+        {
+            fadeActive = false;
+            displayAmount = 0.0f;
+        }
+    }
+
+    // Re-target every frame: the switch should stay down for as long as the
+    // overlay predicate says the send is live, which outlasts the mouse by the
+    // length of the bloom fade. Only once that clears does the cap spring back.
+    retargetTravel();
+    const auto travelling = advanceTravel (now);
 
     if (auto* parent = getParentComponent())
         parent->repaint();
 
-    if (progress >= 1.0)
-        stopBloomFade();
+    if (! fadeActive && ! travelling)
+        stopTimer();
+}
+
+void PressureSendPad::retargetTravel()
+{
+    const auto amountNorm = amountParam != nullptr ? amountParam->getValue() : 0.0f;
+    const auto target = shouldDrawFootswitchPressedOverlay (pressed, displayAmount, amountNorm)
+                          ? 1.0f
+                          : 0.0f;
+
+    if (target == travelTarget)
+        return;
+
+    travelFrom = pressTravel;
+    travelTarget = target;
+    travelStartMs = juce::Time::getMillisecondCounterHiRes();
+    travelDurationMs = target > pressTravel ? kPressDownMs : kPressUpMs;
+}
+
+/** Advances the eased travel; returns true while there is still travel to do. */
+bool PressureSendPad::advanceTravel (double nowMs)
+{
+    if (travelDurationMs <= 0)
+    {
+        pressTravel = travelTarget;
+        return false;
+    }
+
+    const auto progress = juce::jlimit (0.0, 1.0, (nowMs - travelStartMs)
+                                                      / static_cast<double> (travelDurationMs));
+    pressTravel = travelFrom + (travelTarget - travelFrom) * ease (static_cast<float> (progress));
+    return progress < 1.0;
 }
 
 void PressureSendPad::setConnected (bool connected)
@@ -110,17 +170,22 @@ void PressureSendPad::startBloomFade()
     if (displayAmount <= 0.001f)
     {
         displayAmount = 0.0f;
-        return;
+        fadeActive = false;
+    }
+    else
+    {
+        fadeStartAmount = displayAmount;
+        fadeStartTimeMs = juce::Time::getMillisecondCounterHiRes();
+        fadeActive = true;
     }
 
-    fadeStartAmount = displayAmount;
-    fadeStartTimeMs = juce::Time::getMillisecondCounterHiRes();
+    // Run regardless of the fade: the cap still has to travel back up.
     startTimerHz (60);
 }
 
 void PressureSendPad::stopBloomFade()
 {
-    stopTimer();
+    fadeActive = false;
     displayAmount = 0.0f;
 }
 

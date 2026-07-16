@@ -93,6 +93,7 @@ int main (int argc, char* argv[])
     editor.paintEntireComponent (g, true);
 
     juce::PNGImageFormat format;
+    output.deleteFile(); // FileOutputStream appends; a stale first PNG stream would mask every new snapshot
     juce::FileOutputStream stream (output);
     if (! stream.openedOk() || ! format.writeImageToStream (image, stream))
         return 1;

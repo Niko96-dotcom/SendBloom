@@ -34,21 +34,38 @@ class Finding:
 
 
 def element_index(text):
-    """Map id -> tag name for every element carrying an id."""
-    index = {}
+    """Map id -> tag name for every element carrying an id.
+
+    First occurrence wins, mirroring JUCE: applyOperationToChildWithID walks
+    depth-first and returns on the first id match. Ids are supposed to be
+    unique, but when they are not, this is the one JUCE actually resolves to.
+    """
+    index, duplicates = {}, set()
     for m in re.finditer(r"<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>", text):
         tag, attrs = m.group(1), m.group(2)
         mid = ID_RE.search(attrs)
         if mid:
-            index[mid.group(1)] = tag
-    return index
+            key = mid.group(1)
+            if key in index:
+                duplicates.add(key)
+            else:
+                index[key] = tag
+    return index, duplicates
 
 
 def analyse(path):
     text = path.read_text(errors="replace")
     findings = []
     tags = Counter(TAG_RE.findall(text))
-    index = element_index(text)
+    index, duplicate_ids = element_index(text)
+
+    # Duplicate ids are invalid SVG and render-order-dependent: JUCE takes the
+    # first in document order, other renderers may not. Whatever it resolves to
+    # today, it is one reordering away from resolving to something else.
+    for key in sorted(duplicate_ids):
+        findings.append(Finding("WARN", "duplicate-id",
+                                f'id="{key}" declared more than once; JUCE binds the first '
+                                f"(<{index.get(key)}>) — fragile"))
 
     # 1. Unsupported elements: parseSubElement() returns nullptr -> dropped.
     #    A <symbol>/<pattern> sitting in <defs> is inert and harmless on its own

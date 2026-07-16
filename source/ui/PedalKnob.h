@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PedalFaceplatePaint.h"
 #include "TransparentControls.h"
 
 #include <BinaryData.h>
@@ -9,13 +10,18 @@
 namespace sendbloom::ui
 {
 
-/** Photographed rotary control: a square knob crop that rotates with the value,
-    plus a caption strip underneath. The strip shows the control's name and swaps
-    to the live value while the knob is hovered or dragged. */
+/** Path-traced rotary control: a vertical filmstrip (one frame per pointer
+    angle, rendered by tools/render_ui.py in the faceplate's light rig) plus a
+    caption strip underneath. The strip shows the control's name and swaps to
+    the live value while the knob is hovered or dragged.
+
+    The knob never rotates an image. Each frame was lit for its own pointer
+    angle, so the room's reflection stays put while the pointer moves — which
+    is why this class has no hand-painted shading pass any more. */
 class PedalKnob : public juce::Component
 {
 public:
-    PedalKnob (juce::String labelText, const void* imageData = nullptr, size_t imageSize = 0)
+    PedalKnob (juce::String labelText, const void* stripData = nullptr, size_t stripSize = 0)
         : labelName (std::move (labelText))
     {
         slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
@@ -28,7 +34,8 @@ public:
         slider.onValueChange = [this] { repaint(); };
         addAndMakeVisible (slider);
 
-        knobImage = loadKnobImage (imageData, imageSize);
+        strip = loadStrip (stripData, stripSize);
+        stripLo = boxHalveImage (strip);
     }
 
     ~PedalKnob() override
@@ -41,7 +48,6 @@ public:
     void paintOverChildren (juce::Graphics& g) override
     {
         paintKnob (g);
-        paintShading (g);
         paintCaption (g);
     }
 
@@ -75,100 +81,49 @@ public:
     }
 
 private:
-    static juce::Image loadKnobImage (const void* imageData, size_t imageSize)
+    static juce::Image loadStrip (const void* data, size_t size)
     {
-        auto image = imageData != nullptr && imageSize > 0
-                   ? juce::ImageFileFormat::loadFrom (imageData, imageSize)
-                   : juce::Image();
+        auto image = juce::ImageFileFormat::loadFrom (data, size);
         if (! image.isValid())
             image = juce::ImageFileFormat::loadFrom (
-                juce::File::getCurrentWorkingDirectory().getChildFile ("resources/ui/knob.png"));
-        if (! image.isValid())
-            image = juce::ImageFileFormat::loadFrom (BinaryData::knob_png,
-                                                     static_cast<size_t> (BinaryData::knob_pngSize));
+                BinaryData::knob_large_strip_png,
+                static_cast<size_t> (BinaryData::knob_large_strip_pngSize));
         return image;
     }
 
     // Knob square is as wide as the component; whatever height remains is the caption strip.
     int knobSize() const noexcept { return juce::jmin (getWidth(), getHeight()); }
 
-    void paintKnob (juce::Graphics& g)
+    int frameCount() const noexcept
     {
-        if (! knobImage.isValid())
-            return;
-
-        const auto bounds = slider.getBounds().toFloat();
-        juce::Graphics::ScopedSaveState clip (g);
-        g.reduceClipRegion (slider.getBounds());
-
-        const auto params = slider.getRotaryParameters();
-        const auto t = static_cast<float> (slider.valueToProportionOfLength (slider.getValue()));
-        const auto angle = params.startAngleRadians
-                         + t * (params.endAngleRadians - params.startAngleRadians);
-
-        g.addTransform (juce::AffineTransform::rotation (angle, bounds.getCentreX(), bounds.getCentreY()));
-        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
-        g.drawImage (knobImage, bounds, juce::RectanglePlacement::centred, false);
+        return strip.isValid() ? juce::jmax (1, strip.getHeight() / strip.getWidth()) : 0;
     }
 
-    // Relight the rotated photo under the plate's fixed upper-left key light, so the
-    // cap reads as a curved, machined object instead of a flat spinning disc. The
-    // shading is drawn unrotated (component space), so the light stays put while the
-    // photo spins beneath it.
-    void paintShading (juce::Graphics& g)
+    void paintKnob (juce::Graphics& g)
     {
-        const auto sb = slider.getBounds().toFloat();
-        const auto circle = sb.reduced (sb.getWidth() * 0.06f);
-        const auto c = circle.getCentre();
-        const auto r = circle.getWidth() * 0.5f;
+        const auto frames = frameCount();
+        if (frames == 0)
+            return;
 
-        // Shared key light (see lighting::toLight): upper-left.
-        const juce::Point<float> L (-0.55f, -0.83f);
-        const juce::Point<float> lit  (c.x + L.x * r, c.y + L.y * r);
-        const juce::Point<float> dark (c.x - L.x * r, c.y - L.y * r);
+        const auto t = slider.valueToProportionOfLength (slider.getValue());
+        const auto frame = juce::roundToInt (juce::jlimit (0.0, 1.0, t) * (frames - 1));
 
-        juce::Graphics::ScopedSaveState clip (g);
-        juce::Path circ;
-        circ.addEllipse (circle);
-        g.reduceClipRegion (circ);
+        // Standard-DPI contexts get the box-halved strip drawn 1:1; JUCE's own
+        // 2:1 resampling would blur away the cap's machined micro-texture.
+        const auto& art = wantsHiResArt (g) ? strip : stripLo;
+        const auto side = art.getWidth();
 
-        // Diagonal form light: bright toward the light, shaded away from it.
-        juce::ColourGradient form (juce::Colours::white.withAlpha (0.18f), lit.x, lit.y,
-                                   juce::Colours::black.withAlpha (0.30f), dark.x, dark.y, false);
-        form.addColour (0.5, juce::Colours::transparentBlack);
-        g.setGradientFill (form);
-        g.fillEllipse (circle);
-
-        // Warm bounce: the orange plate reflects up the shaded lower-right rim.
-        juce::ColourGradient warm (juce::Colours::transparentBlack, c.x, c.y,
-                                   juce::Colour (0xffe66c0b).withAlpha (0.14f), dark.x, dark.y, false);
-        g.setGradientFill (warm);
-        g.fillEllipse (circle);
-
-        // Crisp specular hotspot on the light-facing shoulder. Kept out toward the
-        // rim (fades to nothing before the hub) so the cap's dark centre stays dark.
-        const juce::Point<float> spec (c.x + L.x * r * 0.56f, c.y + L.y * r * 0.56f);
-        juce::ColourGradient hot (juce::Colours::white.withAlpha (0.30f), spec.x, spec.y,
-                                  juce::Colours::transparentWhite, spec.x, spec.y + r * 0.46f, true);
-        g.setGradientFill (hot);
-        g.fillEllipse (circle);
-
-        // Machined rim: a bright arc where the light grazes the edge, a dark one
-        // opposite — the ambient-occlusion seam that plants the cap.
-        g.setColour (juce::Colours::white.withAlpha (0.20f));
-        juce::Path rimLit;
-        rimLit.addCentredArc (c.x, c.y, r - 1.0f, r - 1.0f, 0.0f, -2.5f, -0.4f, true);
-        g.strokePath (rimLit, juce::PathStrokeType (1.5f));
-        g.setColour (juce::Colours::black.withAlpha (0.32f));
-        juce::Path rimDark;
-        rimDark.addCentredArc (c.x, c.y, r - 1.0f, r - 1.0f, 0.0f, 0.6f, 2.7f, true);
-        g.strokePath (rimDark, juce::PathStrokeType (1.5f));
+        const auto bounds = slider.getBounds();
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (art,
+                     bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(),
+                     0, frame * side, side, side);
     }
 
     void paintCaption (juce::Graphics& g)
     {
-        const auto strip = getLocalBounds().withTop (knobSize());
-        if (strip.isEmpty())
+        const auto strip_ = getLocalBounds().withTop (knobSize());
+        if (strip_.isEmpty())
             return;
 
         const auto showValue = slider.isMouseOverOrDragging();
@@ -177,10 +132,10 @@ private:
         if (engravedCaption)
         {
             g.setColour (juce::Colours::white.withAlpha (0.30f));
-            g.drawText (text, strip.translated (0, 1), juce::Justification::centred, false);
+            g.drawText (text, strip_.translated (0, 1), juce::Justification::centred, false);
         }
         g.setColour ((showValue ? valueColour : labelColour).withAlpha (0.94f));
-        g.drawText (text, strip, juce::Justification::centred, false);
+        g.drawText (text, strip_, juce::Justification::centred, false);
     }
 
     juce::String labelName;
@@ -190,7 +145,8 @@ private:
     bool engravedCaption { true };
     TransparentControlsLookAndFeel transparentLnf;
     juce::Slider slider;
-    juce::Image knobImage;
+    juce::Image strip;
+    juce::Image stripLo;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PedalKnob)
 };

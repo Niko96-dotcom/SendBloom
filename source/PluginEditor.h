@@ -36,13 +36,13 @@ private:
 
     juce::Label titleLabel;
     juce::ComboBox presetBox;
-    // One knob style across the plate: the graphite cap with the bright steel
-    // pointer is the most legible of the photographed set once it rotates.
-    ui::PedalKnob inKnob { "INPUT", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
-    ui::PedalKnob sizeKnob { "SIZE", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
-    ui::PedalKnob lvlKnob { "LEVEL", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
-    ui::PedalKnob distnKnob { "DISTORTION", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
-    ui::PedalKnob outKnob { "OUTPUT", BinaryData::knob_size_png, BinaryData::knob_size_pngSize };
+    // One knob style across the plate: each size has a path-traced filmstrip,
+    // one frame per pointer angle, lit in the faceplate's own light rig.
+    ui::PedalKnob inKnob { "INPUT", BinaryData::knob_small_strip_png, BinaryData::knob_small_strip_pngSize };
+    ui::PedalKnob sizeKnob { "SIZE", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
+    ui::PedalKnob lvlKnob { "LEVEL", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
+    ui::PedalKnob distnKnob { "DISTORTION", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
+    ui::PedalKnob outKnob { "OUTPUT", BinaryData::knob_small_strip_png, BinaryData::knob_small_strip_pngSize };
     juce::ToggleButton darkToggle { "Dark" };
     juce::ToggleButton gateToggle { "Gate Post" };
     ui::ClipLed clipLed;
