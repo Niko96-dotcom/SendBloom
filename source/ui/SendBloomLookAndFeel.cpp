@@ -80,6 +80,40 @@ void SendBloomLookAndFeel::drawToggleButton (juce::Graphics& g, juce::ToggleButt
     const auto text = button.getButtonText();
     auto bounds = button.getLocalBounds().toFloat().reduced (2.0f);
 
+    // Compact software switches in the Advanced drawer deliberately carry no
+    // text: their labels live beside them. Give that family a real horizontal
+    // track and travelling thumb instead of squeezing the full-size generic
+    // toggle into a near-circular 24 px box.
+    if (button.getComponentID().startsWith ("advanced-toggle-"))
+    {
+        const auto on = button.getToggleState();
+        const auto body = bounds.reduced (0.0f, 1.0f);
+        const auto radius = body.getHeight() * 0.5f;
+        g.setColour (juce::Colour (0xff070706));
+        g.fillRoundedRectangle (body, radius);
+        g.setColour ((on ? juce::Colour (0xffe66c0b)
+                         : juce::Colour (0xff8c826f)).withAlpha (0.82f));
+        g.drawRoundedRectangle (body, radius, 1.2f);
+
+        const auto track = body.reduced (3.0f);
+        g.setColour (on ? juce::Colour (0xff6f2b08) : juce::Colour (0xff24211d));
+        g.fillRoundedRectangle (track, track.getHeight() * 0.5f);
+
+        const auto thumbDiameter = track.getHeight();
+        const auto thumbX = on ? track.getRight() - thumbDiameter : track.getX();
+        const auto thumb = juce::Rectangle<float> (thumbX, track.getY(),
+                                                    thumbDiameter, thumbDiameter);
+        juce::ColourGradient metal (juce::Colour (0xffeee5cf),
+                                    thumb.getX(), thumb.getY(),
+                                    juce::Colour (0xff716959),
+                                    thumb.getRight(), thumb.getBottom(), false);
+        g.setGradientFill (metal);
+        g.fillEllipse (thumb);
+        g.setColour (juce::Colours::white.withAlpha (0.30f));
+        g.drawEllipse (thumb.reduced (1.0f), 0.8f);
+        return;
+    }
+
     if (text.startsWithIgnoreCase ("Dark"))
     {
         const auto down = button.getToggleState() || shouldDrawButtonAsDown;

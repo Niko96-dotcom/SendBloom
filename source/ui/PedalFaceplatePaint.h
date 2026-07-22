@@ -9,7 +9,7 @@ namespace sendbloom::ui
 /** Exact 2x2 box average, alpha-weighted. Use this (not Graphics resampling)
     to derive standard-DPI variants of the 2x renders: JUCE's high-quality
     resampler low-pass filters a 2:1 downscale hard enough to erase the
-    ~2 px enamel stipple and film grain the art carries. */
+    ~2 px powder-coat relief and film grain the art carries. */
 juce::Image boxHalveImage (const juce::Image& source);
 
 /** True when `g` maps logical px to >= 1.5 physical px (a hi-DPI backing
@@ -21,13 +21,13 @@ bool wantsHiResArt (juce::Graphics& g);
     parks its invisible hit-targets on the same ones, so art and interaction
     cannot drift apart.
 
-    The background render fills the editor frame exactly; the usable white
+    The background render fills the editor frame exactly; the black wrinkle
     plate spans x 38..383, y 60..702 with its centreline at x = 210. */
 namespace facelayout
 {
     constexpr int kFaceCentreX = 210;
 
-    // The visible white plate (inside the chassis lip) after the background crop.
+    // The visible powder-coated plate (inside the chassis lip) after the background crop.
     inline const juce::Rectangle<float> kPlate { 38.0f, 60.0f, 345.0f, 642.0f };
     constexpr float kPlateCornerRadius = 19.0f;
 
@@ -40,7 +40,7 @@ namespace facelayout
     inline const juce::Rectangle<int> kPresetField { 54, 129, 232, 42 };
     inline const juce::Rectangle<int> kPresetText { 70, 134, 186, 32 };
     inline const juce::Rectangle<int> kPresetLoad { 294, 136, 30, 29 };
-    inline const juce::Rectangle<int> kPresetSave { 332, 136, 27, 29 };
+    inline const juce::Rectangle<int> kPresetSave { 331, 136, 30, 29 };
 
     // Voice row: three matched knobs, signal order left to right.
     constexpr int kKnobLarge = 84;
@@ -59,16 +59,17 @@ namespace facelayout
     // Hardware row: dark-mode button and pre/post gate toggle.
     inline const juce::Rectangle<int> kDarkButton { 84, 438, 74, 74 };
     inline const juce::Rectangle<int> kGateTitle { 262, 414, 76, 14 };
-    inline const juce::Rectangle<int> kGatePre { 262, 430, 76, 12 };
+    // State legends sit beside the lever's sweep, never underneath it.
+    inline const juce::Rectangle<int> kGatePre { 232, 453, 36, 12 };
     inline const juce::Rectangle<int> kGateSwitch { 272, 444, 56, 62 };
-    inline const juce::Rectangle<int> kGatePost { 262, 508, 76, 12 };
+    inline const juce::Rectangle<int> kGatePost { 228, 487, 40, 12 };
     inline const juce::Rectangle<int> kGateHitBox { 258, 414, 84, 106 };
 
     inline const juce::Rectangle<int> kPressureLabel { 135, 528, 150, 14 };
     inline const juce::Rectangle<int> kFootswitch { 138, 546, 144, 145 };
 
-    inline const juce::Rectangle<int> kAdvancedLabel { 264, 654, 94, 18 };
-    inline const juce::Rectangle<int> kAdvancedHitBox { 258, 642, 100, 38 };
+    inline const juce::Rectangle<int> kAdvancedLabel { 246, 650, 106, 18 };
+    inline const juce::Rectangle<int> kAdvancedHitBox { 242, 638, 116, 38 };
     inline const juce::Rectangle<int> kAdvancedDrawer { 214, 476, 168, 204 };
 } // namespace facelayout
 

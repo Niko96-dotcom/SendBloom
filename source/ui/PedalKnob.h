@@ -12,8 +12,8 @@ namespace sendbloom::ui
 
 /** Path-traced rotary control: a vertical filmstrip (one frame per pointer
     angle, rendered by tools/render_ui.py in the faceplate's light rig) plus a
-    caption strip underneath. The strip shows the control's name and swaps to
-    the live value while the knob is hovered or dragged.
+    screen-printed caption underneath. The strip shows the control's name and
+    swaps to the live value while the knob is hovered or dragged.
 
     The knob never rotates an image. Each frame was lit for its own pointer
     angle, so the room's reflection stays put while the pointer moves — which
@@ -31,6 +31,14 @@ public:
                                     true);
         slider.setLookAndFeel (&transparentLnf);
         slider.setOpaque (false);
+        slider.setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
+        slider.setMouseDragSensitivity (240);
+        slider.setVelocityModeParameters (0.18, 1, 0.0, true,
+                                          juce::ModifierKeys::shiftModifier);
+        slider.setScrollWheelEnabled (true);
+        slider.setWantsKeyboardFocus (true);
+        slider.setTooltip (labelName + ": drag vertically, Shift-drag for fine control, "
+                           "or Option-click/double-click to reset");
         slider.onValueChange = [this] { repaint(); };
         addAndMakeVisible (slider);
 
@@ -65,6 +73,11 @@ public:
     }
 
     void setRangeText (juce::String, juce::String) {}
+
+    void setDefaultValue (double value)
+    {
+        slider.setDoubleClickReturnValue (true, value);
+    }
 
     void setValueFormatter (std::function<juce::String (double)> formatter)
     {
@@ -128,19 +141,23 @@ private:
 
         const auto showValue = slider.isMouseOverOrDragging();
         const auto text = showValue ? getDisplayValue() : labelName.toUpperCase();
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+        // Pedal legends are compact ivory pad-print on the wrinkle enclosure.
+        auto font = juce::Font (juce::FontOptions (10.0f, juce::Font::bold));
+        font.setHorizontalScale (0.86f);
+        font.setExtraKerningFactor (0.035f);
+        g.setFont (font);
         if (engravedCaption)
         {
-            g.setColour (juce::Colours::white.withAlpha (0.30f));
+            g.setColour (juce::Colours::black.withAlpha (0.44f));
             g.drawText (text, strip_.translated (0, 1), juce::Justification::centred, false);
         }
-        g.setColour ((showValue ? valueColour : labelColour).withAlpha (0.94f));
+        g.setColour ((showValue ? valueColour : labelColour).withAlpha (0.91f));
         g.drawText (text, strip_, juce::Justification::centred, false);
     }
 
     juce::String labelName;
     std::function<juce::String (double)> valueFormatter;
-    juce::Colour labelColour { 0xff161413 };
+    juce::Colour labelColour { 0xffddd3b7 };
     juce::Colour valueColour { 0xffe66c0b };
     bool engravedCaption { true };
     TransparentControlsLookAndFeel transparentLnf;

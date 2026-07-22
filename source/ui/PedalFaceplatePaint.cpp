@@ -50,7 +50,7 @@ const PedalArtwork& artwork()
     return images;
 }
 
-const auto kInk = juce::Colour (0xff161413);
+const auto kInk = juce::Colour (0xffddd3b7);
 const auto kOrange = juce::Colour (0xffe66c0b);
 
 // Overlay draw rects. Each matches the render crop in tools/render_ui.py
@@ -106,21 +106,21 @@ const juce::Image& drawerShadowImage()
     return image;
 }
 
-// Labels are stamped into the enamel: the light-facing (upper-left) inner wall of
-// each glyph falls into shadow, and the opposite (lower-right) lip catches a
-// highlight. Drawing both around the ink reads as debossed, not printed.
+// Runtime labels must stay dynamic, but should share the physical plate's visual
+// language. A tiny dark registration shadow plus dry ivory top coat reads as
+// pad-print on black wrinkle powder rather than digitally embossed text.
 void drawEngravedText (juce::Graphics& g, const juce::String& text,
                        juce::Rectangle<int> area, float fontHeight, juce::Colour ink,
                        juce::Justification justification = juce::Justification::centred)
 {
-    g.setFont (juce::FontOptions (fontHeight, juce::Font::bold));
+    auto font = juce::Font (juce::FontOptions (fontHeight, juce::Font::bold));
+    font.setHorizontalScale (0.86f);       // compact industrial pad-print proportion
+    font.setExtraKerningFactor (0.035f);   // open counters after condensing
+    g.setFont (font);
 
-    g.setColour (juce::Colours::white.withAlpha (0.32f));
-    g.drawText (text, area.translated (1, 1), justification, false);   // lit lower-right lip
-    g.setColour (juce::Colours::black.withAlpha (0.22f));
-    g.drawText (text, area.translated (-1, -1), justification, false); // shaded upper-left wall
-
-    g.setColour (ink);
+    g.setColour (juce::Colours::black.withAlpha (0.44f));
+    g.drawText (text, area.translated (0, 1), justification, false);
+    g.setColour (ink.withMultipliedAlpha (0.92f));
     g.drawText (text, area, justification, false);
 }
 
@@ -155,8 +155,12 @@ void drawGateMarkings (juce::Graphics& g, bool postGate)
     using namespace facelayout;
 
     drawEngravedText (g, "GATE", kGateTitle, 12.0f, kInk.withAlpha (0.94f));
-    drawEngravedText (g, "PRE", kGatePre, 10.5f, postGate ? kInk.withAlpha (0.38f) : kOrange);
-    drawEngravedText (g, "POST", kGatePost, 10.5f, postGate ? kOrange : kInk.withAlpha (0.38f));
+    drawEngravedText (g, "PRE", kGatePre, 10.5f,
+                      postGate ? kInk.withAlpha (0.38f) : kOrange,
+                      juce::Justification::centredRight);
+    drawEngravedText (g, "POST", kGatePost, 10.5f,
+                      postGate ? kOrange : kInk.withAlpha (0.38f),
+                      juce::Justification::centredRight);
 }
 
 void drawClipLamp (juce::Graphics& g, const PedalArtwork& art, bool active, bool darkRoom)
@@ -167,12 +171,23 @@ void drawClipLamp (juce::Graphics& g, const PedalArtwork& art, bool active, bool
     {
         // The bloom around the lens is live (it brightens in a dimmed room),
         // so it stays a runtime pass; the lit lens itself is the rendered
-        // emissive dome in clip_on.
+        // emissive dome in clip_on. Radial falloff avoids the two flat colour
+        // discs that used to make the lamp look like a UI target reticle.
         const auto boost = darkRoom ? 1.6f : 1.0f;
-        g.setColour (juce::Colour (0xffff2a20).withAlpha (juce::jmin (0.9f, 0.28f * boost)));
-        g.fillEllipse (lens.expanded (5.0f));
-        g.setColour (juce::Colour (0xffff5a43).withAlpha (juce::jmin (0.6f, 0.10f * boost)));
-        g.fillEllipse (lens.expanded (darkRoom ? 18.0f : 12.0f));
+        const auto centre = lens.getCentre();
+        const auto outer = lens.expanded (darkRoom ? 15.0f : 11.0f);
+        juce::ColourGradient outerGlow (
+            juce::Colour (0xffff3b28).withAlpha (juce::jmin (0.48f, 0.19f * boost)), centre,
+            juce::Colours::transparentBlack, { outer.getRight(), centre.y }, true);
+        g.setGradientFill (outerGlow);
+        g.fillEllipse (outer);
+
+        const auto inner = lens.expanded (5.0f);
+        juce::ColourGradient innerGlow (
+            juce::Colour (0xffff8a61).withAlpha (juce::jmin (0.62f, 0.30f * boost)), centre,
+            juce::Colours::transparentBlack, { inner.getRight(), centre.y }, true);
+        g.setGradientFill (innerGlow);
+        g.fillEllipse (inner);
     }
 
     drawImage (g, active ? art.clipOn : art.clipOff, kClipArt);
@@ -284,7 +299,8 @@ void paintPedalFaceplate (juce::Graphics& g,
 
     drawGateMarkings (g, postGate);
     drawEngravedText (g, "CLIP", kClipLabel, 10.0f, kInk.withAlpha (0.94f));
-    drawEngravedText (g, "PRESSURE SEND", kPressureLabel, 11.5f, kOrange);
+    if (! advancedExpanded)
+        drawEngravedText (g, "PRESSURE SEND", kPressureLabel, 11.5f, kOrange);
 
     if (advancedExpanded)
     {

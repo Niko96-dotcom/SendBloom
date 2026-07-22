@@ -11,12 +11,19 @@ cheaply check — but do check before contradicting it.
 
 ## The job
 
-SendBloom is a guitar-pedal plugin. Its UI is currently vector and bitmap art
-composited at runtime, and it reads as **parts floating on a panel** rather than
-one photographed object. Fix that the way UAD, Waves and Soundtoys do: model the
-pedal in 3D, light it once, path-trace it, and ship the renders.
+SendBloom is a guitar-pedal plugin. Its UI began as vector and bitmap art
+composited at runtime, and it read as **parts floating on a panel** rather than
+one photographed object. Fix that by modelling the pedal in 3D, lighting it
+once, path-tracing it, and shipping the renders.
 
 Success is a faceplate where a stranger cannot tell which parts move.
+
+Photoreal does not mean pristine. The approved material direction is a used
+black-wrinkle stompbox on a scarred black workbench: dull exposed aluminium at
+edge impacts, directional scratches from fingers/picks/soles, abraded pad print,
+dirty metal, and two real instrument leads with side plugs. Author the decisive
+wear as deterministic macro geometry so it remains visible at the actual
+420×780 UI size; shader micro-noise alone is not an acceptable realism pass.
 
 ## Why the current UI floats — learn from these, they are paid-for lessons
 
@@ -46,8 +53,8 @@ hi-DPI, and let JUCE downscale.
 **Key light**: `lighting::toLight = { -0.55, -0.83 }` — upper-left, normalised-ish.
 Shadows fall lower-right. Every part shares this. Keep it.
 
-**Plate**: `kPlate { 38, 60, 345, 642 }`, corner radius 19. Cream, stippled
-texture. Centre line x = 210.
+**Plate**: `kPlate { 38, 60, 345, 642 }`, corner radius 19. Black wrinkle powder
+coat with warm-ivory worn pad print. Centre line x = 210.
 
 **Layout rects** (`source/ui/PedalFaceplatePaint.h`, namespace `facelayout`) —
 these are the contract; art must land on them exactly:
@@ -56,7 +63,7 @@ these are the contract; art must land on them exactly:
 |---|---|
 | Logo nameplate | 85, 70, 250, 52 |
 | Preset field | 54, 129, 232, 42 |
-| Preset load / save | 294,136,30,29 / 332,136,27,29 |
+| Preset load / save | 294,136,30,29 / 331,136,30,29 |
 | Knobs, large (x3) | DISTORTION 54,184 · SIZE 168,184 · LEVEL 282,184 — each **84 x 84** + 16 caption |
 | Knobs, small (x2) | INPUT 86,314 · OUTPUT 268,314 — each **66 x 66** + 16 caption |
 | Clip lens | 194, 328, 32, 32 |
@@ -70,6 +77,19 @@ Value 0 = 216°. **The art must point at 12 o'clock at rest.** This was wrong
 before (the art rested at -15.2°) and every reading was off by that much.
 
 **Colours**: ink `0xff161413`, orange accent `0xffe66c0b`.
+
+**Logo**: `resources/ui/brand_logo.svg` is the exact shape contract, not a
+texture. Import its paths and build the slanted nickel rim, recessed face,
+orange inlay, each N/i/k/o/F/X solid and the recessed orange o counter as scene
+geometry. Glyph tops sit one physical millimetre above the orange inlay. Never
+sample `brand_logo.png` in the Blender material.
+
+**Preset furniture**: keep only the selected preset name live in JUCE. Model
+the selector well, bezel, gasket, smoked-black insert, orange arrow and rails;
+model each button's
+well, carrier, gasket, cap, icon and legend as separate solids. Never sample
+`preset_field.png`, `preset_load.png` or `preset_save.png` in a Blender
+material.
 
 **Captions are drawn by the plugin** (`PedalKnob::paintCaption`, `drawEngravedText`).
 Never bake "SIZE", "INPUT", "VALUE", a preset name, or any lettering the host
@@ -101,8 +121,10 @@ instanced around the rim. Precision objects want parametric code, and code is
 reviewable, diffable and re-runnable. Text-to-3D tools make organic game assets
 and are the wrong instrument here.
 
-**Camera: orthographic, straight down.** No perspective — a plugin panel is a
-flat surface viewed square on. `cam.type = "ORTHO"`.
+**Camera: orthographic, pitched 13.5 degrees toward the front edge.** This reveals
+the dimensioned 31 mm enclosure and control sidewalls without perspective
+convergence. Apply the matching world-Y counter-scale so the z=0 control plane
+still projects to the exact 420×780 logical layout. `cam.type = "ORTHO"`.
 
 **Light once, physically.** Cold key upper-left (matching `toLight`), warm fill
 right, plus an HDRI so gloss catches something to reflect. Balance them; do not
@@ -159,10 +181,16 @@ plugin and look at it there.
 - **Never bake text the plugin draws.**
 - **Never rotate a single knob image.** That is the bug you are here to remove.
 - **One light rig for the whole scene.** No per-part cheats.
+- **Respect hardware keep-outs.** Printed frames, legends and wear may not cross
+  screw heads, bezels, lever sweeps or carriers. Check every moving state at 1×.
+- **Construct toggles as assemblies.** Include the recessed bore, dark gasket,
+  washer, bevelled locknut, threaded bushing, pivot and a genuinely pinchable
+  cap. Match the product's dark-dominant material family; reserve aged metal for
+  narrow structural highlights instead of making the entire control mirror chrome.
 - The art must land on the `facelayout` rects unchanged. If a rect genuinely has
   to move, say so and why — do not silently reflow the panel.
-- Keep the pedal recognisably SendBloom: warm cream plate, orange accent, Niko FX
-  nameplate. This is a re-render of an existing product, not a redesign.
+- Keep the pedal recognisably SendBloom: black wrinkle enclosure, warm-ivory
+  pad print, orange accent and Niko FX nameplate.
 - Report render times and file sizes. The last art pass took embedded assets from
   4.32 MB to 542 KB; do not casually undo that.
 

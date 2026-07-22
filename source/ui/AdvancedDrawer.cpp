@@ -13,6 +13,7 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
     addChildComponent (gateSensKnob);
     gateSensKnob.setLabelColour (juce::Colour (0xffe66c0b));
     gateSensKnob.setRangeText ("", "");
+    gateSensKnob.setDefaultValue (0.5);
     gateSensKnob.setValueFormatter ([] (double value)
     {
         // CORE-07: Gate Sens reports canonical threshold dB.
@@ -21,7 +22,7 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
 
     sendFeelLabel.setText ("SEND FEEL", juce::dontSendNotification);
     sendFeelLabel.setJustificationType (juce::Justification::centred);
-    sendFeelLabel.setColour (juce::Label::textColourId, juce::Colour (0xffe66c0b));
+    sendFeelLabel.setColour (juce::Label::textColourId, juce::Colour (0xffddd3b7));
     sendFeelLabel.setFont (juce::FontOptions (13.0f, juce::Font::bold));
     addChildComponent (sendFeelLabel);
 
@@ -37,9 +38,11 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
 
     pressureModeToggle.setTooltip ("Pressure Mode: when on, wet feed follows pressure; "
                                    "when off, reverb stays always-on.");
+    pressureModeToggle.setComponentID ("advanced-toggle-pressure");
     addChildComponent (pressureModeToggle);
 
     addChildComponent (extendedStereoToggle);
+    extendedStereoToggle.setComponentID ("advanced-toggle-stereo");
 
     extendedStereoToggle.setTooltip ("Preserve the original left/right dry image while sharing "
                                      "the mono wet return across both channels.");
@@ -67,15 +70,23 @@ void AdvancedDrawer::paint (juce::Graphics& g)
     panel.lineTo (2.0f, 14.0f);
     panel.closeSubPath();
 
-    g.setColour (juce::Colours::black);
+    juce::ColourGradient face (juce::Colour (0xff1a1714), 0.0f, 0.0f,
+                               juce::Colour (0xff070706), 0.0f, bounds.getBottom(), false);
+    g.setGradientFill (face);
     g.fillPath (panel);
-    g.setColour (juce::Colour (0xffe66c0b));
-    g.strokePath (panel, juce::PathStrokeType (4.0f));
+    g.setColour (juce::Colour (0xffb8aa8c).withAlpha (0.74f));
+    g.strokePath (panel, juce::PathStrokeType (1.5f));
+    g.setColour (juce::Colour (0xffe66c0b).withAlpha (0.78f));
+    g.strokePath (panel, juce::PathStrokeType (0.8f));
 
+    g.setColour (juce::Colour (0xffddd3b7));
+    g.setFont (juce::FontOptions (15.5f, juce::Font::bold));
+    g.drawText ("ADVANCED", 18, 8, getWidth() - 54, 22, juce::Justification::centred);
     g.setColour (juce::Colour (0xffe66c0b));
-    g.setFont (juce::FontOptions (18.0f, juce::Font::bold));
-    g.drawText ("ADVANCED <", 18, 8, getWidth() - 36, 24, juce::Justification::centred);
+    g.drawText ("<", getWidth() - 40, 8, 20, 22, juce::Justification::centred);
+    g.drawHorizontalLine (34, 18.0f, bounds.getRight() - 18.0f);
 
+    g.setColour (juce::Colour (0xffddd3b7).withAlpha (0.90f));
     g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
     g.drawText ("PRESSURE MODE", 14, 124, 108, 20, juce::Justification::centredLeft, false);
     g.drawText ("EXTENDED STEREO", 14, 150, 108, 20, juce::Justification::centredLeft, false);
@@ -102,8 +113,8 @@ void AdvancedDrawer::resized()
     sendFeelLabel.setBounds (86, 43, 66, 16);
     sendFeelBox.setBounds (84, 63, 68, 26);
 
-    pressureModeToggle.setBounds (126, 122, 24, 22);
-    extendedStereoToggle.setBounds (126, 148, 24, 22);
+    pressureModeToggle.setBounds (116, 124, 38, 18);
+    extendedStereoToggle.setBounds (116, 150, 38, 18);
 }
 
 } // namespace sendbloom::ui

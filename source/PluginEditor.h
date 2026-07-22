@@ -36,8 +36,9 @@ private:
 
     juce::Label titleLabel;
     juce::ComboBox presetBox;
-    // One knob style across the plate: each size has a path-traced filmstrip,
-    // one frame per pointer angle, lit in the faceplate's own light rig.
+    // A matched hardware family: skirted main controls and straight-sided
+    // mini controls, each path-traced one frame per pointer angle in the
+    // faceplate's own light rig.
     ui::PedalKnob inKnob { "INPUT", BinaryData::knob_small_strip_png, BinaryData::knob_small_strip_pngSize };
     ui::PedalKnob sizeKnob { "SIZE", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
     ui::PedalKnob lvlKnob { "LEVEL", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
@@ -60,6 +61,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> darkAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> gateAttachment;
+    juce::TooltipWindow tooltipWindow { this, 650 };
 
     void loadPresetFromDisk();
     void savePresetToDisk();

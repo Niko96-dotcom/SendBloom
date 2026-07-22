@@ -71,9 +71,20 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     juce::Graphics g (image);
     editor.paintEntireComponent (g, true);
 
-    // Cropped knob art is dark; punched faceplate hole is light. Centre should be dark.
-    const auto centre = image.getPixelAt (levelCentre.x, levelCentre.y);
-    REQUIRE (centre.getBrightness() < 0.35f);
+    // Black control on black wrinkle plate: prove the rendered hardware still
+    // contains both its dark moulded body and bright physical index/washer.
+    float darkest = 1.0f;
+    float brightest = 0.0f;
+    for (int y = levelCentre.y - 30; y <= levelCentre.y + 30; ++y)
+        for (int x = levelCentre.x - 30; x <= levelCentre.x + 30; ++x)
+        {
+            const auto brightness = image.getPixelAt (x, y).getBrightness();
+            darkest = juce::jmin (darkest, brightness);
+            brightest = juce::jmax (brightest, brightness);
+        }
+    REQUIRE (darkest < 0.22f);
+    REQUIRE (brightest > 0.48f);
+    REQUIRE (brightest - darkest > 0.35f);
 }
 
 TEST_CASE ("Clip hold flag accessible from processor", "[ui][clip]")

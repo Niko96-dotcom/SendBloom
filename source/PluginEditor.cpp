@@ -80,6 +80,14 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     inKnob.setValueFormatter ([] (double value) { return formatInputGainDb (value); });
     outKnob.setValueFormatter ([] (double value) { return juce::String (value, 2); });
 
+    // Match established pro-audio interaction: every rotary has an explicit
+    // hardware default and can be reset without hunting through a preset.
+    inKnob.setDefaultValue (0.5);
+    sizeKnob.setDefaultValue (0.5);
+    lvlKnob.setDefaultValue (0.5);
+    distnKnob.setDefaultValue (0.0);
+    outKnob.setDefaultValue (0.0);
+
     darkToggle.setLookAndFeel (&transparentControls);
     gateToggle.setLookAndFeel (&transparentControls);
     darkToggle.setClickingTogglesState (true);
@@ -157,10 +165,16 @@ void PluginEditor::paint (juce::Graphics& g)
                              pressurePad.getDisplayAmount(),
                              pressurePad.getPressTravel());
 
-    // The photographed face owns the preset field; the editor supplies its live text.
+    // The rendered hardware face owns the preset field; the editor supplies its live text.
     const auto presetName = processorRef.getCurrentProgramDisplayName().toUpperCase();
-    g.setColour (juce::Colours::black);
-    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
+    auto presetFont = juce::Font (juce::FontOptions (12.0f, juce::Font::bold));
+    presetFont.setHorizontalScale (0.88f);
+    presetFont.setExtraKerningFactor (0.025f);
+    g.setFont (presetFont);
+    g.setColour (juce::Colours::black.withAlpha (0.55f));
+    g.drawText (presetName, ui::facelayout::kPresetText.translated (0, 1),
+                juce::Justification::centredLeft, false);
+    g.setColour (juce::Colour (0xffddd3b7));
     g.drawText (presetName, ui::facelayout::kPresetText,
                 juce::Justification::centredLeft, false);
 }
