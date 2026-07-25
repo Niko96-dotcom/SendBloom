@@ -113,6 +113,15 @@ target_compile_definitions(SvgSnapshot PRIVATE
     $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
 target_link_libraries(SvgSnapshot PRIVATE SharedCode)
 
+# Offline DSP renderer: dumps tank impulse responses and overdrive transfer
+# curves as raw f32 for tools/reference analysis. Not shipped.
+add_executable(RenderTank tools/RenderTank.cpp)
+target_compile_features(RenderTank PRIVATE cxx_std_20)
+target_include_directories(RenderTank PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
+target_compile_definitions(RenderTank PRIVATE
+    $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_link_libraries(RenderTank PRIVATE SharedCode)
+
 # include(PamplejuceIPP)
 
 include(Tests)

@@ -11,7 +11,8 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 ## Features
 
 - Parallel dry/wet routing — dry path never gated or distorted
-- One fixed-rate Schroeder reverb engine — every host rate is bandlimited-converted to and from a **32,768 Hz** tank via r8brain ProperSRC (`FixedRateAdapter`). There is no sample-rate, fidelity, or color control, and no speculative parameter quantization. The rate is an original engineering approximation, not a verified hardware specification or firmware-derived implementation; the legacy accumulator and host-rate engines are retained only for diagnostics.
+- One fixed-rate reverb engine — an **allpass ring** (four `allpass → delay → shelving` blocks, fed by four series input diffusers), built to the architecture the reference DSP chip class's manufacturer publishes, and sized to its real 32,768-word delay-RAM budget. Every host rate is bandlimited-converted to and from the **32,768 Hz** tank via r8brain ProperSRC (`FixedRateAdapter`). There is no sample-rate, fidelity, or color control. The rate, the delay-memory budget, and the loop topology come from the chip vendor's own published datasheet and design articles — this is a software model built to documented public constraints, not a verified match to any product and not a firmware-derived implementation. See [docs/fv1-reverb-architecture.md](docs/fv1-reverb-architecture.md) for the design rules, the measurements, and what changed from the previous Schroeder comb tank; the legacy comb, accumulator, and host-rate engines are retained only for diagnostics.
+- Size spans **1.2 s to 6.0 s** — the ring recirculates over ~827 ms and physically cannot decay faster, which is a property of the hardware class rather than a limitation to tune around.
 - Wet-only overdrive blended independently via `distn`
 - Dual gate profiles: Pre (hum suppression) and Post (≤15 ms wet chop)
 - Pressure send pad and MIDI CC1 momentary control

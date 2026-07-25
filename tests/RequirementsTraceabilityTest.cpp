@@ -21,9 +21,9 @@ TEST_CASE ("TEST-01 parameter curves RT60 distn send mapping", "[traceability][T
 {
     using namespace sendbloom::ParameterCurves;
 
-    REQUIRE (sizeToRT60 (0.0f) == Catch::Approx (0.25f));
-    REQUIRE (sizeToRT60 (1.0f) == Catch::Approx (6.0f));
-    REQUIRE (distnBlend (0.5f) == Catch::Approx (std::pow (0.5f, 2.8f)));
+    REQUIRE (sizeToRT60 (0.0f) == Catch::Approx (kMinRT60Seconds));
+    REQUIRE (sizeToRT60 (1.0f) == Catch::Approx (kMaxRT60Seconds));
+    REQUIRE (distnBlend (0.5f) == Catch::Approx (std::pow (0.5f, 1.6f)));
 
     const auto firm = sendGain (0.5f, true);
     const auto soft = sendGain (0.5f, false);

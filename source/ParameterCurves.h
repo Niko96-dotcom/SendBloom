@@ -11,14 +11,29 @@ inline float smoothstep (float x) noexcept
     return x * x * (3.0f - 2.0f * x);
 }
 
+// The allpass ring recirculates over ~827 ms, so its decay is bounded below:
+// even at the lowest usable loop gain it cannot produce a small room, and the
+// reference hardware class cannot either. Anything shorter than this is a
+// different effect, not a smaller setting of this one. The manual's claim is
+// "up to a maximum of 5 or 6 seconds", so the knob spans 1.2 s to 6.0 s.
+inline constexpr float kMinRT60Seconds = 1.2f;
+inline constexpr float kMaxRT60Seconds = 6.0f;
+
 inline float sizeToRT60 (float sizeNorm) noexcept
 {
-    return 0.25f + 5.75f * std::pow (sizeNorm, 2.4f);
+    // Exponential in the knob: decay time is perceived logarithmically, so an
+    // exponential sweep puts equal audible change under equal knob rotation.
+    const auto n = juce::jlimit (0.0f, 1.0f, sizeNorm);
+    return kMinRT60Seconds * std::pow (kMaxRT60Seconds / kMinRT60Seconds, n);
 }
 
 inline float distnBlend (float norm) noexcept
 {
-    return std::pow (norm, 2.8f);
+    // The manual promises the knob reaches "all clean, or all distorted" across
+    // its travel. The old pow(norm, 2.8) left the first half of the sweep
+    // effectively inaudible (0.5 -> 0.14 blend); this keeps a gentle taper at
+    // the bottom while making the middle of the knob genuinely dirty.
+    return std::pow (juce::jlimit (0.0f, 1.0f, norm), 1.6f);
 }
 
 inline void levelEqualPower (float norm, float& dry, float& wet) noexcept

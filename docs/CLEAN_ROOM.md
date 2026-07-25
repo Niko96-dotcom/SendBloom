@@ -10,13 +10,14 @@ SendBloom is an original software implementation of a **gated dirty ambience** g
 
 ## What We Did
 
-- Designed original DSP in C++20 using JUCE 8: Schroeder tank reverb, wet-only overdrive, dual gate profiles, pressure/send control, and parallel dry/wet routing.
+- Designed original DSP in C++20 using JUCE 8: an allpass-ring reverb tank, wet-only overdrive, dual gate profiles, pressure/send control, and parallel dry/wet routing.
+- Built the reverb and overdrive to the **publicly documented architecture of the DSP chip class** the effect category is built on, using material its manufacturer publishes for that purpose: the Spin Semiconductor FV-1 datasheet, the Spin knowledge-base design articles, and Spin's reference programs, which the datasheet offers as *"example code that may be freely used in your product"*. Delay lengths are our own prime values chosen within the ranges those references occupy; no program was copied. Rationale and measurements: [`fv1-reverb-architecture.md`](fv1-reverb-architecture.md).
 - Authored factory presets, UI copy, and parameter curves independently.
 - Validated behavior with unit tests, integration tests, realtime stress harness, and pluginval.
 
 ## What We Did Not Do
 
-- **No EEPROM or FV-1 bytecode decompilation** — we do not possess or use disassembled firmware from any hardware product.
+- **No EEPROM or bytecode decompilation** — we do not possess or use disassembled firmware from any hardware product. Working from a chip vendor's own published design notes and freely licensed reference code is a different act from reading a specific product's program off its EEPROM, and only the former was done here.
 - **No trademarked names in shipping metadata** — product name, presets, and user-visible strings use SendBloom / Niko Audio Labs branding only.
 - **No schematic or BOM cloning** — analog hardware circuits are not replicated; this is a digital model of an audible effect category.
 

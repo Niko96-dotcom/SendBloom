@@ -5,18 +5,42 @@
 
 using namespace sendbloom::ParameterCurves;
 
-TEST_CASE ("sizeToRT60 matches architecture curve", "[curves][parm]")
+TEST_CASE ("sizeToRT60 spans the ring tank's achievable decay range", "[curves][parm]")
 {
-    REQUIRE (sizeToRT60 (0.0f) == Catch::Approx (0.25f));
-    REQUIRE (sizeToRT60 (1.0f) == Catch::Approx (6.0f));
-    REQUIRE (sizeToRT60 (0.5f) == Catch::Approx (0.25f + 5.75f * std::pow (0.5f, 2.4f)));
+    // The allpass ring recirculates over ~827 ms and cannot decay faster than
+    // roughly a second — a small room is not a smaller setting of this effect,
+    // it is a different effect. Size therefore starts at 1.2 s, and tops out at
+    // the 6 s the reference hardware's manual advertises.
+    REQUIRE (sizeToRT60 (0.0f) == Catch::Approx (kMinRT60Seconds));
+    REQUIRE (sizeToRT60 (1.0f) == Catch::Approx (kMaxRT60Seconds));
+    REQUIRE (sizeToRT60 (0.5f)
+             == Catch::Approx (std::sqrt (kMinRT60Seconds * kMaxRT60Seconds)).epsilon (1e-5));
 }
 
-TEST_CASE ("distnBlend uses pow 2.8 curve", "[curves][parm]")
+TEST_CASE ("sizeToRT60 is monotonic and clamped", "[curves][parm]")
+{
+    auto previous = sizeToRT60 (0.0f);
+
+    for (int i = 1; i <= 100; ++i)
+    {
+        const auto current = sizeToRT60 (static_cast<float> (i) / 100.0f);
+        REQUIRE (current > previous);
+        previous = current;
+    }
+
+    REQUIRE (sizeToRT60 (-0.5f) == Catch::Approx (kMinRT60Seconds));
+    REQUIRE (sizeToRT60 (1.5f) == Catch::Approx (kMaxRT60Seconds));
+}
+
+TEST_CASE ("distnBlend reaches both extremes across the knob", "[curves][parm]")
 {
     REQUIRE (distnBlend (0.0f) == Catch::Approx (0.0f));
     REQUIRE (distnBlend (1.0f) == Catch::Approx (1.0f));
-    REQUIRE (distnBlend (0.25f) == Catch::Approx (std::pow (0.25f, 2.8f)));
+    REQUIRE (distnBlend (0.25f) == Catch::Approx (std::pow (0.25f, 1.6f)));
+
+    // The manual promises "all clean, or all distorted" over the sweep, so the
+    // middle of the knob has to be audibly dirty. pow 2.8 put it at 0.14.
+    REQUIRE (distnBlend (0.5f) > 0.3f);
 }
 
 TEST_CASE ("level equal-power wet-only at 0.5", "[curves][parm]")

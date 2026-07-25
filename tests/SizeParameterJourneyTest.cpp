@@ -57,12 +57,13 @@ TEST_CASE ("Size host automation has one canonical nonlinear mapping",
     REQUIRE (sizeKnob->getSlider().valueToProportionOfLength (0.5)
              == Catch::Approx (defaultHostPosition));
 
-    constexpr auto midpointRT60 = 1.3394213f;
+    // Geometric midpoint of the 1.2 s .. 6.0 s span the ring tank can reach.
+    constexpr auto midpointRT60 = 2.6832816f;
     const std::array<SizeJourneyCase, 4> cases {{
-        { "minimum", 0.0f, 0.0f, 0.25f, "0.25 s" },
-        { "midpoint", 0.5f, 0.5f, midpointRT60, "1.34 s" },
+        { "minimum", 0.0f, 0.0f, 1.2f, "1.20 s" },
+        { "midpoint", 0.5f, 0.5f, midpointRT60, "2.68 s" },
         { "maximum", 1.0f, 1.0f, 6.0f, "6.00 s" },
-        { "default", defaultHostPosition, 0.5f, midpointRT60, "1.34 s" },
+        { "default", defaultHostPosition, 0.5f, midpointRT60, "2.68 s" },
     }};
 
     for (const auto& testCase : cases)

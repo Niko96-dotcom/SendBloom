@@ -29,21 +29,53 @@ inline constexpr float kAuthenticVsHostRmsAbove10kMaxRatio = 1.5f;
 // Imaging whistle band (14-15 kHz) tail power ceiling on authentic guitar pluck.
 inline constexpr float kImagingBandPeakRmsMax = 0.0022f;
 
-inline std::vector<float> makeGuitarPluck (size_t totalSamples) noexcept
+/** Short 330 Hz pluck with two harmonics.
+
+    `rate` must be the rate the signal will actually be played at. The burst is
+    5 ms long in wall-clock time at every rate, and is faded out over its last
+    millisecond.
+
+    Both of those matter for cross-rate work. This previously derived `t` from
+    kSampleRate regardless of the rate it was rendered at (so at 44.1 kHz it was
+    really a 303 Hz pluck) and ended on a hard 240-sample cut mid-cycle. That
+    truncation is a broadband click whose energy depends on the waveform phase
+    where the cut lands, which differs per rate — giving the *stimulus* a
+    rate-dependent high-frequency content that DIAG-04 would then read as the
+    reverb failing rate invariance. */
+inline std::vector<float> makeGuitarPluckAtRate (size_t totalSamples, double rate) noexcept
 {
     std::vector<float> signal (totalSamples, 0.0f);
-    constexpr auto kBurstLen = 240;
+    constexpr auto kBurstSeconds = 0.005;
+    constexpr auto kFadeSeconds = 0.001;
+    constexpr auto kPi = 3.14159265358979323846f;
 
-    for (int i = 0; i < kBurstLen; ++i)
+    const auto burstLen = std::min (totalSamples,
+                                    static_cast<size_t> (std::lround (kBurstSeconds * rate)));
+    const auto fadeLen = std::max (size_t { 1 },
+                                   static_cast<size_t> (std::lround (kFadeSeconds * rate)));
+
+    for (size_t i = 0; i < burstLen; ++i)
     {
-        const auto t = static_cast<float> (i) / static_cast<float> (kSampleRate);
-        const auto env = std::exp (-t * 18.0f);
-        signal[static_cast<size_t> (i)] = env * (0.6f * std::sin (2.0f * 3.14159265358979323846f * 330.0f * t)
-                                                 + 0.25f * std::sin (2.0f * 3.14159265358979323846f * 660.0f * t)
-                                                 + 0.15f * std::sin (2.0f * 3.14159265358979323846f * 990.0f * t));
+        const auto t = static_cast<float> (static_cast<double> (i) / rate);
+        auto env = std::exp (-t * 18.0f);
+
+        if (i + fadeLen > burstLen)
+        {
+            const auto into = static_cast<float> (burstLen - i) / static_cast<float> (fadeLen);
+            env *= 0.5f * (1.0f - std::cos (kPi * into));
+        }
+
+        signal[i] = env * (0.6f * std::sin (2.0f * kPi * 330.0f * t)
+                           + 0.25f * std::sin (2.0f * kPi * 660.0f * t)
+                           + 0.15f * std::sin (2.0f * kPi * 990.0f * t));
     }
 
     return signal;
+}
+
+inline std::vector<float> makeGuitarPluck (size_t totalSamples) noexcept
+{
+    return makeGuitarPluckAtRate (totalSamples, kSampleRate);
 }
 
 inline std::vector<float> makeDecayingSine (float hz, size_t totalSamples, int burstLen = 480) noexcept

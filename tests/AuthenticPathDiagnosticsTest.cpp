@@ -30,6 +30,7 @@ using sendbloom::test::printThreePathCsvRow;
 using sendbloom::test::goertzelPower;
 using sendbloom::test::kRenderSamples;
 using sendbloom::test::makeGuitarPluck;
+using sendbloom::test::makeGuitarPluckAtRate;
 using sendbloom::test::renderTankPath;
 using sendbloom::test::rms;
 
@@ -47,10 +48,27 @@ constexpr float kDiag04CrossRateRms10kMaxRatio = 1.6f;
 struct RateHfSnapshot
 {
     float rmsTotal {};
+    float rmsAbove200 {};
+    float rmsAbove6k {};
     float rmsAbove10k {};
     float rmsAbove14k {};
     float peakFrequency {};
     float spectralCentroid {};
+
+    // DIAG-04 asserts that sample-rate conversion does not change the reverb's
+    // voice. Comparing absolute band energy between rates conflates that with
+    // the absolute level in whatever part of the decay the fixed tail window
+    // lands on, which varies far more now the ring's tail runs seconds rather
+    // than hundreds of milliseconds. These compare spectral *shape* instead:
+    // band energy normalised by the same window's own broadband energy.
+    float bandShare (float band) const noexcept
+    {
+        return band / std::max (rmsAbove200, 1.0e-9f);
+    }
+
+    float above6kRatio() const noexcept { return bandShare (rmsAbove6k); }
+    float above10kRatio() const noexcept { return bandShare (rmsAbove10k); }
+    float above14kRatio() const noexcept { return bandShare (rmsAbove14k); }
 };
 
 size_t renderSamplesAtRate (double rate) noexcept
@@ -100,6 +118,10 @@ RateHfSnapshot measureRateTail (const std::vector<float>& wet, double rate) noex
 
     RateHfSnapshot snap;
     snap.rmsTotal = rms (tail);
+    // Same Goertzel summation as the bands, so the shape ratios divide like with
+    // like; rms(tail) is a different measure and is kept only for the CSV.
+    snap.rmsAbove200 = bandRmsAboveAtRate (wet, rate, tailStart, tailCount, 0.0);
+    snap.rmsAbove6k = bandRmsAboveAtRate (wet, rate, tailStart, tailCount, 6000.0);
     snap.rmsAbove10k = bandRmsAboveAtRate (wet, rate, tailStart, tailCount, 10000.0);
     snap.rmsAbove14k = bandRmsAboveAtRate (wet, rate, tailStart, tailCount, 14000.0);
 
@@ -171,7 +193,7 @@ float imaging14825RmsAtRate (const std::vector<float>& wet, double rate) noexcep
 
 std::vector<float> guitarPluckAtRate (double rate)
 {
-    return makeGuitarPluck (renderSamplesAtRate (rate));
+    return makeGuitarPluckAtRate (renderSamplesAtRate (rate), rate);
 }
 
 const char* pathLabel (ReverbPath path) noexcept
@@ -352,20 +374,24 @@ TEST_CASE ("ProperSRC HF metrics invariant across host rates", "[diagnostics][DI
         REQUIRE (imaging < kImagingBandPeakRmsMax);
         REQUIRE (dominance < kNarrowbandDominanceMaxRatio);
 
-        rmsAbove10kByRate.push_back (snap.rmsAbove10k);
+        rmsAbove10kByRate.push_back (snap.above10kRatio());
 
         if (std::abs (rate - kReferenceRate) < 0.5)
             continue;
 
-        const auto rms10kRatio = snap.rmsAbove10k / std::max (reference.rmsAbove10k, 1e-9f);
-        const auto rms14kRatio = snap.rmsAbove14k / std::max (reference.rmsAbove14k, 1e-9f);
+        const auto rms6kRatio = snap.above6kRatio() / std::max (reference.above6kRatio(), 1e-9f);
+        const auto rms10kRatio = snap.above10kRatio() / std::max (reference.above10kRatio(), 1e-9f);
+        const auto rms14kRatio = snap.above14kRatio() / std::max (reference.above14kRatio(), 1e-9f);
         const auto rmsTotalRatio = snap.rmsTotal / std::max (reference.rmsTotal, 1e-9f);
 
-        INFO ("rate = " << rate << " rms10k ratio = " << rms10kRatio);
-        INFO ("rate = " << rate << " rms14k ratio = " << rms14kRatio);
+        INFO ("rate = " << rate << " rms6k shape ratio = " << rms6kRatio);
+        INFO ("rate = " << rate << " rms10k shape ratio = " << rms10kRatio);
+        INFO ("rate = " << rate << " rms14k shape ratio = " << rms14kRatio);
         INFO ("rate = " << rate << " peak delta = " << std::abs (snap.peakFrequency - reference.peakFrequency));
         INFO ("rate = " << rate << " centroid delta = " << std::abs (snap.spectralCentroid - reference.spectralCentroid));
 
+        REQUIRE (rms6kRatio >= kDiag04RmsRatioMin);
+        REQUIRE (rms6kRatio <= kDiag04RmsRatioMax);
         REQUIRE (rms10kRatio >= kDiag04RmsRatioMin);
         REQUIRE (rms10kRatio <= kDiag04RmsRatioMax);
         REQUIRE (rms14kRatio >= kDiag04RmsRatioMin);
@@ -376,11 +402,13 @@ TEST_CASE ("ProperSRC HF metrics invariant across host rates", "[diagnostics][DI
         REQUIRE (std::abs (snap.spectralCentroid - reference.spectralCentroid) <= kDiag04CentroidDeltaMaxHz);
     }
 
+    // Widest disagreement between any two host rates, not just each against the
+    // 48 kHz reference. Compared as spectral share for the same reason as above.
     const auto minRms10k = *std::min_element (rmsAbove10kByRate.begin(), rmsAbove10kByRate.end());
     const auto maxRms10k = *std::max_element (rmsAbove10kByRate.begin(), rmsAbove10kByRate.end());
     const auto crossRateRatio = maxRms10k / std::max (minRms10k, 1e-9f);
 
-    INFO ("cross-rate rmsAbove10k max/min = " << crossRateRatio);
+    INFO ("cross-rate above-10k spectral share max/min = " << crossRateRatio);
     REQUIRE (crossRateRatio <= kDiag04CrossRateRms10kMaxRatio);
 }
 

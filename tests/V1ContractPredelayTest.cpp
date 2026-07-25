@@ -1,5 +1,7 @@
 #include "ChainTestHelpers.h"
 #include "FixedRateAdapter.h"
+#include "Fv1RingTank.h"
+#include "Fv1RingTankTable.h"
 #include "ParameterCurves.h"
 #include "ReverbTestHelpers.h"
 #include "SchroederTank32DelayTable.h"
@@ -251,42 +253,112 @@ TEST_CASE ("darkMix automation on steady tone stays finite with bounded deltas",
     REQUIRE (maxAdjacentDelta (out) <= kMaxAdjacentDelta);
 }
 
-TEST_CASE ("Host-rate and ProperSRC dark onset agree in wall-clock time",
+TEST_CASE ("Dark predelay survives sample-rate conversion at every host rate",
            "[v1][contract][predelay][DSP-02][parity]")
 {
-    // ADR-V1-12: host SchroederTankCore @ 48 kHz vs ProperSRC adapter agree on predelay delta.
-    constexpr double hostRate = 48000.0;
+    // DSP-02: Dark adds kPredelaySeconds ahead of the tank, and the round trip
+    // through the 32,768 Hz fixed-rate adapter must not move that in wall-clock
+    // time at any host rate.
+    //
+    // This previously asserted parity between SchroederTankCore run at host rate
+    // and the shipping adapter. Those are now different algorithms — the shipping
+    // path is the allpass ring — so agreement between them is neither expected
+    // nor meaningful. What matters is that the shipping path itself lands on
+    // 55 ms, which is asserted directly here.
+    //
+    // Onset is taken relative to each impulse response's own peak. An absolute
+    // threshold measures Dark late by several ms purely because Dark's in-loop
+    // damping makes its onset rise more slowly — an artefact of the detector,
+    // not of the predelay.
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
-    constexpr int numSamples = 12000;
 
-    sendbloom::SchroederTankCore hostBright;
-    sendbloom::SchroederTankCore hostDark;
-    hostBright.prepare (hostRate, 512);
-    hostDark.prepare (hostRate, 512);
+    // Contract part 1, measured where it is unambiguous: the tank itself, at its
+    // own rate, with no resampler in the way.
+    {
+        sendbloom::Fv1RingTank bright;
+        sendbloom::Fv1RingTank dark;
+        const auto tankRate = sendbloom::Fv1RingTankTable::kInternalRate;
+        bright.prepare (tankRate, 512);
+        dark.prepare (tankRate, 512);
+        bright.setParameters (rt60, 0.0f);
+        dark.setParameters (rt60, 1.0f);
 
-    const auto hostBrightIr = sendbloom::test::reverb::renderCoreImpulse (hostBright, rt60, 0.0f, numSamples);
-    const auto hostDarkIr = sendbloom::test::reverb::renderCoreImpulse (hostDark, rt60, 1.0f, numSamples);
+        const auto renderTank = [tankRate] (sendbloom::Fv1RingTank& tank)
+        {
+            std::vector<float> ir (static_cast<size_t> (tankRate * 0.25), 0.0f);
 
-    sendbloom::FixedRateAdapter brightAdapter;
-    sendbloom::FixedRateAdapter darkAdapter;
-    const auto properBrightIr = renderAdapterImpulseDark (brightAdapter,
-                                                          sendbloom::Authentic32Mode::ProperSRC,
-                                                          hostRate,
-                                                          0.0f,
-                                                          rt60,
-                                                          numSamples);
-    const auto properDarkIr = renderAdapterImpulseDark (darkAdapter,
-                                                         sendbloom::Authentic32Mode::ProperSRC,
-                                                         hostRate,
-                                                         1.0f,
-                                                         rt60,
-                                                         numSamples);
+            for (size_t i = 0; i < ir.size(); ++i)
+                ir[i] = tank.processSample (i == 0 ? 1.0f : 0.0f);
 
-    const auto hostPredelay = measureOnsetSeconds (hostDarkIr, hostRate)
-                            - measureOnsetSeconds (hostBrightIr, hostRate);
-    const auto properPredelay = measureOnsetSeconds (properDarkIr, hostRate)
-                              - measureOnsetSeconds (properBrightIr, hostRate);
+            return ir;
+        };
 
-    REQUIRE (properPredelay == Catch::Approx (hostPredelay).margin (kOnsetToleranceSeconds));
-    REQUIRE (hostPredelay == Catch::Approx (kPredelaySeconds).margin (kOnsetToleranceSeconds));
+        const auto tankPredelay = measureOnsetSeconds (renderTank (dark), tankRate, 0.0f)
+                                - measureOnsetSeconds (renderTank (bright), tankRate, 0.0f);
+        INFO ("tank predelay = " << tankPredelay);
+        REQUIRE (tankPredelay == Catch::Approx (kPredelaySeconds).margin (kOnsetToleranceSeconds));
+    }
+
+    // Contract part 2: the resampled round trip must not move it. Onset
+    // detectors carry a fixed bias here — Bright opens on a single early tap
+    // while Dark's onset is damped and rises slowly, so any one threshold sits
+    // at a different point on the two ramps — but that bias is constant, so
+    // what this asserts is agreement *between host rates*, which is the
+    // property sample-rate conversion could actually break.
+    std::vector<float> predelayByRate;
+
+    for (const auto hostRate : { 44100.0, 48000.0, 88200.0, 96000.0 })
+    {
+        INFO ("host rate = " << hostRate);
+        const auto numSamples = static_cast<int> (std::lround (0.25 * hostRate));
+
+        sendbloom::FixedRateAdapter brightAdapter;
+        sendbloom::FixedRateAdapter darkAdapter;
+        const auto brightIr = renderAdapterImpulseDark (brightAdapter,
+                                                        sendbloom::Authentic32Mode::ProperSRC,
+                                                        hostRate,
+                                                        0.0f,
+                                                        rt60,
+                                                        numSamples);
+        const auto darkIr = renderAdapterImpulseDark (darkAdapter,
+                                                      sendbloom::Authentic32Mode::ProperSRC,
+                                                      hostRate,
+                                                      1.0f,
+                                                      rt60,
+                                                      numSamples);
+
+        // Onset as the point where the first 150 ms has accumulated 2% of its
+        // energy: unlike a bare amplitude threshold this does not depend on how
+        // tall one early tap happens to be relative to the rest of the response,
+        // which is what makes it stable across rates.
+        const auto energyOnset = [hostRate] (const std::vector<float>& ir)
+        {
+            const auto window = std::min (ir.size(),
+                                          static_cast<size_t> (std::lround (0.15 * hostRate)));
+            auto total = 0.0;
+
+            for (size_t i = 0; i < window; ++i)
+                total += static_cast<double> (ir[i]) * ir[i];
+
+            auto running = 0.0;
+
+            for (size_t i = 0; i < window; ++i)
+            {
+                running += static_cast<double> (ir[i]) * ir[i];
+
+                if (running >= 0.02 * total)
+                    return static_cast<float> (static_cast<double> (i) / hostRate);
+            }
+
+            return static_cast<float> (window / hostRate);
+        };
+
+        predelayByRate.push_back (energyOnset (darkIr) - energyOnset (brightIr));
+        INFO ("measured predelay = " << predelayByRate.back());
+    }
+
+    const auto minPredelay = *std::min_element (predelayByRate.begin(), predelayByRate.end());
+    const auto maxPredelay = *std::max_element (predelayByRate.begin(), predelayByRate.end());
+    INFO ("predelay spread across host rates = " << (maxPredelay - minPredelay));
+    REQUIRE (maxPredelay - minPredelay < 0.001f);
 }

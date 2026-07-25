@@ -325,27 +325,38 @@ TEST_CASE ("input_gain colors wet path only; dry tap stays pre-gain", "[release]
     juce::AudioBuffer<float> buffer (1, 512);
     juce::MidiBuffer midi;
 
-    for (int block = 0; block < 32; ++block)
+    // A 220 Hz tone, not DC. The ring tank carries a high-pass shelf inside the
+    // loop (the reference architecture's low-frequency loss, which is what keeps
+    // a 6 s tail from turning to mud), so a DC stimulus is rejected a little
+    // more on every recirculation and its wet return is a decaying transient
+    // rather than a steady level — which measures input sensitivity backwards.
+    constexpr auto kProbeHz = 220.0f;
+    constexpr auto kPhaseInc = 2.0f * juce::MathConstants<float>::pi * kProbeHz
+                             / static_cast<float> (kSampleRate);
+
+    const auto renderWetRms = [&] (float gain)
     {
-        for (int i = 0; i < 512; ++i)
-            buffer.setSample (0, i, 0.25f);
+        *apvts.getRawParameterValue (inputGain) = gain;
+        plugin.reset();
+        auto phase = 0.0f;
 
-        plugin.processBlock (buffer, midi);
-    }
+        for (int block = 0; block < 32; ++block)
+        {
+            for (int i = 0; i < 512; ++i)
+            {
+                buffer.setSample (0, i, 0.25f * std::sin (phase));
+                phase += kPhaseInc;
+            }
 
-    const auto wetLow = bufferRms (buffer, 0, 256, 256);
+            plugin.processBlock (buffer, midi);
+        }
 
-    *apvts.getRawParameterValue (inputGain) = 1.0f;
+        return bufferRms (buffer, 0, 256, 256);
+    };
 
-    for (int block = 0; block < 32; ++block)
-    {
-        for (int i = 0; i < 512; ++i)
-            buffer.setSample (0, i, 0.25f);
-
-        plugin.processBlock (buffer, midi);
-    }
-
-    const auto wetHigh = bufferRms (buffer, 0, 256, 256);
+    const auto wetLow = renderWetRms (0.0f);
+    const auto wetHigh = renderWetRms (1.0f);
+    INFO ("wetLow = " << wetLow << " wetHigh = " << wetHigh);
     REQUIRE (wetHigh > wetLow * 1.2f);
 }
 

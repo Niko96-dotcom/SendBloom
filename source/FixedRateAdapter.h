@@ -1,8 +1,8 @@
 #pragma once
 
+#include "Fv1RingTank.h"
 #include "RateConverterPair.h"
 #include "SchroederTank32DelayTable.h"
-#include "SchroederTankCore.h"
 #include <algorithm>
 #include <juce_core/juce_core.h>
 #include <vector>
@@ -22,7 +22,7 @@ public:
     {
         maxBlockSize_ = maxBlockSize;
 
-        core.prepare (SchroederTank32DelayTable::kInternalRate, maxBlockSize);
+        core.prepare (Fv1RingTankTable::kInternalRate, maxBlockSize);
         converters.prepare (hostRate, maxBlockSize);
 #if defined(SENDBLOOM_ENABLE_DIAGNOSTICS) && SENDBLOOM_ENABLE_DIAGNOSTICS
         legacy_.prepare (hostRate, maxBlockSize);
@@ -109,7 +109,7 @@ private:
         juce::ignoreUnused (written);
     }
 
-    SchroederTankCore core;
+    Fv1RingTank core;
     RateConverterPair converters;
 #if defined(SENDBLOOM_ENABLE_DIAGNOSTICS) && SENDBLOOM_ENABLE_DIAGNOSTICS
     LegacyAccumulatorPath legacy_;
