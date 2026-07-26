@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.25)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-local")
-include(PamplejuceVersion)
+# Canonical release version comes from the top-level VERSION file only.
+# SendBloomVersion supersedes the upstream template's version module, which
+# cannot parse a -prerelease label. See cmake-local/SendBloomVersion.cmake.
+include(SendBloomVersion)
 
 include(CPM)
 include(PamplejuceMacOS)
@@ -57,6 +60,7 @@ target_compile_definitions(SharedCode
     JUCE_VST3_CAN_REPLACE_VST2=0
     CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
     VERSION="${CURRENT_VERSION}"
+    SENDBLOOM_RELEASE_VERSION="${SENDBLOOM_RELEASE_VERSION}"
     PRODUCT_NAME_WITHOUT_VERSION="SendBloom")
 
 target_link_libraries(SharedCode

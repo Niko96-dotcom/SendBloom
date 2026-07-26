@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+case "${1:-}" in
+  --check-signature)
+    target="$2"
+    fake_log "pkgutil:check-signature $(basename "$target")"
+    if [[ -f "$(fake_marker productsigned "$target")" ]]; then
+      echo "Package \"$(basename "$target")\":"
+      echo "   Status: signed by a developer certificate issued by Apple for distribution"
+      echo "   Certificate Chain:"
+      echo "    1. ${FAKE_INSTALLER_IDENTITY:-Developer ID Installer: Fake Maintainer (TEAM123456)}"
+    else
+      echo "Package \"$(basename "$target")\":"
+      echo "   Status: no signature"
+      exit 1
+    fi
+    ;;
+  --expand-full)
+    fake_log "pkgutil:expand-full $(basename "$2")"
+    mkdir -p "$3"
+    tar -xf "$2" -C "$3"
+    ;;
+  --pkg-info)
+    if [[ -n "${FAKE_RECEIPT_VERSION:-}" ]]; then
+      echo "package-id: $2"
+      echo "version: $FAKE_RECEIPT_VERSION"
+      echo "install-time: 0"
+    else
+      exit 1
+    fi
+    ;;
+  --forget) fake_log "pkgutil:forget $2" ;;
+  *) exit 2 ;;
+esac

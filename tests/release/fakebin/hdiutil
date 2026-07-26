@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Fake hdiutil. A "disk image" is a tar archive, so mounting really does
+# expose the staged payload and the layout assertions test something real.
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+
+cmd="${1:-}"; shift || true
+
+case "$cmd" in
+  create)
+    srcfolder=""; out=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -srcfolder) srcfolder="$2"; shift 2 ;;
+        -volname|-fs|-format) shift 2 ;;
+        -ov|-quiet) shift ;;
+        *) out="$1"; shift ;;
+      esac
+    done
+    [[ -n "$srcfolder" && -n "$out" ]] || { echo "fake hdiutil create: bad args" >&2; exit 2; }
+    fake_log "hdiutil:create $(basename "$out")"
+    tar -cf "$out" -C "$srcfolder" .
+    ;;
+  attach)
+    image=""; mountpoint=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -mountpoint) mountpoint="$2"; shift 2 ;;
+        -nobrowse|-readonly|-quiet) shift ;;
+        *) image="$1"; shift ;;
+      esac
+    done
+    fake_log "hdiutil:attach $(basename "$image")"
+    mkdir -p "$mountpoint"
+    tar -xf "$image" -C "$mountpoint"
+    ;;
+  detach)
+    mountpoint="$1"
+    fake_log "hdiutil:detach"
+    rm -rf "$mountpoint" 2>/dev/null || true
+    ;;
+  *) echo "fake hdiutil: unsupported command $cmd" >&2; exit 2 ;;
+esac

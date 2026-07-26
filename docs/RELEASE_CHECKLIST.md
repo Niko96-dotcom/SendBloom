@@ -1,5 +1,11 @@
 # SendBloom RC0 Release Checklist
 
+> **Superseded.** This is the dated RC0 record, kept as history. The live
+> release process is [docs/release.md](release.md) and the live validation
+> checklist is [docs/release-validation.md](release-validation.md). Do not
+> use this file to gate a release.
+
+
 **Milestone:** v1.0 RC0  
 **Date:** 2026-07-12 (commercial-quality remediation pass)
 **Scope:** Honest pre-tag gate — automated checks verified locally on macOS unless noted.

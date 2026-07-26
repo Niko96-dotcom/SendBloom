@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Fake codesign.
+#
+# FAKE_CODESIGN_VARIANT selects which valid shape of `--display` output to
+# emit. Real codesign reports the hardened runtime in more than one way and
+# the verifier must accept all of them:
+#
+#   runtime-flag     CodeDirectory ... flags=0x10000(runtime)
+#   runtime-line     Runtime Version=15.5.0            (no flags parenthetical)
+#   combined-flags   flags=0x10002(adhoc,runtime)
+#   no-runtime       neither  -> must be REJECTED by a public release
+#   adhoc            Signature=adhoc -> must be REJECTED by a public release
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+
+MODE=""; TARGET=""
+args=("$@")
+for ((i=0; i<${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    --display) MODE="display" ;;
+    --verify)  MODE="verify" ;;
+    --sign)    MODE="sign" ;;
+  esac
+done
+TARGET="${args[$(( ${#args[@]} - 1 ))]}"
+
+variant="${FAKE_CODESIGN_VARIANT:-runtime-flag}"
+
+case "$MODE" in
+  sign)
+    fake_log "codesign:sign $TARGET"
+    touch "$(fake_marker signed "$TARGET")"
+    ;;
+  verify)
+    fake_log "codesign:verify $TARGET"
+    exit "${FAKE_CODESIGN_VERIFY_RC:-0}"
+    ;;
+  display)
+    fake_log "codesign:display $TARGET"
+    echo "Executable=$TARGET/Contents/MacOS/SendBloom"
+    echo "Identifier=com.nikoaudiolabs.sendbloom"
+    echo "Format=bundle with Mach-O universal (x86_64 arm64)"
+    case "$variant" in
+      runtime-flag)
+        echo "CodeDirectory v=20500 size=1234 flags=0x10000(runtime) hashes=10+7 location=embedded"
+        echo "Authority=Developer ID Application: Fake Maintainer (TEAM123456)"
+        echo "TeamIdentifier=TEAM123456"
+        echo "Timestamp=1 Jan 2026 at 00:00:00"
+        ;;
+      runtime-line)
+        echo "CodeDirectory v=20500 size=1234 hashes=10+7 location=embedded"
+        echo "Authority=Developer ID Application: Fake Maintainer (TEAM123456)"
+        echo "TeamIdentifier=TEAM123456"
+        echo "Timestamp=1 Jan 2026 at 00:00:00"
+        echo "Runtime Version=15.5.0"
+        ;;
+      combined-flags)
+        echo "CodeDirectory v=20500 size=1234 flags=0x10002(adhoc,runtime) hashes=10+7 location=embedded"
+        echo "Authority=Developer ID Application: Fake Maintainer (TEAM123456)"
+        echo "TeamIdentifier=TEAM123456"
+        echo "Timestamp=1 Jan 2026 at 00:00:00"
+        ;;
+      no-runtime)
+        echo "CodeDirectory v=20500 size=1234 flags=0x0(none) hashes=10+7 location=embedded"
+        echo "Authority=Developer ID Application: Fake Maintainer (TEAM123456)"
+        echo "TeamIdentifier=TEAM123456"
+        echo "Timestamp=1 Jan 2026 at 00:00:00"
+        ;;
+      adhoc)
+        echo "CodeDirectory v=20400 size=1234 flags=0x2(adhoc) hashes=10+7 location=embedded"
+        echo "Signature=adhoc"
+        ;;
+      no-timestamp)
+        echo "CodeDirectory v=20500 size=1234 flags=0x10000(runtime) hashes=10+7 location=embedded"
+        echo "Authority=Developer ID Application: Fake Maintainer (TEAM123456)"
+        echo "TeamIdentifier=TEAM123456"
+        ;;
+      *) echo "unknown FAKE_CODESIGN_VARIANT: $variant" >&2; exit 99 ;;
+    esac
+    ;;
+esac

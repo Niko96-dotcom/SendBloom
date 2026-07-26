@@ -1,0 +1,54 @@
+# SendBloom release-version allowlist
+#
+# The version consistency gate (scripts/release/check-version-consistency.sh)
+# blocks a release when a product-facing release number is stale, hard-coded
+# in the wrong place, or inconsistent with the canonical VERSION file.
+#
+# Some literal version numbers are legitimate and must survive a bump:
+# historical changelog entries, compatibility notes, test fixtures, and
+# examples that document a specific past release. Each one is listed here
+# WITH A REASON. An entry without a reason is a config error and the gate
+# fails.
+#
+# Format, one entry per line:
+#
+#     <path-glob> | <literal or *> | <reason>
+#
+#   <path-glob>   matched against the repo-relative path (shell glob).
+#   <literal>     the exact version literal allowed there, or * for any.
+#   <reason>      free text. Required. Explain WHY the literal is allowed.
+#
+# Lines starting with # and blank lines are ignored.
+
+# --- Changelog history --------------------------------------------------------
+CHANGELOG.md | * | Changelog is a historical record; every shipped version must keep its own heading and must not be rewritten on a bump.
+
+# --- Internal planning archive ------------------------------------------------
+.planning/* | * | GSD planning archive. Internal, never shipped to users, and intentionally frozen at the version each phase was written against.
+.planning/**/* | * | GSD planning archive (nested). Same rationale as .planning/*.
+
+# --- Release engineering fixtures ---------------------------------------------
+tests/release/* | * | Release-script regression fixtures deliberately pin literal versions (including deliberately stale ones) to prove the stale-version detector still fires.
+tests/release/**/* | * | Release-script regression fixtures (nested). Same rationale.
+
+# --- Compatibility and upgrade documentation ----------------------------------
+docs/install.md | 1.0.0-rc0 | Upgrade section documents removing the pre-1.0 release candidate a user may already have installed. Must keep naming the old artifact.
+docs/rollback.md | * | Rollback documentation names the specific prior releases that are valid rollback targets.
+docs/release-validation.md | 1.0.0 | Worked validation example. Uses the canonical version and is regenerated when the canonical version changes; also asserted by the gate.
+
+# --- Superseded / dated release paperwork -------------------------------------
+docs/RELEASE_CHECKLIST.md | * | Superseded by docs/release.md and kept as the dated RC0 record. Historical; not the live checklist.
+docs/DAW_SMOKE_RC0.md | 1.0.0-rc0 | Dated DAW smoke evidence captured against RC0. Rewriting the version would falsify which build was actually tested.
+docs/reports/* | * | Per-release evidence reports. Each one is frozen at the version it reports on; the filename carries that version deliberately.
+docs/LICENSING_DECISION.md | 1.0.0-rc0 | Records that the JUCE licensing decision was taken at RC0 promotion time. Historical decision record.
+docs/CLEAN_ROOM.md | * | Clean-room positioning statement cites the release it was written against.
+
+# NOTE: RELEASE_NOTES.md is deliberately NOT allowlisted. The release notes
+# describe the release being shipped; any other version literal in them is a
+# defect, and the gate additionally asserts the title names exactly the
+# canonical version.
+
+# --- Third-party dependency pins (not SendBloom release numbers) ---------------
+.github/workflows/* | 1.0.3 | Tracktion pluginval release pin (v1.0.3 download URL), not a SendBloom version.
+README.md | 8.0.12 | JUCE submodule pin cited in build docs.
+docs/THIRD_PARTY_LICENSES.md | * | Third-party dependency versions, not SendBloom versions.

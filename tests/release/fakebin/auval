@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+source "$(dirname "$0")/_fakelib.sh"
+fake_log "auval:$*"
+echo "AU Validation Tool"
+echo "PASS"
+exit "${FAKE_AUVAL_RC:-0}"

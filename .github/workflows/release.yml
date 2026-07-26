@@ -1,0 +1,199 @@
+name: Release gates
+
+# Two jobs:
+#
+#   release-gates   Runs on every push and pull request. Everything here is
+#                   credential-free, so the gates that block a release are
+#                   exercised continuously rather than discovered on release
+#                   day. Failing here fails the branch.
+#
+#   release-build   Runs only for a v* tag, and only when the signing and
+#                   notarization secrets are configured. It performs the real
+#                   signed build and uploads the artifacts for inspection. It
+#                   deliberately does NOT publish: publication stays a
+#                   maintainer action via scripts/release/release-all.sh
+#                   --publish, so nothing reaches users without a human
+#                   reading the dry-run plan first.
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  release-gates:
+    name: Credential-free release gates
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+          fetch-depth: 0          # the stale-version search needs the tags
+
+      - name: Canonical version
+        run: |
+          scripts/release/version.sh
+          echo "RELEASE_VERSION=$(scripts/release/version.sh version)" >> "$GITHUB_ENV"
+
+      - name: Release-script regression tests
+        run: bash tests/release/run-release-tests.sh
+
+      - name: Public-tree hygiene and secret scan
+        run: scripts/release/check-tree-hygiene.sh
+
+      - name: Version consistency and stale-version search
+        run: scripts/release/check-version-consistency.sh
+
+      - name: Legal metadata audit
+        run: bash scripts/check-legal-metadata.sh
+
+      - name: Fidelity-claim truth
+        run: bash scripts/verify-reference-claims.sh
+
+      - name: Dependency and licence inventory
+        run: scripts/release/sbom.sh
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sbom-${{ env.RELEASE_VERSION }}
+          path: dist/${{ env.RELEASE_VERSION }}/*-sbom.json
+          if-no-files-found: error
+
+  release-build:
+    name: Signed release build
+    needs: release-gates
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-14
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Confirm the tag matches the canonical version
+        run: |
+          canonical="$(scripts/release/version.sh tag)"
+          actual="${GITHUB_REF#refs/tags/}"
+          if [[ "$canonical" != "$actual" ]]; then
+            echo "::error::tag $actual does not match the canonical version tag $canonical" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$(scripts/release/version.sh version)" >> "$GITHUB_ENV"
+
+      - name: Require signing secrets
+        env:
+          HAS_APP_CERT: ${{ secrets.DEVELOPER_ID_APPLICATION_P12 != '' }}
+          HAS_NOTARY: ${{ secrets.NOTARY_APPLE_ID != '' }}
+        run: |
+          # Fail closed. A tag build that cannot sign must not quietly produce
+          # an unsigned artifact that looks like a release.
+          if [[ "$HAS_APP_CERT" != "true" || "$HAS_NOTARY" != "true" ]]; then
+            echo "::error::signing or notarization secrets are not configured for this repository." >&2
+            echo "::error::A tagged release build cannot proceed. See docs/release.md." >&2
+            exit 1
+          fi
+
+      - name: Install Ninja
+        run: brew install ninja
+
+      - name: Import signing certificates
+        env:
+          APP_P12: ${{ secrets.DEVELOPER_ID_APPLICATION_P12 }}
+          APP_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_APPLICATION_P12_PASSWORD }}
+          INSTALLER_P12: ${{ secrets.DEVELOPER_ID_INSTALLER_P12 }}
+          INSTALLER_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_INSTALLER_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.RUNNER_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/sendbloom-release.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+
+          import_p12() {
+            local b64="$1" pass="$2" label="$3"
+            [[ -n "$b64" ]] || return 0
+            local file="$RUNNER_TEMP/$label.p12"
+            printf '%s' "$b64" | base64 --decode > "$file"
+            security import "$file" -k "$keychain" -P "$pass" \
+              -T /usr/bin/codesign -T /usr/bin/productsign
+            rm -f "$file"
+          }
+          import_p12 "$APP_P12" "$APP_P12_PASSWORD" app
+          import_p12 "$INSTALLER_P12" "$INSTALLER_P12_PASSWORD" installer
+
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$keychain" >/dev/null
+          echo "RELEASE_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+
+      - name: Store notarization credentials
+        env:
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          xcrun notarytool store-credentials "sendbloom-ci" \
+            --apple-id "$NOTARY_APPLE_ID" \
+            --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_APP_PASSWORD" \
+            --keychain "$RELEASE_KEYCHAIN"
+
+      - name: Fetch pluginval
+        run: |
+          set -euo pipefail
+          archive="pluginval_macOS.zip"
+          curl --fail --location --retry 3 --output "$archive" \
+            "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/$archive"
+          echo "6bb4d0acc964e775af155ec984c1566dc989dad2a708f64c773706d7baec43af *$archive" | shasum -a 256 --check
+          unzip -q "$archive"
+          echo "PLUGINVAL_BIN=$PWD/pluginval.app/Contents/MacOS/pluginval" >> "$GITHUB_ENV"
+
+      - name: Build, sign, notarize, package and validate
+        env:
+          RELEASE_MODE: public
+          SENDBLOOM_ARTIFACT_CONTRACT: ${{ vars.SENDBLOOM_ARTIFACT_CONTRACT || 'pkg-in-dmg' }}
+          DEVELOPER_ID_APPLICATION: ${{ secrets.DEVELOPER_ID_APPLICATION }}
+          DEVELOPER_ID_INSTALLER: ${{ secrets.DEVELOPER_ID_INSTALLER }}
+          NOTARY_PROFILE: sendbloom-ci
+        run: |
+          # No --publish. Publication is a maintainer action, taken after
+          # reading the dry-run plan this produces.
+          scripts/release/release-all.sh
+
+      - name: Upload release artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sendbloom-${{ env.RELEASE_VERSION }}-macOS
+          path: |
+            dist/${{ env.RELEASE_VERSION }}/*.dmg
+            dist/${{ env.RELEASE_VERSION }}/*.pkg
+            dist/${{ env.RELEASE_VERSION }}/SHA256SUMS.txt
+            dist/${{ env.RELEASE_VERSION }}/release-manifest.json
+            dist/${{ env.RELEASE_VERSION }}/provenance.json
+            dist/${{ env.RELEASE_VERSION }}/*-sbom.json
+            dist/${{ env.RELEASE_VERSION }}/release-report.md
+          if-no-files-found: error
+
+      - name: Clean up the temporary keychain
+        if: always()
+        run: |
+          security delete-keychain "$RELEASE_KEYCHAIN" 2>/dev/null || true

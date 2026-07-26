@@ -6,6 +6,7 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 
 **Publisher:** Niko Audio Labs  
 **Formats:** AU (macOS), VST3 (macOS, Windows, Linux)  
+**Distributed builds:** macOS only — AU + VST3, universal (arm64 + x86_64). Windows and Linux VST3 builds run in CI but are not part of the signed public release.  
 **License:** MIT
 
 ## Features
@@ -50,12 +51,35 @@ ctest --test-dir Builds --output-on-failure -C Release
 
 ### macOS local install
 
-Unsigned local builds may need ad-hoc codesign for development only. Public packages must use the fail-closed signing, packaging, and notarization scripts under `scripts/` with a real Developer ID identity:
+Unsigned local builds may need an ad-hoc codesign for development only:
 
 ```bash
 codesign --force --sign - --timestamp=none "Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
 codesign --force --sign - --timestamp=none "Builds/SendBloom_artefacts/Release/AU/SendBloom.component"
 ```
+
+## Install (users)
+
+Download the macOS disk image from the [Releases page](https://github.com/Niko96-dotcom/SendBloom/releases), verify it, and install:
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+Full instructions, upgrade, uninstall and troubleshooting: [docs/install.md](docs/install.md).
+
+## Releasing (maintainers)
+
+The release system is fail-closed and driven by a single canonical version source, the `VERSION` file. One command runs every gate:
+
+```bash
+RELEASE_MODE=public scripts/release/release-all.sh
+```
+
+- [docs/release.md](docs/release.md) — process, prerequisites, artifact contract, signing and notarization
+- [docs/release-validation.md](docs/release-validation.md) — the validation checklist and exact commands
+- [docs/rollback.md](docs/rollback.md) — withdrawing and re-releasing
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## Legal & Clean-Room
 
@@ -78,9 +102,16 @@ GitHub Actions builds and tests on Linux, macOS, and Windows. Each matrix leg ru
 
 ```
 source/          Plugin processor, DSP chain, UI
-tests/           Catch2 unit and integration tests
-resources/       Factory presets
-cmake/           CMake build helpers
-scripts/         Legal metadata checker
-docs/            Clean-room and release documentation
+tests/           Catch2 unit and integration tests, plus release-script tests
+resources/       Factory presets and the UI art the plugin embeds
+tools/           Faceplate renderer, SVG tooling, snapshot and probe harnesses
+scripts/         Legal metadata audit and the release pipeline
+cmake/           CMake build helpers (submodule)
+cmake-local/     Project-owned CMake modules, incl. the canonical version parser
+docs/            Clean-room, architecture, UI-render and release documentation
+.planning/       Roadmap, requirements, ADRs and per-phase planning records
+.github/         CI workflows, issue and pull-request templates
 ```
+
+`Builds/` is the canonical build tree and `JUCE/` and `cmake/` are submodules;
+all three are untracked by design.

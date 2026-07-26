@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+target="${!#}"
+fake_log "spctl:assess $(basename "$target")"
+rc="${FAKE_SPCTL_RC:-0}"
+if [[ "$rc" == "0" ]]; then
+  echo "$target: accepted"
+  echo "source=Notarized Developer ID"
+else
+  echo "$target: rejected" >&2
+fi
+exit "$rc"

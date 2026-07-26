@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Fake xcrun, dispatching notarytool and stapler.
+#
+#   FAKE_NOTARY_STATUS        Accepted | Invalid | Rejected   (default Accepted)
+#   FAKE_NOTARY_SUBMIT_RC     exit code for `notarytool submit` (default 0)
+#   FAKE_STAPLE_RC            exit code for `stapler staple`    (default 0)
+#   FAKE_STAPLE_VALIDATE_RC   force `stapler validate` result; when unset,
+#                             validate succeeds only if staple actually ran.
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+
+tool="${1:-}"; shift || true
+
+case "$tool" in
+  notarytool)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      submit)
+        artifact="$1"
+        fake_log "notarytool:submit $(basename "$artifact")"
+        rc="${FAKE_NOTARY_SUBMIT_RC:-0}"
+        [[ "$rc" == "0" ]] || exit "$rc"
+        printf '{"id":"FAKE-SUBMISSION-0001","status":"%s","message":"Processing complete"}\n' \
+          "${FAKE_NOTARY_STATUS:-Accepted}"
+        ;;
+      log)
+        fake_log "notarytool:log $1"
+        echo '{"issues":[{"severity":"error","message":"fake notarization issue"}]}'
+        ;;
+      *) echo "fake xcrun notarytool: unsupported subcommand $sub" >&2; exit 2 ;;
+    esac
+    ;;
+  stapler)
+    sub="${1:-}"; shift || true
+    target="${1:-}"
+    case "$sub" in
+      staple)
+        fake_log "stapler:staple $(basename "$target")"
+        rc="${FAKE_STAPLE_RC:-0}"
+        [[ "$rc" == "0" ]] || exit "$rc"
+        touch "$(fake_marker stapled "$target")"
+        echo "The staple and validate action worked!"
+        ;;
+      validate)
+        fake_log "stapler:validate $(basename "$target")"
+        if [[ -n "${FAKE_STAPLE_VALIDATE_RC:-}" ]]; then
+          exit "$FAKE_STAPLE_VALIDATE_RC"
+        fi
+        [[ -f "$(fake_marker stapled "$target")" ]] || exit 65
+        echo "The validate action worked!"
+        ;;
+      *) echo "fake xcrun stapler: unsupported subcommand $sub" >&2; exit 2 ;;
+    esac
+    ;;
+  --show-sdk-version) echo "15.0" ;;
+  *) echo "fake xcrun: unsupported tool $tool" >&2; exit 2 ;;
+esac

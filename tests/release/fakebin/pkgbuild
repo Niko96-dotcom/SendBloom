@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+root=""; out=""; install_location=""; identifier=""; version=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --root) root="$2"; shift 2 ;;
+    --identifier) identifier="$2"; shift 2 ;;
+    --version) version="$2"; shift 2 ;;
+    --install-location) install_location="$2"; shift 2 ;;
+    --quiet) shift ;;
+    *) out="$1"; shift ;;
+  esac
+done
+fake_log "pkgbuild:$identifier -> $(basename "$out")"
+work="$(mktemp -d)"
+mkdir -p "$work/payload"
+cp -R "$root/." "$work/payload/"
+cat >"$work/PackageInfo" <<PKGINFO
+<pkg-info identifier="$identifier" version="$version" install-location="$install_location"/>
+PKGINFO
+tar -cf "$out" -C "$work" .
+rm -rf "$work"

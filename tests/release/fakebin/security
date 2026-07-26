@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Fake security(1). Reports whichever identities the test declares present.
+set -euo pipefail
+echo "  1) ABCDEF0123456789 \"${FAKE_APP_IDENTITY:-}\""
+echo "  2) FEDCBA9876543210 \"${FAKE_INSTALLER_IDENTITY:-}\""
+echo "     2 valid identities found"

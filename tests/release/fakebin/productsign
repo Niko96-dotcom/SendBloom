@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+identity=""; in_pkg=""; out_pkg=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --sign) identity="$2"; shift 2 ;;
+    *) if [[ -z "$in_pkg" ]]; then in_pkg="$1"; else out_pkg="$1"; fi; shift ;;
+  esac
+done
+fake_log "productsign:$(basename "$out_pkg")"
+[[ -n "$identity" ]] || { echo "productsign: no identity" >&2; exit 1; }
+cp "$in_pkg" "$out_pkg"
+touch "$(fake_marker productsigned "$out_pkg")"

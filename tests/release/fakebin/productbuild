@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/_fakelib.sh"
+dist=""; pkgpath=""; resources=""; out=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --distribution) dist="$2"; shift 2 ;;
+    --package-path) pkgpath="$2"; shift 2 ;;
+    --resources) resources="$2"; shift 2 ;;
+    --quiet) shift ;;
+    *) out="$1"; shift ;;
+  esac
+done
+fake_log "productbuild:$(basename "$out")"
+work="$(mktemp -d)"
+cp "$dist" "$work/Distribution"
+for p in "$pkgpath"/*.pkg; do
+  [[ -e "$p" ]] || continue
+  [[ "$p" == "$out" ]] && continue
+  d="$work/$(basename "$p")"
+  mkdir -p "$d"
+  tar -xf "$p" -C "$d"
+done
+[[ -n "$resources" && -d "$resources" ]] && cp -R "$resources" "$work/Resources"
+tar -cf "$out" -C "$work" .
+rm -rf "$work"
