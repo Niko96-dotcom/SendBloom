@@ -24,7 +24,18 @@ public:
 
     float processSample (float input, float, float) noexcept override
     {
-        energy.fetch_add (static_cast<double> (std::abs (input)), std::memory_order_relaxed);
+        // std::atomic<double>::fetch_add is C++20 and is missing from the
+        // libc++ on the macOS CI runner, so accumulate by compare-exchange.
+        const auto increment = static_cast<double> (std::abs (input));
+        auto current = energy.load (std::memory_order_relaxed);
+
+        while (! energy.compare_exchange_weak (current,
+                                                current + increment,
+                                                std::memory_order_relaxed,
+                                                std::memory_order_relaxed))
+        {
+        }
+
         return input;
     }
 
