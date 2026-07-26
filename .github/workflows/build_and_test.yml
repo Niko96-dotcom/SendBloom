@@ -99,6 +99,15 @@ jobs:
         run: |
           archive="pluginval_${{ runner.os }}.zip"
           curl --fail --location --retry 3 --output "$archive" "https://github.com/Tracktion/pluginval/releases/download/v1.0.3/$archive"
-          echo "${{ matrix.pluginval-sha256 }} *$archive" | shasum -a 256 --check
+          # The Windows runner's Git Bash has no shasum, so fall back to the
+          # GNU coreutils sha256sum it does ship. Prefer shasum where present:
+          # macOS carries its own /sbin/sha256sum ("Darwin 1.0") that is not
+          # coreutils and cannot check a digest list on stdin, so probing for
+          # sha256sum first would break the macOS and Linux legs that pass today.
+          if command -v shasum >/dev/null 2>&1; then
+            echo "${{ matrix.pluginval-sha256 }} *$archive" | shasum -a 256 --check
+          else
+            echo "${{ matrix.pluginval-sha256 }} *$archive" | sha256sum --check
+          fi
           7z x "$archive"
           ${{ matrix.pluginval-binary }} --strictness-level ${{ env.STRICTNESS_LEVEL }} --verbose --validate "${{ env.VST3_PATH }}"
