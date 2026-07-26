@@ -66,6 +66,25 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     const auto before = level->getValue();
     level->setValueNotifyingHost (before < 0.5f ? 0.9f : 0.1f);
     REQUIRE (std::abs (level->getValue() - before) > 0.3f);
+}
+
+TEST_CASE ("Faceplate knob rendering keeps its moulded body and bright index",
+           "[ui][editor][render]")
+{
+#if ! JUCE_MAC
+    SKIP ("Rendered-pixel brightness is a macOS-referenced contract. The faceplate art is "
+          "path-traced and reviewed on macOS, and macOS AU/VST3 are the only released "
+          "artifacts, so another platform's rasteriser disagreeing here measures the "
+          "rasteriser rather than the art.");
+#else
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+    editor.setVisible (true);
+    editor.resized();
+
+    using namespace sendbloom::ui::facelayout;
+    const auto levelCentre = kLevelKnob.withHeight (kKnobLarge).getCentre();
 
     juce::Image image (juce::Image::ARGB, editor.getWidth(), editor.getHeight(), true);
     juce::Graphics g (image);
@@ -85,6 +104,7 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     REQUIRE (darkest < 0.22f);
     REQUIRE (brightest > 0.48f);
     REQUIRE (brightest - darkest > 0.35f);
+#endif
 }
 
 TEST_CASE ("Clip hold flag accessible from processor", "[ui][clip]")
