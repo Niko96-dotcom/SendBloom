@@ -1,0 +1,414 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" id="button_01_pressed_true_vector" width="344" height="344" viewBox="0 0 344 344" version="1.1" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="button-01-pressed-shadow-grad" cx="80" cy="300" r="105" fx="80" fy="286" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#000000" stop-opacity="0.34"/>
+      <stop offset="0.5500" stop-color="#000000" stop-opacity="0.15"/>
+      <stop offset="1.0000" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="button-01-pressed-outer-grad" x1="4" y1="2" x2="151" y2="305" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#43484d" stop-opacity="1"/>
+      <stop offset="0.1000" stop-color="#262a2e" stop-opacity="1"/>
+      <stop offset="0.4800" stop-color="#171a1d" stop-opacity="1"/>
+      <stop offset="0.7800" stop-color="#2f3338" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#101214" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-rim-highlight-grad" x1="0" y1="0" x2="156" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#8c9297" stop-opacity="0.28"/>
+      <stop offset="0.1800" stop-color="#555b60" stop-opacity="0.12"/>
+      <stop offset="0.5500" stop-color="#050607" stop-opacity="0.18"/>
+      <stop offset="0.8400" stop-color="#7d8388" stop-opacity="0.18"/>
+      <stop offset="1.0000" stop-color="#030405" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-left-side-grad" x1="2" y1="108" x2="38" y2="292" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#686a6d" stop-opacity="1"/>
+      <stop offset="0.2500" stop-color="#595b5e" stop-opacity="1"/>
+      <stop offset="0.6800" stop-color="#45474a" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#303235" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-right-side-grad" x1="154" y1="108" x2="119" y2="292" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#484a4d" stop-opacity="1"/>
+      <stop offset="0.3000" stop-color="#414346" stop-opacity="1"/>
+      <stop offset="0.7200" stop-color="#35373a" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#282a2d" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-top-face-grad" x1="21" y1="5" x2="133" y2="105" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#393b3e" stop-opacity="1"/>
+      <stop offset="0.4200" stop-color="#303235" stop-opacity="1"/>
+      <stop offset="0.8000" stop-color="#292b2e" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#1c1e21" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-top-bevel-grad" x1="13" y1="2" x2="143" y2="111" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#6f7479" stop-opacity="0.42"/>
+      <stop offset="0.3000" stop-color="#292d31" stop-opacity="0.6"/>
+      <stop offset="0.7600" stop-color="#060708" stop-opacity="0.82"/>
+      <stop offset="1.0000" stop-color="#81878d" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-well-grad" x1="34" y1="110" x2="122" y2="285" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#08090b" stop-opacity="1"/>
+      <stop offset="0.2000" stop-color="#111316" stop-opacity="1"/>
+      <stop offset="0.7500" stop-color="#050607" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#1d2023" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-pedal-frame-grad" x1="35" y1="108" x2="121" y2="284" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#393e43" stop-opacity="1"/>
+      <stop offset="0.0800" stop-color="#0b0d0f" stop-opacity="1"/>
+      <stop offset="0.6000" stop-color="#07090b" stop-opacity="1"/>
+      <stop offset="0.9000" stop-color="#24282c" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#020304" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-pedal-face-grad" x1="42" y1="116" x2="113" y2="273" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#383a3d" stop-opacity="1"/>
+      <stop offset="0.4500" stop-color="#323437" stop-opacity="1"/>
+      <stop offset="0.8300" stop-color="#2c2e31" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#202225" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-pedal-bottom-grad" x1="40" y1="263" x2="40" y2="281" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#373b40" stop-opacity="0.15"/>
+      <stop offset="0.3500" stop-color="#555b61" stop-opacity="0.32"/>
+      <stop offset="0.6200" stop-color="#0a0c0e" stop-opacity="0.76"/>
+      <stop offset="1.0000" stop-color="#020304" stop-opacity="1"/>
+    </linearGradient>
+    <radialGradient id="button-01-pressed-screw-grad" cx="15.2" cy="97.5" r="12.5" fx="12.5" fy="94" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#60666c" stop-opacity="0.72"/>
+      <stop offset="0.2200" stop-color="#202429" stop-opacity="1"/>
+      <stop offset="0.5400" stop-color="#07090b" stop-opacity="1"/>
+      <stop offset="0.7800" stop-color="#31363a" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#030405" stop-opacity="1"/>
+    </radialGradient>
+    <radialGradient id="button-01-pressed-screw-core-grad" cx="15.5" cy="97" r="7.6" fx="13.2" fy="95" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#5d6369" stop-opacity="0.56"/>
+      <stop offset="0.2400" stop-color="#24282c" stop-opacity="1"/>
+      <stop offset="0.7200" stop-color="#07090b" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#1c2024" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="button-01-pressed-mark-grad" x1="70" y1="28" x2="84" y2="91" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#fafbfc" stop-opacity="1"/>
+      <stop offset="0.5200" stop-color="#e7eaec" stop-opacity="1"/>
+      <stop offset="1.0000" stop-color="#c8ccd0" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="button-01-pressed-wear-grad" x1="0" y1="0" x2="156" y2="305" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0000" stop-color="#b7bdc2" stop-opacity="0.3"/>
+      <stop offset="0.5000" stop-color="#777d82" stop-opacity="0.12"/>
+      <stop offset="1.0000" stop-color="#111315" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="button-01-pressed-top-clip" clipPathUnits="userSpaceOnUse">
+      <polygon points="16,8 140,8 113,102 43,102" fill="#000000"/>
+    </clipPath>
+    <clipPath id="button-01-pressed-pedal-clip" clipPathUnits="userSpaceOnUse">
+      <polygon points="40,115 116,115 116,269 110,275 46,275 40,269" fill="#000000"/>
+    </clipPath>
+    <clipPath id="button-01-pressed-left-clip" clipPathUnits="userSpaceOnUse">
+      <polygon points="5,15 14,12 39,107 32,112 32,279 4,292" fill="#000000"/>
+    </clipPath>
+    <clipPath id="button-01-pressed-right-clip" clipPathUnits="userSpaceOnUse">
+      <polygon points="151,15 142,12 117,107 124,112 124,279 152,292" fill="#000000"/>
+    </clipPath>
+    <clipPath id="button-01-pressed-pedal-state-clip" clipPathUnits="userSpaceOnUse">
+      <polygon points="40,117 116,117 114,267 108,273 48,273 42,267" fill="#000000"/>
+    </clipPath>
+  </defs>
+  <g id="button-01-pressed" transform="translate(94,32)">
+    <g id="button-01-pressed-base-shadow">
+      <path d="M 15,304 C 7,304 1,299.6 1,292 L 1,18 C 1,10 7,4 15,4 L 141,4 C 149,4 155,10 155,18 L 155,292 C 155,299.6 149,304 141,304 Z" fill="url(#button-01-pressed-shadow-grad)" opacity="0.18"/>
+      <path d="M 17,303.8 C 9,303.8 4,300.2 4,294 L 4,24 C 4,15 10,10 18,10 L 138,10 C 146,10 152,15 152,24 L 152,294 C 152,300.2 147,303.8 139,303.8 Z" fill="#000000" opacity="0.04"/>
+      <ellipse cx="78" cy="302.3" rx="68" ry="1.65" fill="#000000" opacity="0.065"/>
+    </g>
+    <g id="button-01-pressed-outer-rim">
+      <path d="M 13,0.5 C 5.8,0.5 0.5,6.0 0.5,14 L 0.5,290.5 C 0.5,298.9 6.0,304 15,304 L 141,304 C 150,304 155.5,298.7 155.5,290 L 155.5,14 C 155.5,6.0 150.4,0.5 143,0.5 Z" fill="url(#button-01-pressed-outer-grad)" stroke="#08090b" stroke-width="0.9" stroke-linejoin="round"/>
+      <path d="M 13.5,2.4 C 7.2,2.4 3.1,7 3.1,14.3 L 3.1,289.7 C 3.1,296.5 7.3,301.6 14.7,301.6 L 141.1,301.6 C 148.5,301.6 152.9,296.7 152.9,289.7 L 152.9,14.4 C 152.9,7.2 148.7,2.4 142.5,2.4 Z" fill="none" stroke="url(#button-01-pressed-rim-highlight-grad)" stroke-width="1.1" opacity="0.92"/>
+      <path d="M 13,4 C 7,4 4.8,8.1 4.8,14 L 4.8,286" fill="none" stroke="#9aa0a5" stroke-width="0.75" opacity="0.2" stroke-linecap="round"/>
+      <path d="M 143,4 C 149,4 151.2,8.1 151.2,14 L 151.2,286" fill="none" stroke="#000000" stroke-width="0.9" opacity="0.55" stroke-linecap="round"/>
+    </g>
+    <g id="button-01-pressed-side-fluting">
+      <path d="M 4,15 L 13,9 L 41,106 L 32,112 L 32,278 L 4,293 Z" fill="url(#button-01-pressed-left-side-grad)" stroke="#15181b" stroke-width="0.75"/>
+      <path d="M 152,15 L 143,9 L 115,106 L 124,112 L 124,278 L 152,293 Z" fill="url(#button-01-pressed-right-side-grad)" stroke="#111315" stroke-width="0.75"/>
+      <path d="M 11,12 L 39,107 L 31,111 L 31,276" fill="none" stroke="#050607" stroke-width="2.4" opacity="0.88" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 14,13 L 42,105" fill="none" stroke="#81878c" stroke-width="0.8" opacity="0.28" stroke-linecap="round"/>
+      <path d="M 145,12 L 117,107 L 125,111 L 125,276" fill="none" stroke="#090a0c" stroke-width="2.2" opacity="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 142,13 L 114,105" fill="none" stroke="#777d82" stroke-width="0.65" opacity="0.22" stroke-linecap="round"/>
+      <path d="M 4,293 L 32,278 L 41,286 L 16,301 L 8,300 Z" fill="#3e4043" opacity="0.96"/>
+      <path d="M 152,293 L 124,278 L 115,286 L 140,301 L 148,300 Z" fill="#292b2e" opacity="0.98"/>
+      <path d="M 16,301 L 41,286 L 115,286 L 140,301 Z" fill="#242629" opacity="0.93"/>
+      <path d="M 17,299 L 42,285 L 114,285 L 139,299" fill="none" stroke="#4f555a" stroke-width="0.65" opacity="0.18"/>
+    </g>
+    <g id="button-01-pressed-face-bevel">
+      <path d="M 12,5 C 11,3.1 13.6,2 16.5,2 L 139.5,2 C 142.5,2 145.1,4.2 144.2,7.4 L 117,104 C 116,108 113.7,110 109.8,110 L 46.2,110 C 42.5,110 40.1,108 39,104 L 11.8,7.5 Z" fill="url(#button-01-pressed-top-bevel-grad)" stroke="#080a0b" stroke-width="1" stroke-linejoin="round"/>
+    </g>
+    <g id="button-01-pressed-face">
+      <path d="M 16,8 L 140,8 L 113,102 C 112.5,104.1 111,105 108.7,105 L 47.3,105 C 45,105 43.5,104.1 43,102 Z" fill="url(#button-01-pressed-top-face-grad)" stroke="#0b0d0f" stroke-width="0.8" stroke-linejoin="round"/>
+      <path d="M 21,10 L 74,10 C 58,35 50,62 49,94 L 44,98 Z" fill="#778087" opacity="0.045"/>
+      <path d="M 136,10 L 113,97 L 108,102 L 127,27 Z" fill="#000000" opacity="0.08"/>
+    </g>
+    <g id="button-01-pressed-indicator-slot">
+      <path d="M 15.2,6.2 L 140.8,6.2 L 114.3,102.8 C 113.6,105.7 111.5,107 108.6,107 L 47.4,107 C 44.5,107 42.4,105.7 41.7,102.8 Z" fill="none" stroke="#050607" stroke-width="1.7" opacity="0.95" stroke-linejoin="round"/>
+      <path d="M 17,8.7 L 139,8.7" fill="none" stroke="#6c7277" stroke-width="0.65" opacity="0.25" stroke-linecap="round"/>
+    </g>
+    <g id="button-01-pressed-fasteners">
+      <circle cx="17" cy="100" r="12.3" id="button-01-pressed-fastener-1-outer" fill="#050607" stroke="#34383c" stroke-width="0.9"/>
+      <circle cx="17" cy="100" r="9.8" id="button-01-pressed-fastener-1-ring" fill="url(#button-01-pressed-screw-grad)" stroke="#000000" stroke-width="0.75"/>
+      <circle cx="17" cy="100" r="6.8" id="button-01-pressed-fastener-1-core" fill="url(#button-01-pressed-screw-core-grad)" stroke="#15181b" stroke-width="0.55"/>
+      <circle cx="15.8" cy="98.5" r="2.9" id="button-01-pressed-fastener-1-pit" fill="#090b0d" opacity="0.8"/>
+      <path d="M 11.2,96.2 C 13.7,92.8 18.5,92.0 21.8,94.5" id="button-01-pressed-fastener-1-highlight" fill="none" stroke="#9ba1a6" stroke-width="0.75" opacity="0.32" stroke-linecap="round"/>
+      <path d="M 12.5,105.0 C 16,108.2 20.5,107.7 22.3,104.3" id="button-01-pressed-fastener-1-lower" fill="none" stroke="#000000" stroke-width="0.9" opacity="0.75" stroke-linecap="round"/>
+      <circle cx="139" cy="100" r="12.3" id="button-01-pressed-fastener-2-outer" fill="#050607" stroke="#34383c" stroke-width="0.9"/>
+      <circle cx="139" cy="100" r="9.8" id="button-01-pressed-fastener-2-ring" fill="url(#button-01-pressed-screw-grad)" stroke="#000000" stroke-width="0.75"/>
+      <circle cx="139" cy="100" r="6.8" id="button-01-pressed-fastener-2-core" fill="url(#button-01-pressed-screw-core-grad)" stroke="#15181b" stroke-width="0.55"/>
+      <circle cx="137.8" cy="98.5" r="2.9" id="button-01-pressed-fastener-2-pit" fill="#090b0d" opacity="0.8"/>
+      <path d="M 133.2,96.2 C 135.7,92.8 140.5,92.0 143.8,94.5" id="button-01-pressed-fastener-2-highlight" fill="none" stroke="#9ba1a6" stroke-width="0.75" opacity="0.32" stroke-linecap="round"/>
+      <path d="M 134.5,105.0 C 138,108.2 142.5,107.7 144.3,104.3" id="button-01-pressed-fastener-2-lower" fill="none" stroke="#000000" stroke-width="0.9" opacity="0.75" stroke-linecap="round"/>
+    </g>
+    <g id="button-01-pressed-pedal">
+      <path d="M 31,105 L 125,105 L 125,280 C 125,286 121,289 115,289 L 41,289 C 35,289 31,286 31,280 Z" fill="url(#button-01-pressed-well-grad)" stroke="#050607" stroke-width="1"/>
+      <path d="M 33,107 L 123,107 L 123,278 C 123,283 119.5,286 114,286 L 42,286 C 36.5,286 33,283 33,278 Z" fill="url(#button-01-pressed-pedal-frame-grad)" stroke="#020304" stroke-width="1.15" stroke-linejoin="round"/>
+      <path d="M 35,110 L 41,114 L 41,267 C 41,272 43,276 47,278 L 38,282 C 35,281 34,279 34,276 Z" fill="#42474c" opacity="0.28"/>
+      <path d="M 121,110 L 115,114 L 115,267 C 115,272 113,276 109,278 L 118,282 C 121,281 122,279 122,276 Z" fill="#020304" opacity="0.74"/>
+      <path d="M 40,117 L 116,117 L 114,267 C 114,271 111.5,273 108,273 L 48,273 C 44.5,273 42,271 42,267 Z" fill="url(#button-01-pressed-pedal-face-grad)" stroke="#121518" stroke-width="0.8" stroke-linejoin="round"/>
+      <path d="M 42,118 L 114,118 L 111,145 L 45,145 Z" fill="#000000" opacity="0.17"/>
+      <path d="M 42,263 C 55,269 101,269 114,263 L 114,272 C 110,277 46,277 42,272 Z" fill="url(#button-01-pressed-pedal-bottom-grad)" opacity="0.97"/>
+      <path d="M 42,116 L 114,116" fill="none" stroke="#73797f" stroke-width="0.55" opacity="0.2" stroke-linecap="round"/>
+      <path d="M 40,266 C 55,271 101,271 116,266" fill="none" stroke="#6d7378" stroke-width="0.55" opacity="0.18" stroke-linecap="round"/>
+      <g id="button-01-pressed-pedal-surface-texture" clip-path="url(#button-01-pressed-pedal-state-clip)">
+        <ellipse cx="102.9375" cy="211.3704" rx="0.725" ry="0.54" id="button-01-pressed-pedal-grain-000" fill="#8b9299" opacity="0.0467"/>
+        <circle cx="55.4375" cy="263.3704" r="0.38" id="button-01-pressed-pedal-grain-001" fill="#8b9299" opacity="0.0566"/>
+        <circle cx="93.4375" cy="130.4815" r="0.22" id="button-01-pressed-pedal-grain-002" fill="#080a0c" opacity="0.0664"/>
+        <circle cx="74.4375" cy="182.4815" r="0.38" id="button-01-pressed-pedal-grain-003" fill="#8b9299" opacity="0.0763"/>
+        <ellipse cx="112.4375" cy="234.4815" rx="0.6" ry="0.3" id="button-01-pressed-pedal-grain-004" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="43.5625" cy="147.8148" r="0.54" id="button-01-pressed-pedal-grain-005" fill="#080a0c" opacity="0.0959"/>
+        <circle cx="81.5625" cy="199.8148" r="0.38" id="button-01-pressed-pedal-grain-006" fill="#8b9299" opacity="0.0369"/>
+        <circle cx="62.5625" cy="251.8148" r="0.22" id="button-01-pressed-pedal-grain-007" fill="#8b9299" opacity="0.0467"/>
+        <ellipse cx="100.5625" cy="165.1481" rx="0.475" ry="0.46" id="button-01-pressed-pedal-grain-008" fill="#080a0c" opacity="0.0566"/>
+        <circle cx="53.0625" cy="217.1481" r="0.3" id="button-01-pressed-pedal-grain-009" fill="#8b9299" opacity="0.0664"/>
+        <circle cx="91.0625" cy="269.1481" r="0.54" id="button-01-pressed-pedal-grain-010" fill="#8b9299" opacity="0.0763"/>
+        <circle cx="72.0625" cy="120.8519" r="0.38" id="button-01-pressed-pedal-grain-011" fill="#080a0c" opacity="0.0861"/>
+        <ellipse cx="110.0625" cy="172.8519" rx="0.35" ry="0.22" id="button-01-pressed-pedal-grain-012" fill="#8b9299" opacity="0.0959"/>
+        <circle cx="48.3125" cy="224.8519" r="0.38" id="button-01-pressed-pedal-grain-013" fill="#8b9299" opacity="0.0369"/>
+        <circle cx="86.3125" cy="138.1852" r="0.3" id="button-01-pressed-pedal-grain-014" fill="#080a0c" opacity="0.0467"/>
+        <circle cx="67.3125" cy="190.1852" r="0.54" id="button-01-pressed-pedal-grain-015" fill="#8b9299" opacity="0.0566"/>
+        <ellipse cx="105.3125" cy="242.1852" rx="0.85" ry="0.38" id="button-01-pressed-pedal-grain-016" fill="#8b9299" opacity="0.0664"/>
+        <circle cx="57.8125" cy="155.5185" r="0.22" id="button-01-pressed-pedal-grain-017" fill="#080a0c" opacity="0.0763"/>
+        <circle cx="95.8125" cy="207.5185" r="0.38" id="button-01-pressed-pedal-grain-018" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="76.8125" cy="259.5185" r="0.3" id="button-01-pressed-pedal-grain-019" fill="#8b9299" opacity="0.0959"/>
+        <ellipse cx="114.8125" cy="126.6296" rx="0.725" ry="0.54" id="button-01-pressed-pedal-grain-020" fill="#080a0c" opacity="0.0369"/>
+        <circle cx="78.5938" cy="230.6296" r="0.22" id="button-01-pressed-pedal-grain-021" fill="#8b9299" opacity="0.0566"/>
+        <circle cx="59.5938" cy="143.963" r="0.38" id="button-01-pressed-pedal-grain-022" fill="#080a0c" opacity="0.0664"/>
+        <circle cx="97.5938" cy="195.963" r="0.3" id="button-01-pressed-pedal-grain-023" fill="#8b9299" opacity="0.0763"/>
+        <ellipse cx="50.0938" cy="247.963" rx="0.725" ry="0.54" id="button-01-pressed-pedal-grain-024" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="88.0938" cy="161.2963" r="0.38" id="button-01-pressed-pedal-grain-025" fill="#080a0c" opacity="0.0959"/>
+        <circle cx="69.0938" cy="213.2963" r="0.22" id="button-01-pressed-pedal-grain-026" fill="#8b9299" opacity="0.0369"/>
+        <circle cx="107.0938" cy="265.2963" r="0.38" id="button-01-pressed-pedal-grain-027" fill="#8b9299" opacity="0.0467"/>
+        <ellipse cx="45.3438" cy="132.4074" rx="0.6" ry="0.3" id="button-01-pressed-pedal-grain-028" fill="#080a0c" opacity="0.0566"/>
+        <circle cx="83.3438" cy="184.4074" r="0.54" id="button-01-pressed-pedal-grain-029" fill="#8b9299" opacity="0.0664"/>
+        <circle cx="64.3438" cy="236.4074" r="0.38" id="button-01-pressed-pedal-grain-030" fill="#8b9299" opacity="0.0763"/>
+        <circle cx="102.3438" cy="149.7407" r="0.22" id="button-01-pressed-pedal-grain-031" fill="#080a0c" opacity="0.0861"/>
+        <ellipse cx="54.8438" cy="201.7407" rx="0.475" ry="0.46" id="button-01-pressed-pedal-grain-032" fill="#8b9299" opacity="0.0959"/>
+        <circle cx="92.8438" cy="253.7407" r="0.3" id="button-01-pressed-pedal-grain-033" fill="#8b9299" opacity="0.0369"/>
+        <circle cx="73.8438" cy="167.0741" r="0.54" id="button-01-pressed-pedal-grain-034" fill="#080a0c" opacity="0.0467"/>
+        <circle cx="111.8438" cy="219.0741" r="0.38" id="button-01-pressed-pedal-grain-035" fill="#8b9299" opacity="0.0566"/>
+        <ellipse cx="80.9688" cy="117.642" rx="0.475" ry="0.46" id="button-01-pressed-pedal-grain-036" fill="#080a0c" opacity="0.0763"/>
+        <circle cx="61.9688" cy="169.642" r="0.3" id="button-01-pressed-pedal-grain-037" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="99.9688" cy="221.642" r="0.54" id="button-01-pressed-pedal-grain-038" fill="#8b9299" opacity="0.0959"/>
+        <circle cx="52.4688" cy="134.9753" r="0.38" id="button-01-pressed-pedal-grain-039" fill="#080a0c" opacity="0.0369"/>
+        <ellipse cx="90.4688" cy="186.9753" rx="0.35" ry="0.22" id="button-01-pressed-pedal-grain-040" fill="#8b9299" opacity="0.0467"/>
+        <circle cx="71.4688" cy="238.9753" r="0.38" id="button-01-pressed-pedal-grain-041" fill="#8b9299" opacity="0.0566"/>
+        <circle cx="109.4688" cy="152.3086" r="0.3" id="button-01-pressed-pedal-grain-042" fill="#080a0c" opacity="0.0664"/>
+        <circle cx="47.7188" cy="204.3086" r="0.54" id="button-01-pressed-pedal-grain-043" fill="#8b9299" opacity="0.0763"/>
+        <ellipse cx="85.7188" cy="256.3086" rx="0.85" ry="0.38" id="button-01-pressed-pedal-grain-044" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="66.7188" cy="123.4198" r="0.22" id="button-01-pressed-pedal-grain-045" fill="#080a0c" opacity="0.0959"/>
+        <circle cx="104.7188" cy="175.4198" r="0.38" id="button-01-pressed-pedal-grain-046" fill="#8b9299" opacity="0.0369"/>
+        <circle cx="57.2188" cy="227.4198" r="0.3" id="button-01-pressed-pedal-grain-047" fill="#8b9299" opacity="0.0467"/>
+        <ellipse cx="95.2188" cy="140.7531" rx="0.725" ry="0.54" id="button-01-pressed-pedal-grain-048" fill="#080a0c" opacity="0.0566"/>
+        <circle cx="76.2188" cy="192.7531" r="0.38" id="button-01-pressed-pedal-grain-049" fill="#8b9299" opacity="0.0664"/>
+        <circle cx="114.2188" cy="244.7531" r="0.22" id="button-01-pressed-pedal-grain-050" fill="#8b9299" opacity="0.0763"/>
+        <circle cx="41.7812" cy="158.0864" r="0.38" id="button-01-pressed-pedal-grain-051" fill="#080a0c" opacity="0.0861"/>
+        <ellipse cx="79.7812" cy="210.0864" rx="0.6" ry="0.3" id="button-01-pressed-pedal-grain-052" fill="#8b9299" opacity="0.0959"/>
+        <circle cx="60.7812" cy="262.0864" r="0.54" id="button-01-pressed-pedal-grain-053" fill="#8b9299" opacity="0.0369"/>
+        <circle cx="98.7812" cy="129.1975" r="0.38" id="button-01-pressed-pedal-grain-054" fill="#080a0c" opacity="0.0467"/>
+        <circle cx="51.2812" cy="181.1975" r="0.22" id="button-01-pressed-pedal-grain-055" fill="#8b9299" opacity="0.0566"/>
+        <ellipse cx="89.2812" cy="233.1975" rx="0.475" ry="0.46" id="button-01-pressed-pedal-grain-056" fill="#8b9299" opacity="0.0664"/>
+        <circle cx="70.2812" cy="146.5309" r="0.3" id="button-01-pressed-pedal-grain-057" fill="#080a0c" opacity="0.0763"/>
+        <circle cx="108.2812" cy="198.5309" r="0.54" id="button-01-pressed-pedal-grain-058" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="46.5312" cy="250.5309" r="0.38" id="button-01-pressed-pedal-grain-059" fill="#8b9299" opacity="0.0959"/>
+        <ellipse cx="84.5312" cy="163.8642" rx="0.35" ry="0.22" id="button-01-pressed-pedal-grain-060" fill="#080a0c" opacity="0.0369"/>
+        <circle cx="65.5312" cy="215.8642" r="0.38" id="button-01-pressed-pedal-grain-061" fill="#8b9299" opacity="0.0467"/>
+        <circle cx="103.5312" cy="267.8642" r="0.3" id="button-01-pressed-pedal-grain-062" fill="#8b9299" opacity="0.0566"/>
+        <circle cx="56.0312" cy="119.5679" r="0.54" id="button-01-pressed-pedal-grain-063" fill="#080a0c" opacity="0.0664"/>
+        <ellipse cx="94.0312" cy="171.5679" rx="0.85" ry="0.38" id="button-01-pressed-pedal-grain-064" fill="#8b9299" opacity="0.0763"/>
+        <circle cx="75.0312" cy="223.5679" r="0.22" id="button-01-pressed-pedal-grain-065" fill="#8b9299" opacity="0.0861"/>
+        <circle cx="113.0312" cy="136.9012" r="0.38" id="button-01-pressed-pedal-grain-066" fill="#080a0c" opacity="0.0959"/>
+        <circle cx="44.1562" cy="188.9012" r="0.3" id="button-01-pressed-pedal-grain-067" fill="#8b9299" opacity="0.0369"/>
+        <ellipse cx="82.1562" cy="240.9012" rx="0.725" ry="0.54" id="button-01-pressed-pedal-grain-068" fill="#8b9299" opacity="0.0467"/>
+        <circle cx="63.1562" cy="154.2346" r="0.38" id="button-01-pressed-pedal-grain-069" fill="#080a0c" opacity="0.0566"/>
+        <circle cx="101.1562" cy="206.2346" r="0.22" id="button-01-pressed-pedal-grain-070" fill="#8b9299" opacity="0.0664"/>
+        <circle cx="53.6562" cy="258.2346" r="0.38" id="button-01-pressed-pedal-grain-071" fill="#8b9299" opacity="0.0763"/>
+      </g>
+    </g>
+    <g id="button-01-pressed-patina">
+      <path d="M 18,15 C 35,7 62,9 75,17 C 58,28 39,37 26,50 C 20,38 18,27 18,15 Z" fill="#9ba2a8" opacity="0.026"/>
+      <path d="M 131,20 C 125,38 122,56 117,77 C 130,65 137,45 139,25 Z" fill="#000000" opacity="0.05"/>
+      <path d="M 7,178 C 14,145 21,135 30,128 L 30,250 C 19,235 12,209 7,178 Z" fill="#a1a8ae" opacity="0.025"/>
+      <path d="M 149,155 C 140,143 133,132 126,123 L 126,258 C 139,237 146,196 149,155 Z" fill="#000000" opacity="0.02"/>
+    </g>
+    <g id="button-01-pressed-top-surface-texture" clip-path="url(#button-01-pressed-top-clip)">
+      <ellipse cx="124.5" cy="60.2222" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-000" fill="#8b9299" opacity="0.0414"/>
+      <circle cx="85.75" cy="11.4815" r="0.38" id="button-01-pressed-top-grain-001" fill="#080a0c" opacity="0.0635"/>
+      <circle cx="54.75" cy="42.8148" r="0.22" id="button-01-pressed-top-grain-002" fill="#8b9299" opacity="0.0745"/>
+      <circle cx="116.75" cy="74.1481" r="0.38" id="button-01-pressed-top-grain-003" fill="#8b9299" opacity="0.0856"/>
+      <ellipse cx="39.25" cy="21.9259" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-004" fill="#080a0c" opacity="0.0966"/>
+      <circle cx="101.25" cy="53.2593" r="0.54" id="button-01-pressed-top-grain-005" fill="#8b9299" opacity="0.1076"/>
+      <circle cx="70.25" cy="84.5926" r="0.38" id="button-01-pressed-top-grain-006" fill="#8b9299" opacity="0.0414"/>
+      <circle cx="132.25" cy="32.3704" r="0.22" id="button-01-pressed-top-grain-007" fill="#080a0c" opacity="0.0524"/>
+      <ellipse cx="81.875" cy="95.037" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-008" fill="#8b9299" opacity="0.0745"/>
+      <circle cx="50.875" cy="14.963" r="0.54" id="button-01-pressed-top-grain-009" fill="#080a0c" opacity="0.0856"/>
+      <circle cx="112.875" cy="46.2963" r="0.38" id="button-01-pressed-top-grain-010" fill="#8b9299" opacity="0.0966"/>
+      <circle cx="97.375" cy="25.4074" r="0.38" id="button-01-pressed-top-grain-011" fill="#080a0c" opacity="0.0414"/>
+      <ellipse cx="66.375" cy="56.7407" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-012" fill="#8b9299" opacity="0.0524"/>
+      <circle cx="27.625" cy="35.8519" r="0.38" id="button-01-pressed-top-grain-013" fill="#080a0c" opacity="0.0745"/>
+      <circle cx="89.625" cy="67.1852" r="0.22" id="button-01-pressed-top-grain-014" fill="#8b9299" opacity="0.0856"/>
+      <circle cx="58.625" cy="98.5185" r="0.38" id="button-01-pressed-top-grain-015" fill="#8b9299" opacity="0.0966"/>
+      <ellipse cx="120.625" cy="9.1605" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-016" fill="#080a0c" opacity="0.1076"/>
+      <circle cx="43.125" cy="40.4938" r="0.54" id="button-01-pressed-top-grain-017" fill="#8b9299" opacity="0.0414"/>
+      <circle cx="105.125" cy="71.8272" r="0.38" id="button-01-pressed-top-grain-018" fill="#8b9299" opacity="0.0524"/>
+      <circle cx="74.125" cy="19.6049" r="0.22" id="button-01-pressed-top-grain-019" fill="#080a0c" opacity="0.0635"/>
+      <ellipse cx="79.9375" cy="30.0494" rx="0.725" ry="0.54" id="button-01-pressed-top-grain-020" fill="#080a0c" opacity="0.0966"/>
+      <circle cx="48.9375" cy="61.3827" r="0.38" id="button-01-pressed-top-grain-021" fill="#8b9299" opacity="0.1076"/>
+      <circle cx="110.9375" cy="92.716" r="0.22" id="button-01-pressed-top-grain-022" fill="#8b9299" opacity="0.0414"/>
+      <circle cx="33.4375" cy="12.642" r="0.38" id="button-01-pressed-top-grain-023" fill="#080a0c" opacity="0.0524"/>
+      <ellipse cx="95.4375" cy="43.9753" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-024" fill="#8b9299" opacity="0.0635"/>
+      <circle cx="64.4375" cy="75.3086" r="0.54" id="button-01-pressed-top-grain-025" fill="#8b9299" opacity="0.0745"/>
+      <circle cx="126.4375" cy="23.0864" r="0.38" id="button-01-pressed-top-grain-026" fill="#080a0c" opacity="0.0856"/>
+      <circle cx="87.6875" cy="85.7531" r="0.38" id="button-01-pressed-top-grain-027" fill="#8b9299" opacity="0.1076"/>
+      <ellipse cx="56.6875" cy="33.5309" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-028" fill="#080a0c" opacity="0.0414"/>
+      <circle cx="118.6875" cy="64.8642" r="0.54" id="button-01-pressed-top-grain-029" fill="#8b9299" opacity="0.0524"/>
+      <circle cx="103.1875" cy="16.1235" r="0.22" id="button-01-pressed-top-grain-030" fill="#080a0c" opacity="0.0745"/>
+      <circle cx="72.1875" cy="47.4568" r="0.38" id="button-01-pressed-top-grain-031" fill="#8b9299" opacity="0.0856"/>
+      <ellipse cx="21.8125" cy="26.5679" rx="0.725" ry="0.54" id="button-01-pressed-top-grain-032" fill="#080a0c" opacity="0.1076"/>
+      <circle cx="83.8125" cy="57.9012" r="0.38" id="button-01-pressed-top-grain-033" fill="#8b9299" opacity="0.0414"/>
+      <circle cx="52.8125" cy="89.2346" r="0.22" id="button-01-pressed-top-grain-034" fill="#8b9299" opacity="0.0524"/>
+      <circle cx="114.8125" cy="37.0123" r="0.38" id="button-01-pressed-top-grain-035" fill="#080a0c" opacity="0.0635"/>
+      <ellipse cx="37.3125" cy="68.3457" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-036" fill="#8b9299" opacity="0.0745"/>
+      <circle cx="99.3125" cy="99.679" r="0.54" id="button-01-pressed-top-grain-037" fill="#8b9299" opacity="0.0856"/>
+      <circle cx="68.3125" cy="10.321" r="0.38" id="button-01-pressed-top-grain-038" fill="#080a0c" opacity="0.0966"/>
+      <circle cx="130.3125" cy="41.6543" r="0.22" id="button-01-pressed-top-grain-039" fill="#8b9299" opacity="0.1076"/>
+      <ellipse cx="91.5625" cy="20.7654" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-040" fill="#080a0c" opacity="0.0524"/>
+      <circle cx="60.5625" cy="52.0988" r="0.54" id="button-01-pressed-top-grain-041" fill="#8b9299" opacity="0.0635"/>
+      <circle cx="45.0625" cy="31.2099" r="0.22" id="button-01-pressed-top-grain-042" fill="#080a0c" opacity="0.0856"/>
+      <circle cx="107.0625" cy="62.5432" r="0.38" id="button-01-pressed-top-grain-043" fill="#8b9299" opacity="0.0966"/>
+      <ellipse cx="76.0625" cy="93.8765" rx="0.6" ry="0.3" id="button-01-pressed-top-grain-044" fill="#8b9299" opacity="0.1076"/>
+      <circle cx="138.0625" cy="13.8025" r="0.54" id="button-01-pressed-top-grain-045" fill="#080a0c" opacity="0.0414"/>
+      <circle cx="78.9688" cy="76.4691" r="0.22" id="button-01-pressed-top-grain-046" fill="#8b9299" opacity="0.0635"/>
+      <circle cx="47.9688" cy="24.2469" r="0.38" id="button-01-pressed-top-grain-047" fill="#080a0c" opacity="0.0745"/>
+    </g>
+    <g id="button-01-pressed-left-surface-texture" clip-path="url(#button-01-pressed-left-clip)">
+      <ellipse cx="22.3203" cy="179.0782" rx="0.6" ry="0.3" id="button-01-pressed-left-grain-000" fill="#8b9299" opacity="0.0842"/>
+      <circle cx="13.5703" cy="272.4115" r="0.54" id="button-01-pressed-left-grain-001" fill="#8b9299" opacity="0.0324"/>
+      <circle cx="9.1953" cy="127.2263" r="0.22" id="button-01-pressed-left-grain-002" fill="#8b9299" opacity="0.0497"/>
+      <circle cx="26.6953" cy="220.5597" r="0.38" id="button-01-pressed-left-grain-003" fill="#8b9299" opacity="0.0583"/>
+      <ellipse cx="17.9453" cy="65.0041" rx="0.6" ry="0.3" id="button-01-pressed-left-grain-004" fill="#080a0c" opacity="0.067"/>
+      <circle cx="7.0078" cy="251.6708" r="0.38" id="button-01-pressed-left-grain-005" fill="#8b9299" opacity="0.0842"/>
+      <circle cx="24.5078" cy="96.1152" r="0.22" id="button-01-pressed-left-grain-006" fill="#080a0c" opacity="0.0324"/>
+      <circle cx="15.7578" cy="189.4486" r="0.38" id="button-01-pressed-left-grain-007" fill="#8b9299" opacity="0.041"/>
+      <ellipse cx="11.3828" cy="16.6091" rx="0.725" ry="0.54" id="button-01-pressed-left-grain-008" fill="#080a0c" opacity="0.0583"/>
+      <circle cx="28.8828" cy="109.9424" r="0.38" id="button-01-pressed-left-grain-009" fill="#8b9299" opacity="0.067"/>
+      <circle cx="20.1328" cy="203.2757" r="0.22" id="button-01-pressed-left-grain-010" fill="#8b9299" opacity="0.0756"/>
+      <circle cx="5.9141" cy="141.0535" r="0.3" id="button-01-pressed-left-grain-011" fill="#8b9299" opacity="0.0324"/>
+      <ellipse cx="23.4141" cy="234.3868" rx="0.725" ry="0.54" id="button-01-pressed-left-grain-012" fill="#8b9299" opacity="0.041"/>
+      <circle cx="14.6641" cy="78.8313" r="0.38" id="button-01-pressed-left-grain-013" fill="#080a0c" opacity="0.0497"/>
+      <circle cx="10.2891" cy="265.4979" r="0.38" id="button-01-pressed-left-grain-014" fill="#8b9299" opacity="0.067"/>
+      <circle cx="19.0391" cy="120.3128" r="0.54" id="button-01-pressed-left-grain-015" fill="#8b9299" opacity="0.0842"/>
+      <ellipse cx="8.1016" cy="58.0905" rx="0.35" ry="0.22" id="button-01-pressed-left-grain-016" fill="#080a0c" opacity="0.041"/>
+      <circle cx="25.6016" cy="151.4239" r="0.38" id="button-01-pressed-left-grain-017" fill="#8b9299" opacity="0.0497"/>
+      <circle cx="16.8516" cy="244.7572" r="0.3" id="button-01-pressed-left-grain-018" fill="#8b9299" opacity="0.0583"/>
+      <circle cx="12.4766" cy="182.535" r="0.38" id="button-01-pressed-left-grain-019" fill="#8b9299" opacity="0.0756"/>
+      <ellipse cx="29.9766" cy="275.8683" rx="0.35" ry="0.22" id="button-01-pressed-left-grain-020" fill="#8b9299" opacity="0.0842"/>
+      <circle cx="21.6367" cy="68.4609" r="0.38" id="button-01-pressed-left-grain-021" fill="#080a0c" opacity="0.0583"/>
+      <circle cx="12.8867" cy="161.7942" r="0.22" id="button-01-pressed-left-grain-022" fill="#8b9299" opacity="0.067"/>
+      <circle cx="30.3867" cy="255.1276" r="0.38" id="button-01-pressed-left-grain-023" fill="#8b9299" opacity="0.0756"/>
+      <ellipse cx="8.5117" cy="99.572" rx="0.6" ry="0.3" id="button-01-pressed-left-grain-024" fill="#080a0c" opacity="0.0842"/>
+      <circle cx="26.0117" cy="192.9053" r="0.54" id="button-01-pressed-left-grain-025" fill="#8b9299" opacity="0.0324"/>
+      <circle cx="6.3242" cy="113.3992" r="0.38" id="button-01-pressed-left-grain-026" fill="#8b9299" opacity="0.0583"/>
+      <circle cx="23.8242" cy="206.7325" r="0.3" id="button-01-pressed-left-grain-027" fill="#8b9299" opacity="0.067"/>
+    </g>
+    <g id="button-01-pressed-right-surface-texture" clip-path="url(#button-01-pressed-right-clip)">
+      <ellipse cx="143.3867" cy="255.1276" rx="0.475" ry="0.46" id="button-01-pressed-right-grain-000" fill="#8b9299" opacity="0.0683"/>
+      <circle cx="121.5117" cy="99.572" r="0.3" id="button-01-pressed-right-grain-001" fill="#080a0c" opacity="0.0761"/>
+      <circle cx="139.0117" cy="192.9053" r="0.54" id="button-01-pressed-right-grain-002" fill="#8b9299" opacity="0.0292"/>
+      <circle cx="147.7617" cy="20.0658" r="0.22" id="button-01-pressed-right-grain-003" fill="#080a0c" opacity="0.0449"/>
+      <ellipse cx="136.8242" cy="206.7325" rx="0.6" ry="0.3" id="button-01-pressed-right-grain-004" fill="#8b9299" opacity="0.0605"/>
+      <circle cx="145.5742" cy="144.5103" r="0.38" id="button-01-pressed-right-grain-005" fill="#8b9299" opacity="0.0761"/>
+      <circle cx="141.1992" cy="82.2881" r="0.38" id="button-01-pressed-right-grain-006" fill="#080a0c" opacity="0.037"/>
+      <circle cx="132.4492" cy="175.6214" r="0.3" id="button-01-pressed-right-grain-007" fill="#8b9299" opacity="0.0449"/>
+      <ellipse cx="149.9492" cy="268.9547" rx="0.725" ry="0.54" id="button-01-pressed-right-grain-008" fill="#8b9299" opacity="0.0527"/>
+      <circle cx="135.7305" cy="123.7695" r="0.22" id="button-01-pressed-right-grain-009" fill="#8b9299" opacity="0.0683"/>
+      <circle cx="126.9805" cy="217.1029" r="0.38" id="button-01-pressed-right-grain-010" fill="#8b9299" opacity="0.0761"/>
+      <circle cx="144.4805" cy="61.5473" r="0.3" id="button-01-pressed-right-grain-011" fill="#080a0c" opacity="0.0292"/>
+      <ellipse cx="140.1055" cy="248.214" rx="0.85" ry="0.38" id="button-01-pressed-right-grain-012" fill="#8b9299" opacity="0.0449"/>
+      <circle cx="131.3555" cy="92.6584" r="0.22" id="button-01-pressed-right-grain-013" fill="#080a0c" opacity="0.0527"/>
+      <circle cx="148.8555" cy="185.9918" r="0.38" id="button-01-pressed-right-grain-014" fill="#8b9299" opacity="0.0605"/>
+      <circle cx="137.918" cy="40.8066" r="0.54" id="button-01-pressed-right-grain-015" fill="#080a0c" opacity="0.0761"/>
+      <ellipse cx="129.168" cy="134.1399" rx="0.85" ry="0.38" id="button-01-pressed-right-grain-016" fill="#8b9299" opacity="0.0292"/>
+      <circle cx="146.668" cy="227.4733" r="0.22" id="button-01-pressed-right-grain-017" fill="#8b9299" opacity="0.037"/>
+      <circle cx="142.293" cy="165.251" r="0.3" id="button-01-pressed-right-grain-018" fill="#8b9299" opacity="0.0527"/>
+      <circle cx="133.543" cy="258.5844" r="0.54" id="button-01-pressed-right-grain-019" fill="#8b9299" opacity="0.0605"/>
+      <ellipse cx="151.043" cy="103.0288" rx="0.85" ry="0.38" id="button-01-pressed-right-grain-020" fill="#080a0c" opacity="0.0683"/>
+      <circle cx="143.9336" cy="107.6379" r="0.54" id="button-01-pressed-right-grain-021" fill="#8b9299" opacity="0.0449"/>
+      <circle cx="139.5586" cy="45.4156" r="0.22" id="button-01-pressed-right-grain-022" fill="#080a0c" opacity="0.0605"/>
+      <circle cx="130.8086" cy="138.749" r="0.38" id="button-01-pressed-right-grain-023" fill="#8b9299" opacity="0.0683"/>
+      <ellipse cx="148.3086" cy="232.0823" rx="0.6" ry="0.3" id="button-01-pressed-right-grain-024" fill="#8b9299" opacity="0.0761"/>
+      <circle cx="137.3711" cy="169.8601" r="0.38" id="button-01-pressed-right-grain-025" fill="#8b9299" opacity="0.037"/>
+      <circle cx="128.6211" cy="263.1934" r="0.22" id="button-01-pressed-right-grain-026" fill="#8b9299" opacity="0.0449"/>
+      <circle cx="146.1211" cy="24.6749" r="0.38" id="button-01-pressed-right-grain-027" fill="#080a0c" opacity="0.0527"/>
+    </g>
+    <g id="button-01-pressed-paint-chips"/>
+    <g id="button-01-pressed-rust"/>
+    <g id="button-01-pressed-pits">
+      <circle cx="29" cy="31.5" r="0.58" id="button-01-pressed-pit-00" fill="#020304" opacity="0.46"/>
+      <circle cx="28.85" cy="31.35" r="0.261" id="button-01-pressed-pit-highlight-00" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="52.5" cy="91" r="0.44" id="button-01-pressed-pit-01" fill="#020304" opacity="0.46"/>
+      <circle cx="52.35" cy="90.85" r="0.198" id="button-01-pressed-pit-highlight-01" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="102.5" cy="24" r="0.48" id="button-01-pressed-pit-02" fill="#020304" opacity="0.46"/>
+      <circle cx="102.35" cy="23.85" r="0.216" id="button-01-pressed-pit-highlight-02" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="129" cy="64.5" r="0.52" id="button-01-pressed-pit-03" fill="#020304" opacity="0.46"/>
+      <circle cx="128.85" cy="64.35" r="0.234" id="button-01-pressed-pit-highlight-03" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="18.5" cy="164" r="0.48" id="button-01-pressed-pit-04" fill="#020304" opacity="0.46"/>
+      <circle cx="18.35" cy="163.85" r="0.216" id="button-01-pressed-pit-highlight-04" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="139.5" cy="206.5" r="0.46" id="button-01-pressed-pit-05" fill="#020304" opacity="0.46"/>
+      <circle cx="139.35" cy="206.35" r="0.207" id="button-01-pressed-pit-highlight-05" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="22" cy="251.5" r="0.42" id="button-01-pressed-pit-06" fill="#020304" opacity="0.46"/>
+      <circle cx="21.85" cy="251.35" r="0.189" id="button-01-pressed-pit-highlight-06" fill="#9da4aa" opacity="0.12"/>
+      <circle cx="134" cy="264" r="0.5" id="button-01-pressed-pit-07" fill="#020304" opacity="0.46"/>
+      <circle cx="133.85" cy="263.85" r="0.225" id="button-01-pressed-pit-highlight-07" fill="#9da4aa" opacity="0.12"/>
+    </g>
+    <g id="button-01-pressed-scratches">
+      <path d="M 23,19 C 28,22 31,27 35,33" id="button-01-pressed-scratch-00" fill="none" stroke="#050607" stroke-width="0.42" opacity="0.13" stroke-linecap="round"/>
+      <path d="M 123,17 C 120,27 118,37 115,45" id="button-01-pressed-scratch-01" fill="none" stroke="#aeb5bb" stroke-width="0.34" opacity="0.11" stroke-linecap="round"/>
+      <path d="M 53,52 C 59,51 64,50 70,48" id="button-01-pressed-scratch-02" fill="none" stroke="#aeb5bb" stroke-width="0.3" opacity="0.09" stroke-linecap="round"/>
+      <path d="M 86,92 C 90,91 95,90 100,88" id="button-01-pressed-scratch-03" fill="none" stroke="#050607" stroke-width="0.28" opacity="0.1" stroke-linecap="round"/>
+      <path d="M 15,126 C 19,137 21,149 22,160" id="button-01-pressed-scratch-04" fill="none" stroke="#aeb5bb" stroke-width="0.36" opacity="0.1" stroke-linecap="round"/>
+      <path d="M 139,132 C 136,143 135,154 134,165" id="button-01-pressed-scratch-05" fill="none" stroke="#aeb5bb" stroke-width="0.32" opacity="0.09" stroke-linecap="round"/>
+      <path d="M 48,138 C 58,140 66,143 76,146" id="button-01-pressed-scratch-06" fill="none" stroke="#050607" stroke-width="0.28" opacity="0.09" stroke-linecap="round"/>
+      <path d="M 84,174 C 91,176 98,179 105,182" id="button-01-pressed-scratch-07" fill="none" stroke="#aeb5bb" stroke-width="0.3" opacity="0.08" stroke-linecap="round"/>
+      <path d="M 51,214 C 61,213 72,212 82,211" id="button-01-pressed-scratch-08" fill="none" stroke="#aeb5bb" stroke-width="0.26" opacity="0.08" stroke-linecap="round"/>
+      <path d="M 93,242 C 99,241 105,239 111,236" id="button-01-pressed-scratch-09" fill="none" stroke="#050607" stroke-width="0.3" opacity="0.09" stroke-linecap="round"/>
+      <path d="M 9,273 C 14,269 20,265 26,262" id="button-01-pressed-scratch-10" fill="none" stroke="#aeb5bb" stroke-width="0.4" opacity="0.1" stroke-linecap="round"/>
+      <path d="M 131,277 C 136,281 141,285 145,288" id="button-01-pressed-scratch-11" fill="none" stroke="#aeb5bb" stroke-width="0.38" opacity="0.09" stroke-linecap="round"/>
+    </g>
+    <g id="button-01-pressed-highlights">
+      <path d="M 12,6 C 30,2 124,2 143,6" fill="none" stroke="#aeb4b9" stroke-width="0.7" opacity="0.24" stroke-linecap="round"/>
+      <path d="M 4,19 C 3,92 3,217 4,285" fill="none" stroke="#a8aeb4" stroke-width="0.65" opacity="0.16" stroke-linecap="round"/>
+      <path d="M 151,20 C 152,90 152,219 151,283" fill="none" stroke="#030405" stroke-width="0.75" opacity="0.55" stroke-linecap="round"/>
+    </g>
+    <g id="button-01-pressed-edge-wear">
+      <path d="M 13,2 C 30,1.3 49,1.2 67,1.5" id="button-01-pressed-wear-00" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 91,1.5 C 111,1.2 130,1.3 143,2.3" id="button-01-pressed-wear-01" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 1.4,31 C 1.1,52 1.1,74 1.3,94" id="button-01-pressed-wear-02" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 1.4,226 C 1.0,247 1.2,269 2.0,286" id="button-01-pressed-wear-03" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 154.5,33 C 154.8,54 154.8,74 154.6,94" id="button-01-pressed-wear-04" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 154.6,228 C 154.9,247 154.7,268 154.0,286" id="button-01-pressed-wear-05" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 8,300 C 21,303 36,303.5 51,303.5" id="button-01-pressed-wear-06" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+      <path d="M 105,303.5 C 120,303.5 136,303 148,299.8" id="button-01-pressed-wear-07" fill="none" stroke="url(#button-01-pressed-wear-grad)" stroke-width="0.85" opacity="0.55" stroke-linecap="round"/>
+    </g>
+    
+    
+  </g>
+</svg>
