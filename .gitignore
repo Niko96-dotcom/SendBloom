@@ -1,3 +1,6 @@
+# ---------------------------------------------------------------------------
+# CMake generated files
+# ---------------------------------------------------------------------------
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -7,40 +10,67 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+Testing
 _deps
-**/.DS_Store
 
+# ---------------------------------------------------------------------------
+# Build trees
+# ---------------------------------------------------------------------------
+# Builds/ is the canonical tree documented in README.md; keep the directory
+# itself so a fresh clone can configure into it, but track nothing inside.
 Builds/*
 !Builds/.gitkeep
 
 # Alternate / scratch build trees
 build/
+build-release/
 Builds-Compare/
 Builds-deslop-check/
 Builds-v1/
 build-juce-unittests/
-artifacts/
-dist/
-.deslop/
-**/__pycache__/
-
-Install/*
-Testing
-.idea
 cmake-build-debug
 cmake-build-release
 cmake-build-relwithdebinfo
 
-.claude/
+# ---------------------------------------------------------------------------
+# Release and packaging output
+# ---------------------------------------------------------------------------
+# Produced by scripts/release/*. Never committed — the hosted GitHub release
+# is the only distribution channel. See docs/release.md.
+artifacts/
+dist/
+Install/*
 
-# Local pluginval downloads (CI fetches its own)
+# ---------------------------------------------------------------------------
+# Local tooling
+# ---------------------------------------------------------------------------
+# pluginval is fetched per-machine and by CI; never vendored.
+# Matches pluginval.app, pluginval_macOS.zip and tools/pluginval.
 pluginval*
+
+**/__pycache__/
+
+# ---------------------------------------------------------------------------
+# Design source drops
+# ---------------------------------------------------------------------------
+# Multi-hundred-megabyte render/vector packages delivered by the design pass.
+# They are inputs to tools/render_ui.py, not build inputs: everything the
+# plugin actually loads is committed under resources/ui/. Kept out of git so
+# clones stay small.
+SVG NEW/
+UI SENDBLOOM/
+
+# ---------------------------------------------------------------------------
+# Editor, agent and OS cruft
+# ---------------------------------------------------------------------------
+.idea/
+.claude/
+.serena/
+.deslop/
+**/.DS_Store
 
 # Repomix scratch dumps
 repomix-output.md
 
 # Vendored third-party repo samples (local research only)
 .planning/repo-samples/
-
-# Serena MCP project cache
-.serena/

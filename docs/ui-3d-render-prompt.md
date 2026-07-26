@@ -82,14 +82,19 @@ before (the art rested at -15.2°) and every reading was off by that much.
 texture. Import its paths and build the slanted nickel rim, recessed face,
 orange inlay, each N/i/k/o/F/X solid and the recessed orange o counter as scene
 geometry. Glyph tops sit one physical millimetre above the orange inlay. Never
-sample `brand_logo.png` in the Blender material.
+sample a raster logo in the Blender material.
 
 **Preset furniture**: keep only the selected preset name live in JUCE. Model
 the selector well, bezel, gasket, smoked-black insert, orange arrow and rails;
 model each button's
-well, carrier, gasket, cap, icon and legend as separate solids. Never sample
-`preset_field.png`, `preset_load.png` or `preset_save.png` in a Blender
-material.
+well, carrier, gasket, cap, icon and legend as separate solids. Never sample a
+raster preset plate in a Blender material.
+
+The legacy `brand_logo.png`, `preset_field.png`, `preset_load.png` and
+`preset_save.png` rasters these rules warned against were deleted along with
+the photo-extraction script that produced them. Geometry is now the only
+source; if you find yourself wanting one of those files back, model the part
+instead.
 
 **Captions are drawn by the plugin** (`PedalKnob::paintCaption`, `drawEngravedText`).
 Never bake "SIZE", "INPUT", "VALUE", a preset name, or any lettering the host
