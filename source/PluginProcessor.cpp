@@ -229,6 +229,7 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     sendGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     distnScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     thresholdLinearScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
+    gatePostDepthScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     bypassWetScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     outputGainScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     smoothedBank.setTargets (ParameterSnapshot::capture (apvts));
@@ -254,6 +255,7 @@ void PluginProcessor::releaseResources()
     sendGainScratch_.clear();
     distnScratch_.clear();
     thresholdLinearScratch_.clear();
+    gatePostDepthScratch_.clear();
     bypassWetScratch_.clear();
     outputGainScratch_.clear();
 }
@@ -377,7 +379,6 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
     jassert (offset + span <= buffer.getNumSamples());
 
     const auto numChannels = juce::jmin (buffer.getNumChannels(), dryBuffer.getNumChannels());
-    const auto gatePreSoft = snap.gatePreSoft;
     const auto extendedStereo = snap.extendedStereo;
 
     for (int channel = 0; channel < numChannels; ++channel)
@@ -395,6 +396,7 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
         distnScratch_[static_cast<size_t> (sample)] = distnBlend;
         thresholdLinearScratch_[static_cast<size_t> (sample)] =
             smoothedBank.getNextInputThresholdLinear();
+        gatePostDepthScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextGatePostDepth();
         bypassWetScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextBypassWetMix();
         outputGainScratch_[static_cast<size_t> (sample)] = smoothedBank.getNextOutputGainLinear();
         const auto darkModeMix = smoothedBank.getNextDarkModeTarget();
@@ -416,10 +418,11 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
     }
 
     // ADR-V1-06 / RT-06: send, distn, and threshold consumed per sample.
+    // ADR-V1-11c: gate placement is a per-sample depth, not a per-block bool.
     chain.processBlock (monoScratch_.data(), envelopeScratch_.data(), wetScratch_.data(), span,
                         spanRt60, spanDark,
                         distnScratch_.data(), sendGainScratch_.data(), thresholdLinearScratch_.data(),
-                        gatePreSoft);
+                        gatePostDepthScratch_.data());
 
     // ADR-V1-10: build output-gained engaged path first, then crossfade against
     // original per-channel dry. Never apply OutputStage after the bypass mix.

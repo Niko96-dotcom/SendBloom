@@ -57,7 +57,7 @@ TEST_CASE ("post gate wet drops within 15 ms of silence onset", "[gate][integrat
 TEST_CASE ("PostHard gate release budget under 15 ms", "[gate][NoiseGate][TEST-02][timing]")
 {
     sendbloom::NoiseGate gate;
-    gate.prepare (kSampleRate, sendbloom::GateProfile::PostHard);
+    gate.prepare (kSampleRate);
 
     const auto openThresh = juce::Decibels::decibelsToGain (-40.0f);
     gate.process (openThresh * 2.0f, -40.0f);
@@ -86,16 +86,17 @@ TEST_CASE ("PostHard gate release budget under 15 ms", "[gate][NoiseGate][TEST-0
 // The two tests above measure only the final VCA ramp: they hand the gate an
 // envelope directly. The real "hard close" also has to wait for the shared
 // detector to fall below the close threshold. This test keeps the detector in
-// the loop (mirroring GatedBloomChain's 1 ms / 5 ms follower) so tuning the
-// detector release can't silently regress the perceived close speed.
+// the loop, with the same 1 ms / 2 ms constants GatedBloomChain::prepare uses,
+// so tuning the detector release can't silently regress the perceived close
+// speed. Keep these two in sync with the chain.
 TEST_CASE ("PostHard system close incl. detector resolves within 30 ms",
            "[gate][NoiseGate][detector][timing]")
 {
     sendbloom::EnvelopeDetector detector;
-    detector.prepare (kSampleRate, 1.0f, 5.0f);
+    detector.prepare (kSampleRate, 1.0f, 2.0f);
 
     sendbloom::NoiseGate gate;
-    gate.prepare (kSampleRate, sendbloom::GateProfile::PostHard);
+    gate.prepare (kSampleRate);
 
     constexpr auto kThresholdDb = -40.0f;
 

@@ -6,7 +6,7 @@ No row is a PASS until a real tester supplies host version, OS, date, result, an
 
 - Instantiate, open editor, and recall all eight presets.
 - Always-on audio; Pressure Mode dry-at-rest, press, release, and preserved tail.
-- MIDI CC1; PreSoft/PostHard gate; DARK; consistent fixed-rate reverb behavior across realtime/offline rendering and the host's supported sample rates.
+- MIDI CC1; Pre/Post gate placement (including flipping the switch over a live tail); DARK; consistent fixed-rate reverb behavior across realtime/offline rendering and the host's supported sample rates.
 - Stereo true bypass; Input, Level, Distn, and Output automation.
 - Run a minimum 10-minute abuse/soak with repeated automation and bypass.
 

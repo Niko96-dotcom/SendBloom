@@ -110,9 +110,11 @@ These are the non-negotiable product behaviors that SendBloom is intentionally r
 ### Gate
 
 - The gate is always part of the effect.
+- It is one circuit that *moves*, not two gates. The manufacturer describes a gate that is always on, whose trigger threshold is set low enough to go unnoticed ahead of the effect, and whose closing speed is not adjustable. The Gate switch therefore changes placement, not character (`RFX-MANUAL`, `RFX-PRODUCT` FAQ).
 - In Pre mode it suppresses idle noise before the reverb/distortion path.
 - In Post mode it closes after reverb/distortion and creates the hard “edited sample” cut.
 - The hard close is intentionally dramatic, but the software must not rely on an accidental one-sample digital discontinuity to create that character.
+- The threshold follows the Input control, because the detector is measured after input gain.
 
 ### Pressure send
 
@@ -169,7 +171,7 @@ The snapshot already includes a substantial test suite and prior RC documentatio
 |---|---|---|
 | Dry/wet topology | Dry tap is taken before wet input gain | Yes |
 | Wet-only dirt | `WetOverdriveState` only processes wet | Yes |
-| Gate placement | PreSoft and PostHard exist | Yes |
+| Gate placement | Pre and Post placements exist | Yes |
 | Reverb abstraction | `IReverbEngine`, host engine, fixed-rate adapter | Yes |
 | ProperSRC | r8brain host ↔ 32,768 Hz path | Yes |
 | SRC policy | zero reported PDC with measured wet-only delay | Yes unless a separate product decision changes it |
@@ -555,7 +557,7 @@ void processBlock (
     float rt60Seconds,
     float darkMix,
     bool authenticColor,
-    bool gatePreSoft) noexcept;
+    const float* gatePostDepth) noexcept;
 ```
 
 Equivalent naming/order is acceptable only if the semantic contract is identical.
@@ -698,6 +700,59 @@ Input gain stays the dominant sensitivity control because the detector envelope 
 measured post-input-gain — turning INPT up effectively lowers the threshold. The
 parameter is renamed "Gate Trim" for the DAW; the ID `input_threshold` is retained
 for state/preset compatibility.
+
+### ADR-V1-11c — One envelope for both positions, and a ramped placement
+
+Amends 11a. 11a adopted the "single movable gate" model but left the two
+positions with entirely different envelopes, inherited from the original design:
+
+| | open | close | floor |
+|---|---|---|---|
+| PostHard | 0.2 ms linear | 0.75 ms linear | exact 0 |
+| PreSoft | 2 ms one-pole | 150 ms one-pole | −80 dB |
+
+That is a 1000:1 difference in close speed between two positions of what the
+manufacturer describes as one circuit whose closing speed is not adjustable, and
+it differentiates on the wrong axis: Rainger attributes the pre position's
+unobtrusiveness to a low trigger threshold, not to a gentler close.
+
+**Measured, the slow profile bought nothing and cost the gate its job.** With the
+gate ahead of the tank the tail after a mute was identical to the fast profile
+within `0.07 dB` at every point out to 1.9 s — once the gate stops feeding the
+tank, the tank's own decay dominates. Meanwhile PreSoft needed `705 ms` to reach
+−40 dB (it was only 5 dB down 100 ms into a gap), so with −50 dBFS hum on the
+input it left roughly 30 dB more hum in the tank across the first half second of
+every gap, where the tank then reverberated it for the length of the tail. Its
+2 ms one-pole open also took ~5 ms to reach unity, rounding the front edge off
+every note feeding the bloom — the defect 11a removed from the post position.
+
+- **`GateProfile` is deleted.** `NoiseGate` has one envelope: 0.2 ms linear open,
+  0.75 ms linear close, exact zero. Placement lives in `GatedBloomChain`.
+- **The hysteresis ratio is derived from `kHysteresisDb`** instead of a duplicated
+  literal, so the two cannot drift.
+- **Threshold stays single and shared.** Under the one-circuit reading the same
+  low threshold serves both positions; you notice it in post because it chops a
+  tail, not because it moved. No per-position offset is introduced.
+- **Placement is a per-sample ramp, not a per-block bool.** `gate_pre_post` feeds
+  a 5 ms smoother (the bypass budget) that drives both nodes from one gate gain
+  `g`:
+
+```text
+pre  = g + (1 - g) * postDepth
+post = 1 - (1 - g) * postDepth
+```
+
+  Both are continuous in `postDepth` and collapse to unity while the gate is
+  open, so the ramp only does work during a close. Flipping the switch over a
+  live tail previously stepped the wet output by up to `0.44` in one sample as
+  the post node muted or unmuted a full-level tail; measured after the change the
+  worst step is `0.019`, at or below the tail's own per-sample slew (`0.019`).
+
+CORE-10, CORE-11 and CORE-12 are unchanged and still hold — the surviving
+envelope is the one they were written against. Measured post-gate close on real
+audio remains `15.65 ms`, and the low-E chatter diagnostic remains at zero
+dropouts down to INPT 0.35. CORE-13 is rewritten: pre is unobtrusive by
+position, not by closing slowly.
 
 ## ADR-V1-12 — Predelay topology
 
@@ -850,7 +905,7 @@ Every requirement below is mandatory unless marked `human_needed`.
 - **CORE-10** PostHard close uses a 0.75 ms ramp, not a one-sample snap.
 - **CORE-11** PostHard reaches zero no later than 1 ms after the close command.
 - **CORE-12** Post gate still chops wet within 15 ms after silence onset.
-- **CORE-13** PreSoft retains its long unobtrusive close behavior.
+- **CORE-13** One gate circuit serves both positions; Pre is unobtrusive by placement, rejecting sub-threshold hum from the wet path while leaving the tail to decay.
 - **CORE-14** Settled bypass is channel-preserving.
 - **CORE-15** Settled bypass is unity within floating tolerance.
 - **CORE-16** Settled bypass ignores Input, Distn, Gate, Level, and Output settings.
@@ -1623,12 +1678,14 @@ Update chain:
 
 ### Pre-reverb loop
 
+One gate advanced once per sample; `gatePostDepth[i]` is the ramped placement
+(0 = ahead of the effect, 1 = behind it). See ADR-V1-11a/11c.
+
 ```cpp
-wet = monoIn[i];
+g = gate.processLinear (envelope[i], thresholdLinear[i]);
+postGateScratch[i] = 1.0f - (1.0f - g) * gatePostDepth[i];
 
-if (gatePreSoft)
-    wet *= preGate.process (envelope[i], thresholdDb[i]);
-
+wet = monoIn[i] * (g + (1.0f - g) * gatePostDepth[i]);
 wetSendScratch[i] = wet * sendGain[i];
 ```
 
@@ -1636,11 +1693,7 @@ wetSendScratch[i] = wet * sendGain[i];
 
 ```cpp
 wet = overdrive.process (reverbScratch[i], distnBlend[i]);
-
-if (! gatePreSoft)
-    wet *= postGate.process (envelope[i], thresholdDb[i]);
-
-wetOut[i] = wet;
+wetOut[i] = wet * postGateScratch[i];
 ```
 
 For the host-rate fast path, it is acceptable to keep sample processing, but it must consume the arrays.
@@ -1800,13 +1853,12 @@ ParallelWetMixer::mix (dryTap, wet, wetGain)
 
 ## 12.6 PostHard gate implementation
 
-Preferred implementation:
+Preferred implementation (superseded in part by ADR-V1-11a/11c — one envelope
+serves both positions and the opening ramp is 0.2 ms):
 
-- PreSoft: existing exponential attack/release and -80 dB floor.
-- PostHard:
-  - 0.5 ms linear opening ramp;
-  - 0.75 ms linear closing ramp;
-  - exact zero at completion.
+- 0.2 ms linear opening ramp;
+- 0.75 ms linear closing ramp;
+- exact zero at completion.
 
 Possible state:
 
@@ -1824,12 +1876,14 @@ Do not restart the ramp every sample while state remains unchanged.
 
 ## 12.7 Gate tests
 
-- PreSoft closes toward floor over long release.
-- PostHard does not snap.
-- PostHard reaches zero by 1 ms.
-- PostHard first-sample delta <=0.05 at unity.
-- Hysteresis remains 3 dB.
+- The gate does not snap; it reaches zero by 1 ms after the close command.
+- First-sample delta <=0.05 at unity.
+- Hysteresis remains 2 dB (ADR-V1-11a).
 - Post gate wet output drops below 2% of prior peak within 15 ms after silence onset.
+- Pre gate rejects a sub-threshold signal from the wet path by >=40 dB, and lets
+  nothing into the tank once closed (ADR-V1-11c).
+- Pre gate leaves the tail decaying where Post chops it.
+- Flipping the Gate switch over a live tail is click-bounded.
 - Long riff keeps gate open.
 - Dry path is never gated.
 - sample rates: 44.1, 48, 96 kHz.
@@ -2672,7 +2726,9 @@ PostHard close does not snap in one sample
 PostHard reaches zero within one millisecond
 PostHard step delta is bounded
 Post gate chops within fifteen milliseconds
-PreSoft release remains long
+Pre gate rejects sub threshold hum from the wet path
+Pre gate leaves the tail decaying
+Gate switch flip over a live tail is click bounded
 ```
 
 ### Bypass

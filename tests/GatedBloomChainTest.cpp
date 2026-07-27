@@ -22,12 +22,12 @@ float processChainSample (sendbloom::GatedBloomChain& chain,
                           float rt60,
                           float distnBlend,
                           float sendGain,
-                          bool gatePreSoft,
+                          bool gatePre,
                           float darkModeMix = 0.0f)
 {
     const auto env = chain.getEnvelope().process (std::abs (input));
     return chain.processSample (input, env, rt60, darkModeMix,
-                                distnBlend, sendGain, gatePreSoft, kThresholdDb);
+                                distnBlend, sendGain, gatePre, kThresholdDb);
 }
 
 std::vector<float> renderChain (sendbloom::GatedBloomChain& chain,
@@ -35,12 +35,12 @@ std::vector<float> renderChain (sendbloom::GatedBloomChain& chain,
                                 float rt60,
                                 float distnBlend,
                                 float sendGain,
-                                bool gatePreSoft)
+                                bool gatePre)
 {
     std::vector<float> wet (input.size());
 
     for (size_t i = 0; i < input.size(); ++i)
-        wet[i] = processChainSample (chain, input[i], rt60, distnBlend, sendGain, gatePreSoft);
+        wet[i] = processChainSample (chain, input[i], rt60, distnBlend, sendGain, gatePre);
 
     return wet;
 }
@@ -184,25 +184,25 @@ TEST_CASE ("GatedBloomChain processBlock matches processSample loop",
     const auto rt60 = sendbloom::ParameterCurves::sizeToRT60 (0.5f);
     constexpr float kDistnBlend = 0.3f;
     constexpr float kSendGain = 1.0f;
-    constexpr bool kGatePreSoft = true;
+    constexpr bool kGatePre = true;
 
     for (int i = 0; i < 2000; ++i)
     {
         const auto env = chainBlock.getEnvelope().process (0.5f);
-        chainBlock.processSample (0.5f, env, rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
-        chainSample.processSample (0.5f, env, rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+        chainBlock.processSample (0.5f, env, rt60, 0.0f, kDistnBlend, kSendGain, kGatePre, kThresholdDb);
+        chainSample.processSample (0.5f, env, rt60, 0.0f, kDistnBlend, kSendGain, kGatePre, kThresholdDb);
     }
 
     std::vector<float> blockOut (static_cast<size_t> (kNumSamples));
     std::vector<float> sampleOut (static_cast<size_t> (kNumSamples));
 
     chainBlock.processBlock (monoIn.data(), envelope.data(), blockOut.data(), kNumSamples,
-                             rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+                             rt60, 0.0f, kDistnBlend, kSendGain, kGatePre, kThresholdDb);
 
     for (int i = 0; i < kNumSamples; ++i)
         sampleOut[static_cast<size_t> (i)] = chainSample.processSample (
             monoIn[static_cast<size_t> (i)], envelope[static_cast<size_t> (i)],
-            rt60, 0.0f, kDistnBlend, kSendGain, kGatePreSoft, kThresholdDb);
+            rt60, 0.0f, kDistnBlend, kSendGain, kGatePre, kThresholdDb);
 
     float maxDiff = 0.0f;
     for (int i = 0; i < kNumSamples; ++i)

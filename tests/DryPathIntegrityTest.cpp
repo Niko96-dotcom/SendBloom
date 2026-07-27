@@ -56,7 +56,7 @@ RenderCapture renderWithDistn (float distnValue)
     const auto inputGainLinear = juce::Decibels::decibelsToGain (snap.inputGainDb);
     const auto distnBlend = snap.distnBlend;
     const auto sendGain = snap.sendGain;
-    const auto gatePreSoft = snap.gatePreSoft;
+    const auto gatePre = snap.gatePre;
     const auto darkModeMix = snap.darkMode ? 1.0f : 0.0f;
 
     RenderCapture capture;
@@ -90,7 +90,7 @@ RenderCapture renderWithDistn (float distnValue)
             const auto monoIn = inputStage.processSample (dryTap, inputGainLinear);
             const auto env = chain.getEnvelope().process (std::abs (monoIn));
             const auto wet = chain.processSample (monoIn, env, rt60, darkModeMix,
-                                                  distnBlend, sendGain, gatePreSoft, thresholdDb);
+                                                  distnBlend, sendGain, gatePre, thresholdDb);
             const auto mixed = buffer.getSample (0, i);
 
             capture.output.push_back (mixed);

@@ -11,7 +11,41 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- The gate is now one circuit that moves between the Pre and Post positions
+  rather than two gates with different envelopes (ADR-V1-11c). The Pre position
+  previously used a 150 ms one-pole release to a −80 dB floor; measured, that
+  left the reverb tail identical to a fast close within 0.07 dB while taking
+  705 ms to reach −40 dB, so roughly 30 dB more hum reached the reverb tank
+  across the first half second of every gap — the one thing the gate is there to
+  prevent. Both positions now share the 0.2 ms open / 0.75 ms close envelope.
+  Pre is quiet because of where it sits, not because it closes slowly.
+- The Pre position no longer softens note attacks feeding the bloom: its 2 ms
+  one-pole opening ramp took ~5 ms to reach unity and has been replaced by the
+  same 0.2 ms linear ramp the Post position already used.
+- Flipping the Gate switch over a live tail now ramps over 5 ms instead of
+  jumping. Worst-case sample step went from 0.44 to 0.019, at or below the
+  tail's own per-sample slew.
+- The `Gate Pre/Post` parameter's choices are displayed as `Pre` / `Post`
+  instead of `PreSoft` / `PostHard`, which described envelopes that no longer
+  differ. Parameter ID, indices, and saved state are unchanged.
+- The gate now defaults to `Pre`, matching the reference pedal, whose Gate
+  switch ships out. `Init.xml` moves with it so a fresh instance still reports
+  the Init program rather than Custom. Saved sessions and the eight factory
+  presets are unaffected — `Cut Sample Gate`, `Gated Room`, `Hot Clip`,
+  `Sparkle Verb` and `Spacerock Burn` still ship in the Post position.
+
+### Fixed
+
+- The Pre gate position had no on-audio test coverage: the only test that named
+  it fed a silent input and asserted the wet mixer's own formula, so it passed
+  with the gate removed. Added `tests/GatePlacementTest.cpp` covering hum
+  rejection, tail preservation, hum exclusion from the tank after close, the
+  buried-tail reveal in Post, and the switch-flip click bound.
+- `PostGateTimingTest` built its detector with a 5 ms release while claiming to
+  mirror the chain, which uses 2 ms — it was guarding a slower detector than
+  ships.
 
 ## [1.0.0]
 

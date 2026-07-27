@@ -48,8 +48,9 @@ TEST_CASE ("size and output_gain ranges and defaults", "[parm][layout]")
     REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::outputGain)->load()
              == Catch::Approx (0.0f));
 
+    // Matches the reference pedal, whose Gate switch ships out ('pre' effects).
     REQUIRE (plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::gatePrePost)->load()
-             == Catch::Approx (1.0f));
+             == Catch::Approx (0.0f));
 }
 
 TEST_CASE ("default send_amount is 0 (UX-02)", "[parm][layout]")

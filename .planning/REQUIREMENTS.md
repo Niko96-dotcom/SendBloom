@@ -81,7 +81,7 @@ Every requirement below is mandatory for this milestone unless marked `human_nee
 - [x] **CORE-10**: PostHard close uses a 0.75 ms ramp, not a one-sample snap
 - [x] **CORE-11**: PostHard reaches zero no later than 1 ms after the close command
 - [x] **CORE-12**: Post gate still chops wet within 15 ms after silence onset
-- [x] **CORE-13**: PreSoft retains its long unobtrusive close behavior
+- [x] **CORE-13**: One gate circuit serves both switch positions (ADR-V1-11c) — Pre is unobtrusive because of where it sits, not because it closes slowly; it must reject sub-threshold hum from the wet path while leaving the tail to decay
 - [x] **CORE-14**: Settled bypass is channel-preserving
 - [x] **CORE-15**: Settled bypass is unity within floating tolerance
 - [x] **CORE-16**: Settled bypass ignores Input, Distn, Gate, Level, and Output settings
@@ -211,7 +211,7 @@ These constrain implementation; full text lives in the master milestone spec:
 | ADR-V1-08 | Canonical Input −9/0/+9 |
 | ADR-V1-09 | Unity dry level; wet-only Level |
 | ADR-V1-10 | True bypass final crossfade |
-| ADR-V1-11 | PostHard 0.75 ms de-click ramp (see 11a single movable gate + 5 ms hold + fast detector; 11b threshold→trim) |
+| ADR-V1-11 | PostHard 0.75 ms de-click ramp (see 11a single movable gate + 5 ms hold + fast detector; 11b threshold→trim; 11c one envelope for both positions + 5 ms placement ramp) |
 | ADR-V1-12 | Continuous fixed 55 ms dark tap |
 | ADR-V1-13 | Modulation time invariant |
 | ADR-V1-14 | SRC underfill pre-clear |

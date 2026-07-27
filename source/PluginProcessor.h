@@ -81,6 +81,7 @@ private:
     std::vector<float> sendGainScratch_;
     std::vector<float> distnScratch_;
     std::vector<float> thresholdLinearScratch_;
+    std::vector<float> gatePostDepthScratch_;
     std::vector<float> bypassWetScratch_;
     std::vector<float> outputGainScratch_;
     void applyPressureMidiAtSample (const juce::MidiBuffer& midiMessages,

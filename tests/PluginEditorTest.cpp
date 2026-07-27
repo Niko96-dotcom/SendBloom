@@ -149,11 +149,11 @@ TEST_CASE ("Gate control follows preset changes and has no inert preset action b
 
     REQUIRE (gateButton != nullptr);
 
-    processor.setCurrentProgram (1); // Sparkle Verb: PostHard
+    processor.setCurrentProgram (1); // Sparkle Verb: gate Post
     juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
     REQUIRE (gateButton->getToggleState());
 
-    processor.setCurrentProgram (4); // Dry Dub Sends: PreSoft
+    processor.setCurrentProgram (4); // Dry Dub Sends: gate Pre
     juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
     REQUIRE_FALSE (gateButton->getToggleState());
 }

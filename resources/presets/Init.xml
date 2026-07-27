@@ -8,7 +8,7 @@
   <PARAM id="distn" value="0.0"/>
   <PARAM id="output_gain" value="0.0"/>
   <PARAM id="dark_mode" value="0"/>
-  <PARAM id="gate_pre_post" value="1"/>
+  <PARAM id="gate_pre_post" value="0"/>
   <PARAM id="send_connected" value="0"/>
   <PARAM id="send_amount" value="0"/>
   <PARAM id="send_feel" value="0"/>

@@ -34,20 +34,17 @@ TEST_CASE ("TEST-01 parameter curves RT60 distn send mapping", "[traceability][T
 
 TEST_CASE ("TEST-02 gate pre hum suppression post hard floor dry passes", "[traceability][TEST-02]")
 {
-    sendbloom::NoiseGate preGate;
-    sendbloom::NoiseGate postGate;
-    preGate.prepare (48000.0, sendbloom::GateProfile::PreSoft);
-    postGate.prepare (48000.0, sendbloom::GateProfile::PostHard);
+    // ADR-V1-11c: one circuit, one envelope — both placements drive the same gate
+    // to the same floor. What differs is where the gain is applied, which
+    // GatePlacementTest.cpp covers on audio.
+    sendbloom::NoiseGate gate;
+    gate.prepare (48000.0);
 
     for (int i = 0; i < 20000; ++i)
-    {
-        preGate.process (0.00001f, -40.0f);
-        postGate.process (0.00001f, -40.0f);
-    }
+        gate.process (0.00001f, -40.0f);
 
-    REQUIRE (preGate.getGain() > 0.0f);
-    REQUIRE (preGate.getGain() < 0.1f);
-    REQUIRE (postGate.getGain() == Catch::Approx (0.0f).margin (1e-3f));
+    REQUIRE_FALSE (gate.getIsOpen());
+    REQUIRE (gate.getGain() == Catch::Approx (0.0f).margin (1e-3f));
 
     const auto dryTap = 0.5f;
     const auto wet = 0.0f;

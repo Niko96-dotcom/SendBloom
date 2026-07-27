@@ -40,7 +40,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
         juce::ParameterID { gatePrePost, 1 }, "Gate Pre/Post",
-        juce::StringArray { "PreSoft", "PostHard" }, 1));
+        // One gate circuit that moves (ADR-V1-11c) — these select where it sits,
+        // not how hard it closes. Default is Pre, matching the reference pedal,
+        // whose Gate switch ships out. Init.xml must stay in step with this or a
+        // fresh instance reports itself as a custom program.
+        juce::StringArray { "Pre", "Post" }, 0));
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
         juce::ParameterID { sendConnected, 1 }, "Send Connected",

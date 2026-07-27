@@ -20,6 +20,10 @@ public:
         // sendGain smoothing removed — PressureController owns attack/release (ADR-V1-04)
         darkModeTarget.reset (sampleRate, 0.015);
         bypassWetMix.reset (sampleRate, 0.005);
+        // ADR-V1-11c: the Gate switch moves one circuit pre<->post. Ramping the
+        // placement over the same 5 ms budget as bypass keeps the post node from
+        // muting or unmuting a live tail in a single sample.
+        gatePostDepth.reset (sampleRate, 0.005);
     }
 
     void setTargets (const ParameterSnapshot& snap) noexcept
@@ -32,6 +36,7 @@ public:
         distnBlend.setTargetValue (snap.distnBlend);
         darkModeTarget.setTargetValue (snap.darkMode ? 1.0f : 0.0f);
         bypassWetMix.setTargetValue (snap.bypassed ? 0.0f : 1.0f);
+        gatePostDepth.setTargetValue (snap.gatePre ? 0.0f : 1.0f);
     }
 
     void snapToTargets() noexcept
@@ -44,6 +49,7 @@ public:
         distnBlend.setCurrentAndTargetValue (distnBlend.getTargetValue());
         darkModeTarget.setCurrentAndTargetValue (darkModeTarget.getTargetValue());
         bypassWetMix.setCurrentAndTargetValue (bypassWetMix.getTargetValue());
+        gatePostDepth.setCurrentAndTargetValue (gatePostDepth.getTargetValue());
     }
 
     float getNextInputGainLinear() noexcept { return inputGainLinear.getNextValue(); }
@@ -54,6 +60,7 @@ public:
     float getNextDistnBlend() noexcept { return distnBlend.getNextValue(); }
     float getNextDarkModeTarget() noexcept { return darkModeTarget.getNextValue(); }
     float getNextBypassWetMix() noexcept { return bypassWetMix.getNextValue(); }
+    float getNextGatePostDepth() noexcept { return gatePostDepth.getNextValue(); }
 
     juce::SmoothedValue<float>& getBypassWetMixSmoother() noexcept { return bypassWetMix; }
 
@@ -66,6 +73,7 @@ private:
     juce::SmoothedValue<float> distnBlend;
     juce::SmoothedValue<float> darkModeTarget;
     juce::SmoothedValue<float> bypassWetMix;
+    juce::SmoothedValue<float> gatePostDepth;
 };
 
 } // namespace sendbloom

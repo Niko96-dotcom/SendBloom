@@ -12,7 +12,7 @@ TEST_CASE ("v1 PostHard close uses sub-ms ramp not one-sample snap",
     constexpr float kThresholdDb = -40.0f;
 
     sendbloom::NoiseGate gate;
-    gate.prepare (kSampleRate, sendbloom::GateProfile::PostHard);
+    gate.prepare (kSampleRate);
 
     const auto openThresh = juce::Decibels::decibelsToGain (kThresholdDb);
     gate.process (openThresh * 2.0f, kThresholdDb);

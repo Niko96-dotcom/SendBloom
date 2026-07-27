@@ -25,7 +25,7 @@ struct ParameterSnapshot
     float sendAmountNorm {};
     float sendGain {};
     bool darkMode {};
-    bool gatePreSoft {};
+    bool gatePre {};
     bool sendConnected {};
     bool sendFirmFeel {};
     bool extendedStereo {};
@@ -58,7 +58,7 @@ struct ParameterSnapshot
         s.outputGainLinear = ParameterCurves::outputGainLinear (s.outputGainDb);
 
         s.darkMode = apvts.getRawParameterValue (ParameterIDs::darkMode)->load() > 0.5f;
-        s.gatePreSoft = static_cast<int> (apvts.getRawParameterValue (ParameterIDs::gatePrePost)->load()) == 0;
+        s.gatePre = static_cast<int> (apvts.getRawParameterValue (ParameterIDs::gatePrePost)->load()) == 0;
         s.sendConnected = apvts.getRawParameterValue (ParameterIDs::sendConnected)->load() > 0.5f;
 
         s.sendAmountNorm = apvts.getRawParameterValue (ParameterIDs::sendAmount)->load();

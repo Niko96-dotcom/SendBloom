@@ -80,6 +80,8 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     std::vector<float> distnVarying (kN, 0.0f);
     std::vector<float> thresh (
         kN, juce::Decibels::decibelsToGain (kThresholdDb));
+    // ADR-V1-11c: gate placement is per-sample too. 0 == gate ahead of the effect.
+    std::vector<float> gatePostDepth (kN, 0.0f);
     std::vector<float> outSilent (kN, 0.0f);
     std::vector<float> outUnity (kN, 0.0f);
     std::vector<float> outDirty (kN, 0.0f);
@@ -99,7 +101,8 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     }
 
     chain.processBlock (mono.data(), env.data(), outUnity.data(), kN,
-                        rt60, 0.0f, distn.data(), sendUnity.data(), thresh.data(), true);
+                        rt60, 0.0f, distn.data(), sendUnity.data(), thresh.data(),
+                        gatePostDepth.data());
 
     double unityEnergy = 0.0;
 
@@ -109,7 +112,8 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     REQUIRE (unityEnergy > 1.0e-3);
 
     chain.processBlock (mono.data(), env.data(), outSilent.data(), kN,
-                        rt60, 0.0f, distn.data(), sendVarying.data(), thresh.data(), true);
+                        rt60, 0.0f, distn.data(), sendVarying.data(), thresh.data(),
+                        gatePostDepth.data());
 
     double early = 0.0;
     double late = 0.0;
@@ -124,7 +128,8 @@ TEST_CASE ("v1 GatedBloomChain consumes per-sample send/distn/threshold arrays",
     REQUIRE (late > 1.0e-3);
 
     chain.processBlock (mono.data(), env.data(), outDirty.data(), kN,
-                        rt60, 0.0f, distnVarying.data(), sendUnity.data(), thresh.data(), true);
+                        rt60, 0.0f, distnVarying.data(), sendUnity.data(), thresh.data(),
+                        gatePostDepth.data());
 
     double dirtyDelta = 0.0;
 

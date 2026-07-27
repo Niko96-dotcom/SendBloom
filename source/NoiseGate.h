@@ -7,12 +7,29 @@
 namespace sendbloom
 {
 
-enum class GateProfile
-{
-    PreSoft,
-    PostHard
-};
+/** One gate circuit, one envelope.
 
+    The reference hardware does not swap in a gentler gate for the pre
+    position: the manufacturer describes a gate that is always in circuit, has
+    a trigger threshold set low enough to go unnoticed ahead of the effect, and
+    a closing speed that is not adjustable. The Gate switch *moves* that one
+    circuit from ahead of the reverb/distortion to behind it. Placement
+    therefore lives in GatedBloomChain, and this class has no per-position
+    profile.
+
+    ADR-V1-11c removed the former PreSoft profile (2 ms one-pole open, 150 ms
+    one-pole release to a -80 dB floor). Measured, it bought nothing: with the
+    gate ahead of the tank the tail after a mute was identical to the fast
+    profile within 0.07 dB at every point out to 1.9 s, because once the gate
+    stops feeding the tank the tank's own decay dominates. What it cost was the
+    job the manual actually gives the gate — taming hum into the reverb and
+    distortion stages. The slow profile was only 5 dB down 100 ms into a gap and
+    took 705 ms to reach -40 dB, leaving roughly 30 dB more hum in the tank
+    across the first half second of every gap, where it then reverberates for
+    the length of the tail. Its 2 ms one-pole open also rounded the front edge
+    off every note feeding the bloom — the same defect ADR-V1-11a removed from
+    the post position.
+*/
 class NoiseGate
 {
 public:
@@ -29,39 +46,29 @@ public:
     // unclipped low E (82 Hz) with margin; measured stutter-free down to INPT 0.35.
     static constexpr double kHoldMs = 5.0;
 
-    void prepare (double sampleRate, GateProfile profile) noexcept
+    // ADR-V1-11 / 11a: deterministic linear edges. The opening ramp is linear
+    // rather than a one-pole so it preserves the violent front edge of the wet
+    // burst; the closing ramp is a deterministic chop to exact zero that is fast
+    // enough to read as an edit but long enough not to be a one-sample click.
+    static constexpr float kOpenRampMs = 0.2f;
+    static constexpr float kCloseRampMs = 0.75f;
+
+    void prepare (double sampleRate) noexcept
     {
         sampleRate_ = sampleRate;
-        gain = 1.0f;
-        isOpen = true;
-        holdCounter = 0;
-        configureProfile (profile);
-    }
-
-    // Re-point the gate at a different profile WITHOUT resetting the running
-    // open/close/hold/gain state. This is how a single shared gate "moves"
-    // between the pre- and post-effect positions like the hardware's one physical
-    // circuit, instead of two independent gates that surface stale state when the
-    // Gate switch is toggled.
-    void setProfile (GateProfile profile) noexcept
-    {
-        if (profile == profile_)
-            return;
-
-        configureProfile (profile);
+        configure();
+        reset();
     }
 
     float process (float inputEnvelope, float thresholdDb) noexcept
     {
-        const auto openThresh = juce::Decibels::decibelsToGain (thresholdDb);
-        return processLinear (inputEnvelope, openThresh);
+        return processLinear (inputEnvelope, juce::Decibels::decibelsToGain (thresholdDb));
     }
 
     float processLinear (float inputEnvelope, float openThreshold) noexcept
     {
-        constexpr auto kCloseThresholdRatio = 0.7943282347f; // -2 dB
         const auto openThresh = juce::jmax (0.0f, openThreshold);
-        const auto closeThresh = openThresh * kCloseThresholdRatio;
+        const auto closeThresh = openThresh * closeThresholdRatio;
 
         // Trigger + hold state machine. Opening is instant; closing waits out the
         // hold so brief dropouts don't retrigger, but a genuine mute closes.
@@ -75,22 +82,9 @@ public:
         else
             isOpen = false;              // hold expired: close
 
-        if (postHardClose)
-        {
-            if (isOpen)
-                // Linear ~0.2 ms attack: preserves the violent front edge of the
-                // wet burst instead of a one-pole that rounds the transient away.
-                gain = std::min (1.0f, gain + openRampStep);
-            else
-                // Deterministic linear ~0.75 ms chop to zero.
-                gain = std::max (0.0f, gain - closeRampStep);
+        gain = isOpen ? std::min (1.0f, gain + openRampStep)
+                      : std::max (0.0f, gain - closeRampStep);
 
-            return gain;
-        }
-
-        const auto target = isOpen ? 1.0f : floorGain;
-        const auto coeff = target > gain ? attackCoeff : releaseCoeff;
-        gain = coeff * gain + (1.0f - coeff) * target;
         return gain;
     }
 
@@ -105,38 +99,12 @@ public:
     }
 
 private:
-    void configureProfile (GateProfile profile) noexcept
+    void configure() noexcept
     {
-        profile_ = profile;
-
-        switch (profile)
-        {
-            case GateProfile::PreSoft:
-                releaseMs = 150.0f;
-                attackMs = 2.0f;
-                floorGain = juce::Decibels::decibelsToGain (-80.0f);
-                postHardClose = false;
-                break;
-
-            case GateProfile::PostHard:
-                // ADR-V1-11: deterministic hard chop; fast linear edges.
-                releaseMs = 0.75f; // close ramp length
-                attackMs = 0.2f;   // open ramp length (linear, not one-pole)
-                floorGain = 0.0f;
-                postHardClose = true;
-                break;
-        }
-
-        releaseCoeff = coeffForMs (releaseMs, sampleRate_);
-        attackCoeff = coeffForMs (attackMs, sampleRate_);
-        openRampStep = rampStepForMs (attackMs, sampleRate_);
-        closeRampStep = rampStepForMs (releaseMs, sampleRate_);
+        openRampStep = rampStepForMs (kOpenRampMs, sampleRate_);
+        closeRampStep = rampStepForMs (kCloseRampMs, sampleRate_);
         holdSamples = static_cast<int> (std::max (1.0, kHoldMs * 0.001 * sampleRate_));
-    }
-
-    static float coeffForMs (float ms, double sampleRate) noexcept
-    {
-        return std::exp (-1.0f / (ms * 0.001f * static_cast<float> (sampleRate)));
+        closeThresholdRatio = juce::Decibels::decibelsToGain (-kHysteresisDb);
     }
 
     static float rampStepForMs (float ms, double sampleRate) noexcept
@@ -146,19 +114,13 @@ private:
     }
 
     float gain { 1.0f };
-    float floorGain { 0.0f };
-    float attackCoeff { 0.0f };
-    float releaseCoeff { 0.0f };
-    float attackMs { 2.0f };
-    float releaseMs { 150.0f };
     float openRampStep { 0.0f };
     float closeRampStep { 0.0f };
+    float closeThresholdRatio { 1.0f };
     int holdSamples { 0 };
     int holdCounter { 0 };
     double sampleRate_ { 48000.0 };
     bool isOpen { true };
-    bool postHardClose { false };
-    GateProfile profile_ { GateProfile::PreSoft };
 };
 
 } // namespace sendbloom
