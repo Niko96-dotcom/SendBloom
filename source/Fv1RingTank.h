@@ -10,9 +10,9 @@
 namespace sendbloom
 {
 
-/** The shipping reverb tank: a ring of four [allpass -> delay -> shelving]
-    blocks fed by four series input diffusers, with the reverb-time coefficient
-    applied once per block.
+/** The shipping reverb tank: a ring of four [allpass -> allpass -> delay ->
+    shelving] blocks fed by four series input diffusers, with the reverb-time
+    coefficient applied once per block.
 
     This replaces the earlier Freeverb-style tank (four parallel combs, 32-37 ms
     each). That structure could not sound like the reference hardware class for a
@@ -43,9 +43,14 @@ public:
                       Fv1RingTankTable::lfoDepthSamplesForRate (1, processingRate_)))) + 4;
 
         for (size_t i = 0; i < ringAllpasses_.size(); ++i)
+        {
+            // Modulation margin only on the long (second) allpass of each block;
+            // the short companion is processed unmodulated.
+            const auto margin = (i % 2 == 1) ? modMargin : 0;
             ringAllpasses_[i].prepare (scaled (Fv1RingTankTable::kRingAllpassDelays[i], scale),
                                        Fv1RingTankTable::kRingAllpassFeedback,
-                                       modMargin);
+                                       margin);
+        }
 
         for (size_t i = 0; i < ringDelays_.size(); ++i)
         {
@@ -118,7 +123,8 @@ public:
             if (b > 0)
                 acc += v;
 
-            acc = ringAllpasses_[b].process (acc, mod[b]);
+            acc = ringAllpasses_[2 * b].process (acc, 0.0f);
+            acc = ringAllpasses_[2 * b + 1].process (acc, mod[b]);
             acc = ringDelays_[b].process (acc);
 
             // Low-frequency loss: subtract a scaled lowpass (high-pass shelf).
@@ -325,7 +331,7 @@ private:
     };
 
     std::array<ModulatedAllpass, 4> inputDiffusers_;
-    std::array<ModulatedAllpass, 4> ringAllpasses_;
+    std::array<ModulatedAllpass, 8> ringAllpasses_;
     std::array<RingDelay, 4> ringDelays_;
     Predelay predelay_;
 

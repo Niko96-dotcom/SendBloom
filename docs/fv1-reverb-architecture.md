@@ -83,10 +83,10 @@ in ─┬───────────────────────�
    ┌──────────────────────────────┴─────────────────────────────┐
    │  ring, 4 blocks; input injected at blocks 1..3             │
    │                                                            │
-   │   allpass(g=0.6) → delay → LF-loss shelf → HF-loss shelf   │
-   │                                          → × krt           │
+   │   allpass(g=0.6) → allpass(g=0.6) → delay                  │
+   │                  → LF-loss shelf → HF-loss shelf → × krt   │
    │                                                            │
-   │   allpasses 2311, 2909, 3167, 2417                         │
+   │   allpass pairs 588+1723, 706+2203, 756+2411, 586+1831    │
    │   delays    3623, 4597, 4391, 3671                         │
    └────────────────────────────────────────────────────────────┘
                                   │
@@ -94,7 +94,9 @@ in ─┬───────────────────────�
                + 0.7·del2[+897]  + 0.5·del3[+1780]
 ```
 
-All twelve lengths are prime, so ring modes coincide as little as possible.
+The four plain ring delays remain prime. The paired allpass lengths are
+asymmetric and non-uniform; each pair preserves the exact delay budget of the
+single allpass it replaced.
 
 | | |
 |---|---|
@@ -134,10 +136,9 @@ with pre-delay"*.
 
 ### Modulation
 
-Two sine LFOs at 0.48 Hz and 0.60 Hz, sin and cos each, sweeping the four ring
-allpasses by ±4.6 / ±4.1 samples. Roughly a third of the old tank's depth and
-spread over four points instead of one — enough to break up ringing without
-audible pitch wobble.
+Two sine LFOs at 0.48 Hz and 0.60 Hz, sin and cos each, sweep the longer
+(second) allpass in each block by ±4.6 / ±4.1 samples. The short first allpass
+is unmodulated and supplies density without adding another moving delay.
 
 ## Measured, old vs new
 
@@ -159,6 +160,32 @@ almost nothing above a few hundred Hz.
 `kOutputNormalisation` is calibrated so the wet return matches the previous
 tank's level at RT60 3 s, so the Level curve, factory presets and clip LED
 thresholds carry over unchanged.
+
+### 2026-07 density correction
+
+The first ring implementation used one allpass per block even though the cited
+vendor pattern specifies two. The corrected topology splits each former
+allpass delay into an asymmetric serial pair while preserving the loop total,
+RAM usage, taps, shelves, gain, and predelay. Deterministic 32,768 Hz impulse
+renders at a 3.0 s target produced:
+
+| Metric | Single allpass/block | Two allpasses/block |
+|---|---:|---:|
+| Bright crest, 100–250 ms | 7.331 | 6.805 |
+| Bright kurtosis, 100–250 ms | 11.578 | 6.064 |
+| Dark crest, 100–250 ms | 7.047 | 6.925 |
+| Dark kurtosis, 100–250 ms | 16.577 | 9.343 |
+| Bright T30 | 3.002 s | 2.910 s |
+| Dark T30 | 2.666 s | 2.578 s |
+| Bright onset | 6.409 ms | 6.409 ms |
+| Dark onset | 61.462 ms | 61.462 ms |
+| Bright 0–4 s RMS change | baseline | −0.045 dB |
+| Dark 0–4 s RMS change | baseline | −0.023 dB |
+
+Lower early-window kurtosis is the intended directional density result. The
+existing ProperSRC high-frequency regression remains the guardrail: its ratio
+moved from 1.122 to 1.415, still below the unchanged 1.500 ceiling. These are
+implementation regression measurements, not measurements of Reverb-X hardware.
 
 ## The overdrive
 

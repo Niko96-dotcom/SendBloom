@@ -48,8 +48,13 @@ struct Fv1RingTankTable
     // Input diffusion: four series allpasses ahead of the ring.
     static constexpr std::array<int, 4> kInputDiffuserDelays { 241, 443, 863, 1097 };
 
-    // The ring: one allpass then one delay per block, four blocks.
-    static constexpr std::array<int, 4> kRingAllpassDelays { 2311, 2909, 3167, 2417 };
+    // The ring: two serial allpasses then one delay per block, four blocks.
+    // Asymmetric short+long per block (sums match prior singles 2311/2909/3167/2417).
+    // Short AP first (unmodulated) densifies; long second (modulated) keeps
+    // relative LFO depth near the old single-allpass HF behaviour.
+    static constexpr std::array<int, 8> kRingAllpassDelays {
+        588, 1723, 706, 2203, 756, 2411, 586, 1831
+    };
     static constexpr std::array<int, 4> kRingDelays { 3623, 4597, 4391, 3671 };
 
     static constexpr float kInputDiffuserFeedback = 0.6f;
@@ -84,7 +89,7 @@ struct Fv1RingTankTable
     /** Dark adds predelay ahead of the tank ("dark with pre-delay"). */
     static constexpr float kDarkPredelaySeconds = 0.055f;
 
-    // Two slow LFOs, sin and cos each, smearing the four ring allpasses.
+    // Two slow LFOs, sin and cos each, smear the long (second) allpass of each block.
     static constexpr std::array<float, 2> kLfoHz { 0.48f, 0.60f };
     static constexpr std::array<float, 2> kLfoDepthSeconds {
         4.625f / 32768.0f, 4.125f / 32768.0f
@@ -107,6 +112,11 @@ struct Fv1RingTankTable
     static constexpr int sumOf (const std::array<int, 4>& a) noexcept
     {
         return a[0] + a[1] + a[2] + a[3];
+    }
+
+    static constexpr int sumOf (const std::array<int, 8>& a) noexcept
+    {
+        return a[0] + a[1] + a[2] + a[3] + a[4] + a[5] + a[6] + a[7];
     }
 
     /** Plain delay in the loop — Barr's ">= 200 ms or it flutters" budget. */
