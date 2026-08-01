@@ -71,8 +71,13 @@ plutil -extract CFBundleShortVersionString raw -o - \
 For the Audio Unit, the authoritative check is whether the AU layer accepts it:
 
 ```bash
-auval -v aufx SbLm NkMo
+AU_TYPE="$(plutil -extract 'AudioComponents.0.type' raw -o - \
+  /Library/Audio/Plug-Ins/Components/SendBloom.component/Contents/Info.plist)"
+auval -v "$AU_TYPE" SbLm NkMo
 ```
+
+SendBloom currently reports `aumf` because it accepts MIDI; the command reads
+the installed component's type instead of assuming `aufx`.
 
 If you installed from the package, the receipts also record the version:
 
@@ -130,8 +135,8 @@ work around a Gatekeeper refusal by removing quarantine attributes — a refusal
 means the file is not what it should be.
 
 **Logic does not list the Audio Unit.**
-Logic caches AU scan results. Run `auval -v aufx SbLm NkMo` first; if that
-passes, the component is installed correctly and the problem is Logic's cache
+Logic caches AU scan results. Run the `AU_TYPE`/`auval` command above first; if
+that passes, the component is installed correctly and the problem is Logic's cache
 — reset the AU cache from Logic's plug-in manager and relaunch.
 
 **I upgraded but the version has not changed.**

@@ -127,7 +127,9 @@ fi
 step "Does the AU host layer see it? (auval)"
 # ---------------------------------------------------------------------------
 
-# Manufacturer NkMo / plugin SbLm, from CMakeLists.txt. Type aufx.
+# Manufacturer NkMo / plugin SbLm, from CMakeLists.txt. Read the AU type from
+# the installed component: MIDI-capable effects are `aumf`, while ordinary
+# effects are `aufx`. The bundle metadata is the source of truth here.
 if [[ "$RUN_AUVAL" != "1" ]]; then
   skip "auval disabled by RUN_AUVAL=$RUN_AUVAL"
 elif [[ ! -d "$INSTALLED_AU" ]]; then
@@ -135,14 +137,21 @@ elif [[ ! -d "$INSTALLED_AU" ]]; then
 elif ! command -v auval >/dev/null 2>&1; then
   skip "auval is not available on this system"
 else
+  au_type="$(plutil -extract 'AudioComponents.0.type' raw -o - \
+    "$INSTALLED_AU/Contents/Info.plist" 2>/dev/null || true)"
+  if [[ ! "$au_type" =~ ^[[:alnum:]]{4}$ ]]; then
+    fail "installed Audio Unit has no valid four-character type in Info.plist"
+    au_type=""
+  fi
+
   # The AudioComponent registry is a cache. Ask for the component directly and
   # treat a miss as a real finding rather than re-reading the cached list.
-  if auval -v aufx SbLm NkMo >/tmp/sendbloom-auval.$$.log 2>&1; then
-    ok "auval validated aufx SbLm NkMo"
+  if [[ -n "$au_type" ]] && auval -v "$au_type" SbLm NkMo >/tmp/sendbloom-auval.$$.log 2>&1; then
+    ok "auval validated $au_type SbLm NkMo"
     grep -E 'AU Validation|PASS|Version' /tmp/sendbloom-auval.$$.log | head -20 | sed 's/^/      /' || true
   else
     tail -40 /tmp/sendbloom-auval.$$.log | sed 's/^/      /' >&2 || true
-    fail "auval could not validate aufx SbLm NkMo — the host layer does not accept the installed component"
+    fail "auval could not validate ${au_type:-<missing-type>} SbLm NkMo — the host layer does not accept the installed component"
   fi
   rm -f /tmp/sendbloom-auval.$$.log
 fi

@@ -52,7 +52,7 @@ output. Run one case with `bash tests/release/run-release-tests.sh T09`.
 | 3.3 | Full Catch2 suite | `ctest --test-dir build-release -C Release --output-on-failure` | yes |
 | 3.4 | ProperSRC / HF acceptance gates | `BUILD_DIR=build-release scripts/enab-acceptance-gates.sh` | yes |
 | 3.5 | pluginval strictness 10 on the VST3 | `pluginval --strictness-level 10 --validate build-release/SendBloom_artefacts/Release/VST3/SendBloom.vst3` | yes for public |
-| 3.6 | auval on the Audio Unit | `auval -v aufx SbLm NkMo` | skipped-with-note if unavailable |
+| 3.6 | auval on the Audio Unit | `AU_TYPE="$(plutil -extract 'AudioComponents.0.type' raw -o - /Library/Audio/Plug-Ins/Components/SendBloom.component/Contents/Info.plist)"; auval -v "$AU_TYPE" SbLm NkMo` | skipped-with-note if unavailable |
 
 3.1 removes the build tree first. Reusing a tree with `KEEP_BUILD_DIR=1` is a
 debugging aid and prints a warning; it is not a release build.
