@@ -196,8 +196,9 @@ RELEASE_MODE=public scripts/release/release-all.sh --publish
 ```
 
 This creates the tag, pushes it, creates the GitHub Release with the five
-assets, then downloads those assets into a fresh temporary directory and
-re-runs the full validation against them.
+metadata/DMG assets plus the PKG when the `pkg-in-dmg` contract is active,
+then downloads those assets into a fresh temporary directory and re-runs the
+full validation against them.
 
 ### 4. Prove the installed product is this build
 

@@ -89,6 +89,9 @@ for a in json.load(open(sys.argv[1]))["assets"]:
 ' "$RELEASE_JSON" | sort)
 
 EXPECTED_ASSETS=("$DMG_NAME" "$CHECKSUM_NAME" "$MANIFEST_NAME" "$PROVENANCE_NAME" "$SBOM_NAME")
+if [[ "$ARTIFACT_CONTRACT" == "pkg-in-dmg" ]]; then
+  EXPECTED_ASSETS+=("$PKG_NAME")
+fi
 
 info "hosted assets:"
 if [[ ${#HOSTED_ASSETS[@]} -eq 0 ]]; then

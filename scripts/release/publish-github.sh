@@ -32,6 +32,12 @@ for arg in "$@"; do
 done
 
 ASSETS=("$DMG_PATH" "$CHECKSUM_PATH" "$MANIFEST_PATH" "$PROVENANCE_PATH" "$SBOM_PATH")
+# The pkg-in-dmg contract ships the DMG as the primary user download, but the
+# manifest and checksum file also describe the signed installer. Attach that
+# exact PKG so a fresh hosted download can validate every listed artifact.
+if [[ "$ARTIFACT_CONTRACT" == "pkg-in-dmg" ]]; then
+  ASSETS+=("$PKG_PATH")
+fi
 
 step "Publish preflight — $RELEASE_TAG"
 
