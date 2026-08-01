@@ -7,10 +7,9 @@ using namespace sendbloom::ParameterCurves;
 
 TEST_CASE ("sizeToRT60 spans the ring tank's achievable decay range", "[curves][parm]")
 {
-    // The allpass ring recirculates over ~827 ms and cannot decay faster than
-    // roughly a second — a small room is not a smaller setting of this effect,
-    // it is a different effect. Size therefore starts at 1.2 s, and tops out at
-    // the 6 s the reference hardware's manual advertises.
+    // Requested targets below roughly a second collapse toward the same ring
+    // tail, so 1.2 s is the chosen useful floor. The public manual establishes
+    // the 6 s maximum, not a hardware minimum.
     REQUIRE (sizeToRT60 (0.0f) == Catch::Approx (kMinRT60Seconds));
     REQUIRE (sizeToRT60 (1.0f) == Catch::Approx (kMaxRT60Seconds));
     REQUIRE (sizeToRT60 (0.5f)

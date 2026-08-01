@@ -10,6 +10,7 @@
       RenderTank host <out.f32> <hostRate> <rt60> <darkMix> <seconds>
       RenderTank src    <out.f32> <hostRate> <seconds>
       RenderTank stream <in.f32> <out.f32> <rt60> <darkMix> <distn> [ring|legacy]
+      RenderTank dirt <in.f32> <out.f32> <distn>
 */
 
 #include <FixedRateAdapter.h>
@@ -40,6 +41,29 @@ bool writeF32 (const std::string& path, const std::vector<float>& data)
     const auto written = std::fwrite (data.data(), sizeof (float), data.size(), f);
     std::fclose (f);
     return written == data.size();
+}
+
+bool readF32 (const std::string& path, std::vector<float>& data)
+{
+    std::FILE* f = std::fopen (path.c_str(), "rb");
+
+    if (f == nullptr)
+        return false;
+
+    std::fseek (f, 0, SEEK_END);
+    const auto bytes = std::ftell (f);
+    std::fseek (f, 0, SEEK_SET);
+
+    if (bytes <= 0 || bytes % static_cast<long> (sizeof (float)) != 0)
+    {
+        std::fclose (f);
+        return false;
+    }
+
+    data.resize (static_cast<size_t> (bytes) / sizeof (float));
+    const auto read = std::fread (data.data(), sizeof (float), data.size(), f);
+    std::fclose (f);
+    return read == data.size();
 }
 
 int renderImpulse (int argc, char** argv)
@@ -169,23 +193,10 @@ int renderStream (int argc, char** argv)
     const auto distn = static_cast<float> (std::atof (argv[6]));
     const std::string engine = argv[7];
 
-    std::FILE* f = std::fopen (in.c_str(), "rb");
+    std::vector<float> x;
 
-    if (f == nullptr)
+    if (! readF32 (in, x))
         return 1;
-
-    std::fseek (f, 0, SEEK_END);
-    const auto bytes = std::ftell (f);
-    std::fseek (f, 0, SEEK_SET);
-    std::vector<float> x (static_cast<size_t> (bytes) / sizeof (float));
-
-    if (std::fread (x.data(), sizeof (float), x.size(), f) != x.size())
-    {
-        std::fclose (f);
-        return 1;
-    }
-
-    std::fclose (f);
 
     std::vector<float> y (x.size(), 0.0f);
     sendbloom::WetOverdriveState od;
@@ -209,6 +220,32 @@ int renderStream (int argc, char** argv)
         for (size_t i = 0; i < x.size(); ++i)
             y[i] = od.process (core.processSample (x[i]), distn);
     }
+
+    return writeF32 (out, y) ? 0 : 1;
+}
+
+/** Stream raw f32 at the tank rate through only the shipping stateful wet-dirt
+    branch. This keeps before/after transfer and fixture measurements separate
+    from reverb-topology changes. */
+int renderDirt (int argc, char** argv)
+{
+    if (argc < 5)
+        return 2;
+
+    const std::string in = argv[2];
+    const std::string out = argv[3];
+    const auto blend = static_cast<float> (std::atof (argv[4]));
+    std::vector<float> x;
+
+    if (! readF32 (in, x))
+        return 1;
+
+    std::vector<float> y (x.size(), 0.0f);
+    sendbloom::WetOverdriveState od;
+    od.prepare (kRate);
+
+    for (size_t i = 0; i < x.size(); ++i)
+        y[i] = od.process (x[i], blend);
 
     return writeF32 (out, y) ? 0 : 1;
 }
@@ -239,7 +276,7 @@ int main (int argc, char** argv)
 {
     if (argc < 2)
     {
-        std::fprintf (stderr, "usage: RenderTank ir|od ...\n");
+        std::fprintf (stderr, "usage: RenderTank ir|od|host|src|stream|dirt ...\n");
         return 2;
     }
 
@@ -257,6 +294,9 @@ int main (int argc, char** argv)
 
     if (std::strcmp (argv[1], "stream") == 0)
         return renderStream (argc, argv);
+
+    if (std::strcmp (argv[1], "dirt") == 0)
+        return renderDirt (argc, argv);
 
     std::fprintf (stderr, "unknown mode '%s'\n", argv[1]);
     return 2;

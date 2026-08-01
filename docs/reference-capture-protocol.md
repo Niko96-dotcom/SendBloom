@@ -20,7 +20,7 @@ Name WAVs `<capture-id>__<mode>__<cell>__take-N.wav`. Supply analysis metadata:
 {"capture_id":"unit-bright-size50-take1","capture_metadata":{"operator":"Niko","captured_utc":"human_needed","device":"human_needed","stimulus_sha256":"...","capture_sha256":"..."},"settings":{"mode":"bright","size_pct":50,"input_pct":50,"distn_pct":0,"gate":"pre","pressure_pct":0}}
 ```
 
-Analyze with `python3 tools/reference/analyze_reference.py capture.wav metadata.json --json metrics.json --csv metrics.csv`. Results include metadata/settings with predelay, EDT/RT20/RT30, spectral-centroid series, harmonic ratios, DC offset, and gate-close envelope time. The estimators are deterministic screening metrics, not listening judgments.
+Analyze mono 16-bit or packed 24-bit integer PCM WAV with `python3 tools/reference/analyze_reference.py capture.wav metadata.json --json metrics.json --csv metrics.csv`. The analyzer recomputes the WAV SHA-256, rejects a mismatch with `capture_metadata.capture_sha256`, rejects truncated/silent/multichannel input, and requires a sustained close before reporting gate time. Results include metadata/settings with predelay, EDT/RT20/RT30, spectral-centroid series, harmonic ratios, DC offset, and gate-close envelope time. For owned raw `float32` tank renders, `python3 tools/reference/measure_ir.py input.f32 --sample-rate 32768 --json metrics.json` records the input hash, normalized Schroeder T30 fit, onset, RMS, peak, and declared-window crest/kurtosis. The estimators are deterministic screening metrics, not listening judgments.
 
 ## Measurement grids
 

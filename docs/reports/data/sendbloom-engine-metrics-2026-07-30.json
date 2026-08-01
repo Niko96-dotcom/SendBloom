@@ -1,0 +1,259 @@
+{
+  "candidate": {
+    "base_commit": "efb5c5df0bb5e5a9241c4ce74929f04132c26c1b",
+    "binary_sha256": {
+      "au_executable": "e17512e36df2eddf7a192c9c26f5c385941de6c668b06076c8ebd7f35152d525",
+      "renderer": "d4ddfbf2f5914907aee63f6449b8b36a16f1e3763b6a693141acd4e5c88e3907",
+      "tests": "ad84785dc6338e8520d08019852e9d8622d663a4dfe850a791a9dd5bdff084e6",
+      "vst3_executable": "f3bd8946e8ccd96d5832ae17d2e26da2ffed93d16619d04d6d91447463b10040"
+    },
+    "source_sha256": {
+      "source/Fv1RingTank.h": "0ce76fdac66471bad8e908f6affc0dba41042c3328a80d91259128ed2d43df36",
+      "source/Fv1RingTankTable.h": "e2a27b5c91bdc4d5029f06b050721eac2d5d2b0b8243b1b5754c493e47378315",
+      "source/ParameterCurves.h": "8a37d594f25f6931e31da9d03b3f79b3296318063d506b4e429c7f1c09183e13",
+      "source/WetOverdrive.h": "1c1fbbacad085ee5cb9eb5d895e5741ef763a42f187f0d941ab7b3200cd0f06f",
+      "tools/RenderTank.cpp": "ec444b0dfcdc87e2eb8d8b13e2f9fd6625e7072cbc1def483b5b0efcc8e0b6b7",
+      "tools/reference/analyze_reference.py": "a4e5fbf76c22ea1abb35e17df02d13f266e2bd46d9e6a72e243424270655913c",
+      "tools/reference/build_listening_pack.py": "2ba5918c3612eb7600d9fd6c4996fe24c762df1107394739275dd8a93139ea1a",
+      "tools/reference/measure_ir.py": "1797d13250ad9040215d80d1ec1cfb64633d1c67fbf2f8ce884b587867d0cdc1"
+    },
+    "worktree_state": "uncommitted candidate; identity is the base commit plus the source and binary hashes above"
+  },
+  "created_date": "2026-07-30",
+  "current_engine_status": {
+    "baseline_commit": "0c0cbdc6987bef5a7e2a4f74c07e1f89a0f6ebaf",
+    "candidate_preferred_cells": 0,
+    "density_wet_dirt_candidate": "rejected_by_interactive_listening",
+    "interactive_cells_completed": 4,
+    "interactive_result": "baseline_preferred_all_four_cells",
+    "validation_scope": "current_worktree_after_revert"
+  },
+  "current_validation": {
+    "ctest": {
+      "discovered": 284,
+      "failed": 0,
+      "passed": 283,
+      "skipped": 1
+    },
+    "reference_python_unittests": {
+      "failed": 0,
+      "passed": 16
+    },
+    "verify_v1": "GREEN",
+    "vst3_pluginval": "pass, strictness 10"
+  },
+  "density_comparison": {
+    "baseline": {
+      "commit": "0c0cbdc6987bef5a7e2a4f74c07e1f89a0f6ebaf",
+      "renderer_sha256": "8fae57d9768a8d925c1e3a122c974bfb08c44ee8b1add422761c5afb92d5e88a",
+      "tests_sha256": "5806e2aefee0118f72fd3d1ce192acf1c0c36b5b9960c7e237d8adb0511f76c5",
+      "worktree_clean": true
+    },
+    "configuration": {
+      "duration_seconds": 4.0,
+      "engine": "ring",
+      "internal_sample_rate_hz": 32768,
+      "onset_threshold": 0.0001,
+      "rt60_target_seconds": 3.0,
+      "t30_fit_db": [
+        -5.0,
+        -35.0
+      ],
+      "window_seconds": [
+        0.1,
+        0.25
+      ]
+    },
+    "metrics": [
+      {
+        "candidate": {
+          "onset_ms": 6.40869140625,
+          "peak": 0.04950771480798721,
+          "rms": 0.002023279785448733,
+          "source_sha256": "66dd0641e32f6b864f69591e27b76683babf17323f8abc1cc8557e18e55d8b91",
+          "t30_fit_r2": 0.9988366117699831,
+          "t30_seconds": 2.9103182482838124,
+          "window_crest_factor": 6.803922300053692,
+          "window_kurtosis": 6.062627076063579
+        },
+        "mode": "bright",
+        "single_allpass_baseline": {
+          "onset_ms": 6.40869140625,
+          "peak": 0.0514768622815609,
+          "rms": 0.002033866419388979,
+          "source_sha256": "c9ff8d361ffd21d927ac3b052c64b75300b5c9be52dc9aff371366858a697458",
+          "t30_fit_r2": 0.998901755564608,
+          "t30_seconds": 3.0023316844198824,
+          "window_crest_factor": 7.330005175556346,
+          "window_kurtosis": 11.575338852023368
+        }
+      },
+      {
+        "candidate": {
+          "onset_ms": 61.46240234375,
+          "peak": 0.04950771480798721,
+          "rms": 0.0018308519045928263,
+          "source_sha256": "d8b625e7bb5e26f487354121013e223f8b09ba99cbd7bc5b657a354968877f71",
+          "t30_fit_r2": 0.9920352560866362,
+          "t30_seconds": 2.577719272057208,
+          "window_crest_factor": 6.923964233582349,
+          "window_kurtosis": 9.340695868113182
+        },
+        "mode": "dark",
+        "single_allpass_baseline": {
+          "onset_ms": 61.46240234375,
+          "peak": 0.04992898926138878,
+          "rms": 0.0018357823171534018,
+          "source_sha256": "abce548b14fd9019b363f6e13c2fac08d703b5020d103c3f8c5d073855e8eb0e",
+          "t30_fit_r2": 0.9921864779263916,
+          "t30_seconds": 2.6659034762121654,
+          "window_crest_factor": 7.0462590716989295,
+          "window_kurtosis": 16.573323558308726
+        }
+      }
+    ]
+  },
+  "listening_pack": {
+    "artifact_path": "artifacts/listening/sendbloom-reverbx-2026-07-30",
+    "artifact_tracking": "ignored local deliverable; regenerate with the recorded command and exact renderer hashes",
+    "cells": 4,
+    "format": "mono packed 24-bit PCM WAV",
+    "generator_sha256": "2ba5918c3612eb7600d9fd6c4996fe24c762df1107394739275dd8a93139ea1a",
+    "human_verdict": "human_needed",
+    "manifest_sha256": "3831fac9b80d1d0c0a7f86d9662bc80d921cb864cd48b4fcd8b8f8b827fb0187",
+    "max_ab_rms_delta_db": 2.3193358157102916e-08,
+    "max_peak_dbfs": -1.0000008709134622,
+    "public_hardware_audio_embedded": false,
+    "sample_rate_hz": 32768,
+    "scorecard_sha256": "69aa4c701d1a46ea35abb43b665078c397d09e52480d8fa0e9dfe73279a32db6",
+    "wav_files_verified": 12
+  },
+  "measurement_commands": [
+    "cmake -S . -B Builds -DCMAKE_BUILD_TYPE=Release",
+    "cmake --build Builds --config Release --target Tests RenderTank SendBloom_AU SendBloom_VST3 --parallel 8",
+    "RenderTank ir <output.f32> 3.0 <0.0|1.0> 4.0 ring",
+    "python3 tools/reference/measure_ir.py <input.f32> --sample-rate 32768 --json <metrics.json>",
+    "python3 tools/reference/build_listening_pack.py --density-baseline-renderer <0c0cbdc-renderer> --dirt-baseline-renderer <efb5c5d-renderer> --candidate-renderer <candidate-renderer> --output artifacts/listening/sendbloom-reverbx-2026-07-30",
+    "Tests '[od][WetOverdrive][diagnostics][fixtures]' --reporter compact -s"
+  ],
+  "performance_diagnostic": {
+    "baseline_max_32_instance_percent": 24.727,
+    "baseline_max_one_instance_percent": 0.773083,
+    "candidate_max_32_instance_percent": 25.4853,
+    "candidate_max_one_instance_percent": 0.807833,
+    "cell_count": 80,
+    "median_all_cell_candidate_to_baseline_ratio": 1.0552515959322126,
+    "median_one_instance_candidate_to_baseline_ratio": 1.0548341422854839,
+    "median_worst_candidate_to_baseline_ratio": 1.0549902840614784,
+    "note": "Three alternating Release runs per binary. This hidden benchmark renders only 0.1 seconds, has no deadline assertion, and is comparative diagnostic evidence rather than a real-time certification.",
+    "runs_per_binary": 3
+  },
+  "public_reference_boundary": "No sample-aligned public Reverb-X dry/wet stems were found. These are SendBloom before/after regression metrics, not measurements of or a distance score to the hardware.",
+  "schema_version": 1,
+  "toolchain": {
+    "architecture": "arm64",
+    "cmake": "4.3.3",
+    "compiler": "Apple clang 21.0.0 (clang-2100.1.1.101)",
+    "configuration": "Release",
+    "generator": "Unix Makefiles",
+    "macos": "26.5.2 (25F84)"
+  },
+  "validation": {
+    "au_codesign_strict": "pass after local ad-hoc signing",
+    "auval": "human_needed; installed AU executable hash c306ccc33edfd7eb6a2c65dd234c3ccb88da82d0dd543f78970d82eb7b0a9a38 does not match candidate",
+    "ctest": {
+      "discovered": 289,
+      "failed": 0,
+      "passed": 288,
+      "skipped": 1
+    },
+    "reference_python_unittests": {
+      "failed": 0,
+      "passed": 16
+    },
+    "realtime_focused": {
+      "assertions": 25546419,
+      "cases": 10,
+      "failed": 0
+    },
+    "verify_v1": "GREEN",
+    "vst3_codesign_strict": "pass",
+    "vst3_pluginval": "pass, strictness 10"
+  },
+  "wet_dirt_comparison": {
+    "baseline": {
+      "commit": "efb5c5df0bb5e5a9241c4ce74929f04132c26c1b",
+      "tests_sha256": "9daae17d9512cb34e57b908f6baadcf946201c62727c01811873b1c1fd2c2e9b"
+    },
+    "candidate_contract": {
+      "active_curve": "Barr reciprocal",
+      "stateless_scan_input_range": [-4.0, 4.0],
+      "stateless_scan_max_abs_output": 0.468,
+      "negative_knee": -0.2,
+      "negative_quiet_slope": 1.2,
+      "output_at_negative_0_25": -0.28800002,
+      "output_at_positive_0_25": 0.27768597,
+      "positive_knee": 0.18181818,
+      "positive_quiet_slope": 1.2,
+      "preclip_highpass_hz": 100.0,
+      "thirty_hz_to_one_khz_rms_ratio": 0.243956495
+    },
+    "fixtures": [
+      {
+        "baseline": {
+          "dirty_to_clean_tail_rms": 1.17292,
+          "tail_rms_clean": 0.0235102,
+          "tail_rms_dirty": 0.0275755
+        },
+        "candidate": {
+          "dirty_to_clean_tail_rms": 1.11092,
+          "tail_rms_clean": 0.0235102,
+          "tail_rms_dirty": 0.0261179
+        },
+        "name": "guitar_pluck"
+      },
+      {
+        "baseline": {
+          "dirty_to_clean_tail_rms": 1.05157,
+          "tail_rms_clean": 0.00670066,
+          "tail_rms_dirty": 0.00704625
+        },
+        "candidate": {
+          "dirty_to_clean_tail_rms": 0.996028,
+          "tail_rms_clean": 0.00670066,
+          "tail_rms_dirty": 0.00667404
+        },
+        "name": "sine220_decay"
+      },
+      {
+        "baseline": {
+          "dirty_to_clean_tail_rms": 1.15193,
+          "tail_rms_clean": 0.0154896,
+          "tail_rms_dirty": 0.0178429
+        },
+        "candidate": {
+          "dirty_to_clean_tail_rms": 1.09592,
+          "tail_rms_clean": 0.0154896,
+          "tail_rms_dirty": 0.0169753
+        },
+        "name": "di_transient"
+      }
+    ],
+    "transfer_before_after": {
+      "baseline": {
+        "negative_knee": -0.33333333,
+        "negative_quiet_slope": 1.2,
+        "positive_knee": 0.3030303,
+        "positive_quiet_slope": 1.32,
+        "stateless_scan_max_abs_output": 0.769697
+      },
+      "candidate": {
+        "negative_knee": -0.2,
+        "negative_quiet_slope": 1.2,
+        "positive_knee": 0.18181818,
+        "positive_quiet_slope": 1.2,
+        "stateless_scan_max_abs_output": 0.468
+      }
+    }
+  }
+}

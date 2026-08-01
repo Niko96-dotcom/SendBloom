@@ -1,6 +1,6 @@
 # Why the reverb is an allpass ring
 
-**Status:** implemented, v1.x
+**Status:** implemented, v1.x; the 2026 two-allpass density candidate was rejected by interactive listening and is not the shipping topology
 **Supersedes the tank design in:** ADR-002 (8-line FDN / Schroeder tank)
 
 ## The problem
@@ -83,10 +83,10 @@ in ─┬───────────────────────�
    ┌──────────────────────────────┴─────────────────────────────┐
    │  ring, 4 blocks; input injected at blocks 1..3             │
    │                                                            │
-   │   allpass(g=0.6) → allpass(g=0.6) → delay                  │
+   │   allpass(g=0.6) → delay                                  │
    │                  → LF-loss shelf → HF-loss shelf → × krt   │
    │                                                            │
-   │   allpass pairs 588+1723, 706+2203, 756+2411, 586+1831    │
+   │   allpass   2311, 2909, 3167, 2417                        │
    │   delays    3623, 4597, 4391, 3671                         │
    └────────────────────────────────────────────────────────────┘
                                   │
@@ -94,9 +94,8 @@ in ─┬───────────────────────�
                + 0.7·del2[+897]  + 0.5·del3[+1780]
 ```
 
-The four plain ring delays remain prime. The paired allpass lengths are
-asymmetric and non-uniform; each pair preserves the exact delay budget of the
-single allpass it replaced.
+The four plain ring delays remain prime. The ring allpass lengths are asymmetric
+and non-uniform, with modulation distributed across all four loop blocks.
 
 | | |
 |---|---|
@@ -112,16 +111,17 @@ failure.
 
 `krt` multiplies once per block, so one traversal costs `krt⁴`. Solving for a
 target RT60 and correcting for in-loop damping loss gives the `krtForRT60`
-mapping. This has a consequence worth stating plainly: **the ring cannot produce
-a short reverb.** At the lowest usable loop gain it still decays over roughly a
-second. That is a property of the hardware class, not a limitation to engineer
-around — Barr: *"Do not expect a given reverb structure, with delays and
-coefficients well chosen, to sound good at extremes of reverb time."*
+mapping. The current ring has a practical short-decay floor: requested targets
+of 0.25/0.40/0.60 s measure about 0.90/0.90/0.94 s Bright and
+0.88/0.88/0.90 s Dark. Below roughly 0.9 s, feed-forward and allpass energy
+dominate and lower feedback targets become nearly the same sound. A genuinely
+shorter room would require a size-dependent diffuser or a separate topology,
+with different density and headroom tradeoffs.
 
-`ParameterCurves::sizeToRT60` therefore spans **1.2 s to 6.0 s**, exponentially,
-matching the reference manual's *"up to a maximum of 5 or 6 seconds"*. The old
-curve started at 0.25 s, which the architecture cannot reach and the hardware
-never did.
+`ParameterCurves::sizeToRT60` therefore spans **1.2 s to 6.0 s** exponentially:
+1.2 s is a SendBloom control-design choice that avoids a dead lower knob region,
+while 6.0 s matches the reference manual's *"up to a maximum of 5 or 6
+seconds"*. Public Reverb-X material does not establish its minimum decay.
 
 ### Damping
 
@@ -136,9 +136,9 @@ with pre-delay"*.
 
 ### Modulation
 
-Two sine LFOs at 0.48 Hz and 0.60 Hz, sin and cos each, sweep the longer
-(second) allpass in each block by ±4.6 / ±4.1 samples. The short first allpass
-is unmodulated and supplies density without adding another moving delay.
+Two sine LFOs at 0.48 Hz and 0.60 Hz, sin and cos each, sweep the four ring
+allpasses by ±4.6 / ±4.1 samples. The modulation is spread over four points to
+break up ringing without audible pitch wobble.
 
 ## Measured, old vs new
 
@@ -161,20 +161,19 @@ almost nothing above a few hundred Hz.
 tank's level at RT60 3 s, so the Level curve, factory presets and clip LED
 thresholds carry over unchanged.
 
-### 2026-07 density correction
+### 2026-07 density candidate — rejected by listening
 
-The first ring implementation used one allpass per block even though the cited
-vendor pattern specifies two. The corrected topology splits each former
-allpass delay into an asymmetric serial pair while preserving the loop total,
-RAM usage, taps, shelves, gain, and predelay. Deterministic 32,768 Hz impulse
-renders at a 3.0 s target produced:
+An offline candidate split each former allpass delay into an asymmetric serial
+pair while preserving the loop total, RAM usage, taps, shelves, gain, and
+predelay. Deterministic 32,768 Hz impulse renders at a 3.0 s target produced the
+following objective direction:
 
 | Metric | Single allpass/block | Two allpasses/block |
 |---|---:|---:|
-| Bright crest, 100–250 ms | 7.331 | 6.805 |
-| Bright kurtosis, 100–250 ms | 11.578 | 6.064 |
+| Bright crest, 100–250 ms | 7.330 | 6.804 |
+| Bright kurtosis, 100–250 ms | 11.575 | 6.063 |
 | Dark crest, 100–250 ms | 7.047 | 6.925 |
-| Dark kurtosis, 100–250 ms | 16.577 | 9.343 |
+| Dark kurtosis, 100–250 ms | 16.573 | 9.341 |
 | Bright T30 | 3.002 s | 2.910 s |
 | Dark T30 | 2.666 s | 2.578 s |
 | Bright onset | 6.409 ms | 6.409 ms |
@@ -182,10 +181,10 @@ renders at a 3.0 s target produced:
 | Bright 0–4 s RMS change | baseline | −0.045 dB |
 | Dark 0–4 s RMS change | baseline | −0.023 dB |
 
-Lower early-window kurtosis is the intended directional density result. The
-existing ProperSRC high-frequency regression remains the guardrail: its ratio
-moved from 1.122 to 1.415, still below the unchanged 1.500 ceiling. These are
-implementation regression measurements, not measurements of Reverb-X hardware.
+Lower early-window kurtosis was the intended directional density result, but the
+interactive level-matched A/B screen preferred the single-allpass baseline in
+both Bright and Dark cells. The candidate is therefore reverted; these remain
+historical regression measurements, not measurements of Reverb-X hardware.
 
 ## The overdrive
 
@@ -197,11 +196,10 @@ hardware class and say why:
 > avoided. This concept delivers *nice* distortion, that is, lower level signals
 > are clean, and only 'break up' on transients and emphasized instrumental notes.
 
-Measured on the built binary, the curve is flat at gain 1.10 up to |x| = 0.30,
-then bends: 0.93 at 0.5, 0.68 at 0.8, 0.31 at 2.0. The tanh curve it replaces
-had no straight region at all — its gain fell continuously from 1.95× at silence
-to 0.92× at full scale, squashing the whole reverb tail uniformly rather than
-leaving quiet trails clean and biting only on the blooms.
+The shipping curve is flat at gain 1.10 up to |x| = 0.30, then bends: 0.93 at
+0.5, 0.68 at 0.8, and 0.31 at 2.0. An offline 5× branch-normalized candidate
+moved the knees to +0.182 / −0.200, but the interactive Dirt cells preferred the
+baseline in both pluck and long-Dark-chord tests. That candidate is reverted.
 
 ## Provenance
 

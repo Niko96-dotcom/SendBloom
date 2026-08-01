@@ -11,11 +11,10 @@ inline float smoothstep (float x) noexcept
     return x * x * (3.0f - 2.0f * x);
 }
 
-// The allpass ring recirculates over ~827 ms, so its decay is bounded below:
-// even at the lowest usable loop gain it cannot produce a small room, and the
-// reference hardware class cannot either. Anything shorter than this is a
-// different effect, not a smaller setting of this one. The manual's claim is
-// "up to a maximum of 5 or 6 seconds", so the knob spans 1.2 s to 6.0 s.
+// The allpass ring recirculates over ~827 ms. Requested targets below roughly
+// 0.9 s collapse toward the same feed-forward/allpass tail, so 1.2 s is the
+// chosen useful floor rather than a claimed hardware minimum. Public reference
+// material states only "up to a maximum of 5 or 6 seconds".
 inline constexpr float kMinRT60Seconds = 1.2f;
 inline constexpr float kMaxRT60Seconds = 6.0f;
 

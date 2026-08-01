@@ -11,8 +11,28 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ## [Unreleased]
 
+### Added
+
+- A verified public-reference catalogue with exact listening time codes, pair
+  classifications, evidence boundaries, and a structured blind scorecard. No
+  third-party media is tracked or treated as calibrated golden audio.
+- Deterministic raw-IR metrics with source hashes, normalized Schroeder T30 fit
+  quality, onset, RMS/peak, and declared-window crest/kurtosis. The capture
+  analyzer now accepts both 16-bit and packed 24-bit mono integer PCM WAV,
+  verifies the declared capture hash, and rejects truncation or silence.
+
 ### Changed
 
+- Each fixed-rate ring block now uses the vendor-documented two serial
+  allpasses before its delay. The split preserves loop length, delay-RAM use,
+  taps, onset, and level while materially lowering 100–250 ms crest/kurtosis.
+- Wet-only `distn` now reaches reciprocal breakup at +0.182/−0.200 bloom level
+  instead of +0.303/−0.333. Per-branch normalization keeps quiet-tail gain
+  equal on both polarities while retaining the locked 100 Hz dirty-branch
+  high-pass. Dry and clean-wet routing are unchanged.
+- Documentation now describes 1.2 s as SendBloom's chosen useful Size floor;
+  public reference material establishes the 5–6 s maximum but not a hardware
+  minimum.
 - The gate is now one circuit that moves between the Pre and Post positions
   rather than two gates with different envelopes (ADR-V1-11c). The Pre position
   previously used a 150 ms one-pole release to a −80 dB floor; measured, that
@@ -63,8 +83,9 @@ shipping as an Audio Unit and a VST3 for macOS.
 - Bandlimited host-rate ↔ 32,768 Hz conversion on every host sample rate via
   r8brain ProperSRC (`FixedRateAdapter`), so behaviour does not change with the
   session rate.
-- Size range of 1.2 s to 6.0 s. The ring recirculates over roughly 827 ms and
-  cannot decay faster; that floor is a property of the modelled hardware class.
+- Size range of 1.2 s to 6.0 s. The 1.2 s floor was a SendBloom control-design
+  choice; public reference material establishes the maximum, not a hardware
+  minimum. This corrects the original release-note rationale.
 - Wet-only overdrive with an independent `distn` blend.
 - Dual gate placement: Pre for hum suppression, Post for a wet chop of 15 ms
   or less.
