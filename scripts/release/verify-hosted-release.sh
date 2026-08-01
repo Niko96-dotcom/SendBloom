@@ -13,7 +13,8 @@
 #   * exactly the expected assets are attached — no missing ones and no
 #     leftovers from an older release
 #   * the downloaded bytes match the manifest that the build produced
-#   * CI is green on the released commit
+#   * required CI is green on the released commit (the signed-build duplicate
+#     is optional unless ENABLE_SIGNED_RELEASE=true)
 #
 # Requires only a read token; it publishes nothing.
 
@@ -181,10 +182,42 @@ if [[ -n "${remote_tag_commit:-}" ]]; then
     warn "no check runs reported for $remote_tag_commit — CI status is UNKNOWN, not green"
   else
     printf '%s\n' "$ci_out" | sed 's/^/      /'
-    if printf '%s\n' "$ci_out" | awk -F'\t' '$3 != "success" && $3 != "skipped" && $3 != "neutral" {found=1} END{exit !found}'; then
-      fail "at least one check run on $remote_tag_commit is not successful"
+    # The signed build in release.yml is a duplicate of the local maintainer
+    # pipeline. It is intentionally optional: when the repository variable is
+    # absent/false, missing signing secrets must not turn a valid, already
+    # signed public artifact into a hosted-release failure. If the maintainer
+    # enables that job, its result becomes required again.
+    signed_ci_enabled="$(gh variable list --repo "$REPO" --json name,value \
+      --jq '.[] | select(.name == "ENABLE_SIGNED_RELEASE") | .value' 2>/dev/null || true)"
+    required_failures=0
+    while IFS=$'\t' read -r check_name check_status check_conclusion; do
+      [[ -n "$check_name" ]] || continue
+      check_ok=false
+      if [[ "$check_status" == "completed" \
+            && ( "$check_conclusion" == "success" \
+                 || "$check_conclusion" == "skipped" \
+                 || "$check_conclusion" == "neutral" ) ]]; then
+        check_ok=true
+      fi
+
+      if [[ "$check_name" == "Signed release build" && "$signed_ci_enabled" != "true" ]]; then
+        if [[ "$check_ok" == "true" ]]; then
+          info "optional signed release build is green"
+        else
+          warn "optional signed release build is not successful; local signed/notarized artifacts remain the source of publication truth"
+        fi
+        continue
+      fi
+
+      if [[ "$check_ok" != "true" ]]; then
+        required_failures=$((required_failures + 1))
+      fi
+    done <<< "$ci_out"
+
+    if [[ "$required_failures" -gt 0 ]]; then
+      fail "$required_failures required check run(s) on $remote_tag_commit are not successful"
     else
-      ok "all check runs on the released commit are successful"
+      ok "all required check runs on the released commit are successful"
     fi
   fi
 fi

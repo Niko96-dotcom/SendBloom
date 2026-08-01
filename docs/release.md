@@ -132,7 +132,9 @@ The optional GitHub Actions signed-build duplicate is disabled unless the
 repository variable `ENABLE_SIGNED_RELEASE=true` and its signing/notarization
 secrets are configured. The credential-free workflow remains required; a
 missing optional secret set is reported as skipped rather than as a product
-failure.
+failure. `verify-hosted-release.sh` applies the same policy when it evaluates
+the check-runs attached to a published commit: the duplicate is a warning
+unless that variable is enabled.
 
 ### Tools
 

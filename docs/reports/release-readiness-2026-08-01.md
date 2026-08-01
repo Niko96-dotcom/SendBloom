@@ -1,110 +1,129 @@
-# SendBloom release-readiness report — 1.0.0 candidate
+# SendBloom release-readiness report — 1.0.0
 
 - Project: SendBloom
 - Date: 2026-08-01 (Europe/Berlin)
-- Scope: macOS AU/VST3 candidate, `pkg-in-dmg` contract
-- Proof level: `CANDIDATE`
-- Verdict: `NOT READY`
-- Release verified: `NO`
+- Scope: published macOS AU/VST3 release, `pkg-in-dmg` contract
+- Proof level: `PUBLISHED`
+- Verdict: `READY WITH CAVEATS`
+- Release verified: `NO` (the verdict has named optional/environment-specific caveats)
 - Version: `1.0.0`
-- Source commit: `2bb6fd4f22834b2fb68772698bf7adbe04d5eb9b`
-- Tag/channel: intended `v1.0.0`; local unsigned rehearsal only
+- Source commit: `e61576572a0b99950a891261df9d9df61955089f`
+- Tag/release: [`v1.0.0`](https://github.com/Niko96-dotcom/SendBloom/releases/tag/v1.0.0)
 
 ## Decision
 
-The SendBloom 1.0.0 code and candidate package layout pass the local release
-gates, including a clean universal build, the full test suite, pluginval,
-checksums, manifest, SBOM, and fresh-directory DMG inspection. Developer ID
-signing is now verified for both plug-in bundles and a temporary installer
-package. This is not a public-release proof: the packaged candidate remains
-the earlier ad-hoc rehearsal, no notary profile is configured, nothing was
-published, and nothing was installed for direct AU/host identity checks.
+The public release is live and the exact hosted DMG and PKG were fetched into a
+fresh directory, matched to the local manifest byte-for-byte, and passed the
+full artifact validator. The final public artifacts are Developer ID signed,
+notarized, stapled, Gatekeeper-accepted, and installable as universal
+arm64+x86_64 AU/VST3 components.
 
-The current engine is the restored baseline. The 2026 two-allpass density and
-5x wet-dirt candidates are retained only as historical measurements; structured
-interactive listening preferred the baseline in all four level-matched cells.
+The exact public artifact was installed locally with administrator approval.
+The installed AU and VST3 binary hashes match the final build, both receipts
+are version `1.0.0`, and `auval -v aumf SbLm NkMo` passes. Linux, macOS, and
+Windows CI are green on the immutable release commit after rerunning a
+transient macOS UI-test failure.
 
-## Release Contract
+This is `READY WITH CAVEATS`, not `RELEASE VERIFIED`: the signed GitHub Actions
+duplicate was an optional job run from the pre-hardening tag workflow and
+failed because repository signing secrets were absent; the local maintainer
+pipeline supplied the signed/notarized artifact. DAW-host behavior, uninstall /
+rollback, store review, and hardware-equivalence listening remain separate
+checks and are not silently promoted to PASS.
+
+## Release contract
 
 | Item | Expected |
 | --- | --- |
-| Product/components | SendBloom AU component and VST3 bundle, packaged in a macOS installer DMG |
+| Product/components | SendBloom AU component and VST3 bundle |
 | Platforms/architectures | macOS 11+; universal `arm64` + `x86_64` |
-| Distribution channels | Local candidate now; signed/notarized GitHub release intended |
-| Public artifacts | Versioned DMG containing the versioned PKG; checksum, manifest, provenance, and SBOM alongside it |
-| Install/deploy targets | `/Library/Audio/Plug-Ins/VST3` and `/Library/Audio/Plug-Ins/Components` |
-| Upgrade/uninstall/rollback | Release scripts define the path; not run in this non-destructive candidate check |
+| Distribution channel | Public GitHub Release |
+| User artifact | `SendBloom-1.0.0-macOS.dmg` containing `SendBloom-1.0.0.pkg` |
+| Hosted metadata | checksum, manifest, provenance, and SBOM alongside the DMG/PKG |
+| Install targets | `/Library/Audio/Plug-Ins/VST3` and `/Library/Audio/Plug-Ins/Components` |
+| Release tag | Immutable `v1.0.0` at the source commit above |
 
-## Gate Evidence
+## Gate evidence
 
-| Gate | Required | Status | Evidence | Notes |
-| --- | --- | --- | --- | --- |
-| Release contract | Yes | PASS | `docs/release.md`, `scripts/release/lib.sh` | AU/VST3 and `pkg-in-dmg` contract are explicit |
-| Version/source identity | Yes | PASS | `VERSION=1.0.0`; `dist/1.0.0/build-environment.txt`; `release-manifest.json` | Build is clean and bound to source commit `2bb6fd4` |
-| Tests and CI | Yes | PASS | CTest: 284 discovered, 283 passed, 1 capability skip; release-script tests 18/18; ENAB PASS; pluginval strictness 10 PASS | Local evidence only; hosted CI matrix was not rechecked here |
-| Security and hygiene | Yes | PASS | tree-hygiene PASS; legal-metadata PASS; reference-claims PASS; SBOM PASS; `git diff --check` PASS | Local evidence only; public hosted/security status remains unverified |
-| Clean release build | Yes | PASS | `scripts/release/build-macos.sh`; `arm64+x86_64`; build ID `1.0.0+2bb6fd4f2283` | Release output was cleared before build |
-| Signing/attestation | As applicable | PASS | `sign-macos.sh` verified both bundles as Developer ID Application, team `4H5447ZWS3`, hardened runtime; `pkgutil --check-signature` verified a productsigned PKG | The checked-in local DMG/PKG remains the earlier ad-hoc rehearsal; final public packaging still depends on notarization |
-| Notarization/store/registry validation | As applicable | BLOCKED | `xcrun notarytool history --keychain-profile sendbloom-ci` and `sendbloom-notary` found no keychain item | A notary profile must be created before public packaging |
-| Final artifact layout/payload | Yes | PASS | `validate-artifacts.sh` PASS in `dist/1.0.0` and a fresh temporary directory | DMG mounted; license/install notes, PKG, AU, and VST3 payloads found; versions and install paths match |
-| Portable checksums and manifest | Yes | PASS | `SHA256SUMS.txt` verifies after relocation; manifest hashes match | Entries use artifact basenames |
-| Upgrade/uninstall/rollback | As applicable | NOT RUN | No installation was performed | Requires a separate controlled install test |
-| Tag and publication metadata | PUBLISHED | NOT RUN | No tag or upload performed | Candidate scope only |
-| Fresh hosted download and revalidation | PUBLISHED | NOT RUN | No hosted artifact exists | Requires publication first |
-| Installed/deployed identity | PUBLISHED, as applicable | NOT RUN | `SENDBLOOM_INSTALL_SMOKE` was unset | No installed AU/VST3 or `auval` claim |
-| Post-publish CI/security status | PUBLISHED | NOT RUN | No publication | Requires hosted release |
+| Gate | Status | Evidence |
+| --- | --- | --- |
+| Contract/version/source identity | PASS | Canonical `VERSION=1.0.0`; tag, manifest, and release commit agree |
+| Local release-script regressions | PASS | `bash tests/release/run-release-tests.sh`: 18/18 |
+| Local release build and product gates | PASS | Clean universal build; CTest 284 discovered, 283 passed, 1 intentional capability skip (#281); ENAB PASS; pluginval strictness 10 PASS |
+| Security/hygiene/legal/reference claims | PASS | Tree hygiene, legal metadata, SBOM, and reference-claim checks passed; claim status remains `original-inspired` with human evidence separate |
+| Developer ID signing | PASS | Application and Installer identities for team `4H5447ZWS3`; hardened runtime verified |
+| Notarization/stapling/Gatekeeper | PASS | Accepted submissions for bundles `32b2c479-cf71-4367-b962-64b83a76c327`, PKG `7e9c502d-04aa-43d8-817a-156faeed2842`, DMG `a28c6073-33d6-4f32-8d59-0d4637a5ee88` |
+| Hosted asset set | PASS | Exactly six contracted assets; no stale extras |
+| Fresh hosted download | PASS | `verify-hosted-release.sh v1.0.0`; downloaded DMG and PKG match the local manifest and pass fresh validation |
+| Required post-publish CI | PASS | Run `30687751753`: Linux, macOS, Windows all completed `success`; credential-free release gates completed `success` |
+| Optional signed CI duplicate | WARNING | Historical run `30687751754` failed only at missing signing secrets; `ENABLE_SIGNED_RELEASE` is unset/false, so the duplicate is not a required product gate. Main commit `e6fe996` gates it correctly for future tags. |
+| Installed/deployed identity | PASS | Public artifact install/upgrade smoke; 0 failures, 0 skipped; installed AU/VST3 direct hashes match build; receipts and `auval` pass |
+| Uninstall/rollback | NOT RUN | No destructive uninstall or rollback was run after the final install; the verified release was intentionally left installed |
+| DAW host smoke/soak | NOT RUN | No host was restarted and no DAW session was used for this release proof |
+| Store review/hardware equivalence | NOT APPLICABLE to GitHub publication / HUMAN NEEDED | No store submission; hardware/perceptual equivalence remains a separate listening claim |
 
-## Artifact Identity
+## Artifact identity
 
-| Artifact | Size | SHA-256/digest | Signature/attestation | Hosted match |
-| --- | ---: | --- | --- | --- |
-| `SendBloom-1.0.0-LOCAL-UNSIGNED-DO-NOT-DISTRIBUTE.pkg` | 20,339,447 bytes | `9439cc83ceb86cd4ad97c415a9ef77118a973163e0be53491b0d51829ebfb3aa` | Local ad-hoc rehearsal; no public identity | N/A |
-| `SendBloom-1.0.0-macOS-LOCAL-UNSIGNED-DO-NOT-DISTRIBUTE.dmg` | 20,383,169 bytes | `9c3a88203b2302bce1cc0af82ba137c3608f3acf763262db7c19252aef6afe6d` | Local ad-hoc rehearsal; not notarized/stapled | N/A |
+| Artifact | Size | SHA-256 | Notarization |
+| --- | ---: | --- | --- |
+| `SendBloom-1.0.0-macOS.dmg` | 20,411,152 bytes | `779165a715772a97c175b7ddcb8d36fcb5acabcc0ec363a024dbb01d98bbc10e` | stapled-valid |
+| `SendBloom-1.0.0.pkg` | 20,357,491 bytes | `39fa63bb00d23230c2c33ee567cdfc7857dcc510b1df70f1e538e9b97693f1cd` | stapled-valid |
 
-Nested AU and VST3 executables are universal `x86_64 arm64`, report bundle ID
-`com.nikoaudiolabs.sendbloom`, version `1.0.0`, and pass recursive local
-`codesign --verify --deep --strict`; their signature is ad-hoc only.
+The release contains `SHA256SUMS.txt`, `release-manifest.json`,
+`provenance.json`, and `SendBloom-1.0.0-sbom.json`. The manifest binds the
+artifacts to source commit `e61576572a0b99950a891261df9d9df61955089f`.
 
-## Installed or Deployed Truth
+## Installed truth
 
-Not established. The rehearsal did not install either bundle, did not run
-`auval` against the installed AU, and did not restart or inspect a DAW host.
+The final public artifact was installed under administrator approval. Direct
+binary identity comparison is:
 
-## Failures and Caveats
+| Component | Build SHA-256 | Installed SHA-256 |
+| --- | --- | --- |
+| VST3 | `7541f06d2c500d05a1d8ceb1ed59540e9963f124849d13db39585d5915f2dd0e` | `7541f06d2c500d05a1d8ceb1ed59540e9963f124849d13db39585d5915f2dd0e` |
+| AU | `9096815f228690cb6b4226c49291359f5f1a02112155fea634958a96c59f1b46` | `9096815f228690cb6b4226c49291359f5f1a02112155fea634958a96c59f1b46` |
 
-- Developer ID Application and Installer identities are present and signing has
-  passed locally. Notarization, stapling, and Gatekeeper assessment are blocked
-  until a notarytool keychain profile is created.
-- Nothing was published, so tag immutability, hosted bytes, release metadata,
-  and post-publish status are unproven.
-- Install smoke, installed identity, AU validation, and upgrade/rollback were
-  intentionally not run.
-- `sudo -n` is unavailable and the install script is deliberately destructive;
-  it requires an explicit administrator-authorized run.
-- Windows/Linux CI, DAW host coverage, Developer ID/notarization, and hardware
-  equivalence remain separate human or external-environment evidence. The
-  four-cell interactive screen is complete and preferred the baseline in all
-  four cells; it does not prove hardware equivalence.
-- The generated DMG is labelled `LOCAL-UNSIGNED-DO-NOT-DISTRIBUTE` and must not
-  be shared as a release.
+`verify-installed-macos.sh` reported `0 failure(s), 0 skipped`; the installed
+AU validated as type `aumf`, subtype `SbLm`, manufacturer `NkMo`. A process
+named `ableton-cubase-keys` was present and was reported by the generic live
+process check; it is not treated as DAW proof.
 
-## Commands and Evidence Sources
+## Reproducible verification commands
 
-- `RELEASE_MODE=local-unsigned SENDBLOOM_ARTIFACT_CONTRACT=pkg-in-dmg bash scripts/release/release-all.sh`
-- `RELEASE_MODE=local-unsigned SENDBLOOM_ARTIFACT_CONTRACT=pkg-in-dmg bash scripts/release/validate-artifacts.sh <fresh-temporary-directory>`
-- `DEVELOPER_ID_APPLICATION="Developer ID Application: Nikolay Mohr (4H5447ZWS3)" DEVELOPER_ID_INSTALLER="Developer ID Installer: Nikolay Mohr (4H5447ZWS3)" RELEASE_MODE=public bash scripts/release/sign-macos.sh`
-- `productsign --sign "Developer ID Installer: Nikolay Mohr (4H5447ZWS3)" <pkg> <temporary-signed-pkg>` followed by `pkgutil --check-signature`
-- `ctest --test-dir build-release --output-on-failure -C Release`
-- `docs/reports/sendbloom-reverb-x-public-reference-engine-evidence.md`
-- `docs/reverb-x-public-reference-catalog.md`
-- `docs/reports/data/sendbloom-engine-metrics-2026-07-30.json`
-- `dist/1.0.0/release-report.md`, `build-environment.txt`, `SHA256SUMS.txt`,
-  `release-manifest.json`, `provenance.json`, and the SBOM
+```text
+RELEASE_MODE=public SENDBLOOM_ARTIFACT_CONTRACT=pkg-in-dmg \
+  bash scripts/release/verify-hosted-release.sh v1.0.0
 
-## Final Claim
+RELEASE_MODE=public SENDBLOOM_ARTIFACT_CONTRACT=pkg-in-dmg \
+  bash scripts/release/verify-installed-macos.sh
+```
 
-The candidate source commit proves a clean, tested, locally packaged SendBloom 1.0.0 candidate
-whose exact DMG and PKG bytes validate in a fresh directory and whose current
-engine is the listening-preferred baseline. It does not prove a signed,
-notarized, published, installed, hosted, or hardware-equivalent release.
-`RELEASE VERIFIED` is intentionally not claimed.
+The hosted verifier finished `PASS`; it deliberately kept its fresh download
+directory for inspection. The final hosted check list included Linux/macOS/
+Windows success and the optional signed-build warning above.
+
+## Product and listening caveats
+
+The Reverb-X public-reference catalog, objective engine measurements, and
+structured interactive listening remain in the referenced evidence documents.
+The current engine is the listening-preferred baseline. Those references are
+qualitative/original-inspired direction, not a claim of hardware identity or a
+null-tested transfer fit. Any final perceptual/hardware-equivalence statement
+is `human_needed`.
+
+## Post-publication hardening
+
+- `bdb3fe4` makes the PKG a required hosted asset for the `pkg-in-dmg`
+  contract; the exact PKG was uploaded and verified on `v1.0.0`.
+- `e6fe996` makes the duplicate signed GitHub job explicitly opt-in via
+  `ENABLE_SIGNED_RELEASE=true` and documents the local maintainer pipeline.
+- The public tag remains immutable at `e615765...`; these hardening commits are
+  on `main` for subsequent releases and do not rewrite the shipped bytes.
+
+## Final claim
+
+SendBloom 1.0.0 is publicly available and its hosted bytes, signatures,
+notarization, package payload, required CI, and installed AU/VST3 identity are
+verified. The release is `READY WITH CAVEATS`; `RELEASE VERIFIED` is not claimed
+because optional CI, DAW-host, uninstall/rollback, store, and
+hardware-equivalence evidence are intentionally kept separate.
