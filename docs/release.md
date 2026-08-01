@@ -128,6 +128,12 @@ If you have an Application certificate but no Installer certificate, generate
 the Installer one from the same Apple Developer account (Certificates →
 Developer ID Installer), or release under `SENDBLOOM_ARTIFACT_CONTRACT=bundles-in-dmg`.
 
+The optional GitHub Actions signed-build duplicate is disabled unless the
+repository variable `ENABLE_SIGNED_RELEASE=true` and its signing/notarization
+secrets are configured. The credential-free workflow remains required; a
+missing optional secret set is reported as skipped rather than as a product
+failure.
+
 ### Tools
 
 `cmake` 3.25+, Xcode command line tools, `python3`, `gh` (authenticated), and

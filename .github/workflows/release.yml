@@ -77,7 +77,10 @@ jobs:
   release-build:
     name: Signed release build
     needs: release-gates
-    if: startsWith(github.ref, 'refs/tags/v')
+    # The local maintainer pipeline owns the signed/public artifact. Run this
+    # duplicate CI build only when its environment secrets are deliberately
+    # enabled; an unconfigured optional job must be skipped, not fail a tag.
+    if: startsWith(github.ref, 'refs/tags/v') && vars.ENABLE_SIGNED_RELEASE == 'true'
     runs-on: macos-14
     environment: release
     steps:
