@@ -14,10 +14,11 @@
 
 The SendBloom 1.0.0 code and candidate package layout pass the local release
 gates, including a clean universal build, the full test suite, pluginval,
-checksums, manifest, SBOM, and fresh-directory DMG inspection. This is not a
-public-release proof: the rehearsal is explicitly ad-hoc signed, neither
-notarized nor stapled, was not published, and was not installed for direct
-AU/host identity checks.
+checksums, manifest, SBOM, and fresh-directory DMG inspection. Developer ID
+signing is now verified for both plug-in bundles and a temporary installer
+package. This is not a public-release proof: the packaged candidate remains
+the earlier ad-hoc rehearsal, no notary profile is configured, nothing was
+published, and nothing was installed for direct AU/host identity checks.
 
 The current engine is the restored baseline. The 2026 two-allpass density and
 5x wet-dirt candidates are retained only as historical measurements; structured
@@ -43,8 +44,8 @@ interactive listening preferred the baseline in all four level-matched cells.
 | Tests and CI | Yes | PASS | CTest: 284 discovered, 283 passed, 1 capability skip; release-script tests 18/18; ENAB PASS; pluginval strictness 10 PASS | Local evidence only; hosted CI matrix was not rechecked here |
 | Security and hygiene | Yes | PASS | tree-hygiene PASS; legal-metadata PASS; reference-claims PASS; SBOM PASS; `git diff --check` PASS | Local evidence only; public hosted/security status remains unverified |
 | Clean release build | Yes | PASS | `scripts/release/build-macos.sh`; `arm64+x86_64`; build ID `1.0.0+2bb6fd4f2283` | Release output was cleared before build |
-| Signing/attestation | As applicable | BLOCKED | Bundle inspection reports `Signature=adhoc`, `TeamIdentifier=not set` | Developer ID credentials were intentionally not used |
-| Notarization/store/registry validation | As applicable | BLOCKED | `not-attempted-local-unsigned` in manifest | Public notarization/stapling was not attempted |
+| Signing/attestation | As applicable | PASS | `sign-macos.sh` verified both bundles as Developer ID Application, team `4H5447ZWS3`, hardened runtime; `pkgutil --check-signature` verified a productsigned PKG | The checked-in local DMG/PKG remains the earlier ad-hoc rehearsal; final public packaging still depends on notarization |
+| Notarization/store/registry validation | As applicable | BLOCKED | `xcrun notarytool history --keychain-profile sendbloom-ci` and `sendbloom-notary` found no keychain item | A notary profile must be created before public packaging |
 | Final artifact layout/payload | Yes | PASS | `validate-artifacts.sh` PASS in `dist/1.0.0` and a fresh temporary directory | DMG mounted; license/install notes, PKG, AU, and VST3 payloads found; versions and install paths match |
 | Portable checksums and manifest | Yes | PASS | `SHA256SUMS.txt` verifies after relocation; manifest hashes match | Entries use artifact basenames |
 | Upgrade/uninstall/rollback | As applicable | NOT RUN | No installation was performed | Requires a separate controlled install test |
@@ -71,12 +72,15 @@ Not established. The rehearsal did not install either bundle, did not run
 
 ## Failures and Caveats
 
-- Public signing, notarization, stapling, and Gatekeeper assessment are blocked
-  until the Developer ID and notary credentials are available.
+- Developer ID Application and Installer identities are present and signing has
+  passed locally. Notarization, stapling, and Gatekeeper assessment are blocked
+  until a notarytool keychain profile is created.
 - Nothing was published, so tag immutability, hosted bytes, release metadata,
   and post-publish status are unproven.
 - Install smoke, installed identity, AU validation, and upgrade/rollback were
   intentionally not run.
+- `sudo -n` is unavailable and the install script is deliberately destructive;
+  it requires an explicit administrator-authorized run.
 - Windows/Linux CI, DAW host coverage, Developer ID/notarization, and hardware
   equivalence remain separate human or external-environment evidence. The
   four-cell interactive screen is complete and preferred the baseline in all
@@ -88,6 +92,8 @@ Not established. The rehearsal did not install either bundle, did not run
 
 - `RELEASE_MODE=local-unsigned SENDBLOOM_ARTIFACT_CONTRACT=pkg-in-dmg bash scripts/release/release-all.sh`
 - `RELEASE_MODE=local-unsigned SENDBLOOM_ARTIFACT_CONTRACT=pkg-in-dmg bash scripts/release/validate-artifacts.sh <fresh-temporary-directory>`
+- `DEVELOPER_ID_APPLICATION="Developer ID Application: Nikolay Mohr (4H5447ZWS3)" DEVELOPER_ID_INSTALLER="Developer ID Installer: Nikolay Mohr (4H5447ZWS3)" RELEASE_MODE=public bash scripts/release/sign-macos.sh`
+- `productsign --sign "Developer ID Installer: Nikolay Mohr (4H5447ZWS3)" <pkg> <temporary-signed-pkg>` followed by `pkgutil --check-signature`
 - `ctest --test-dir build-release --output-on-failure -C Release`
 - `docs/reports/sendbloom-reverb-x-public-reference-engine-evidence.md`
 - `docs/reverb-x-public-reference-catalog.md`
