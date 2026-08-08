@@ -141,7 +141,8 @@ private:
 
         const auto showValue = slider.isMouseOverOrDragging();
         const auto text = showValue ? getDisplayValue() : labelName.toUpperCase();
-        // Pedal legends are compact ivory pad-print on the wrinkle enclosure.
+        // Bright/Clear legends are compact dark second-surface print over the
+        // frosted carrier; live values keep the orange product accent.
         auto font = juce::Font (juce::FontOptions (10.0f, juce::Font::bold));
         font.setHorizontalScale (0.86f);
         font.setExtraKerningFactor (0.035f);
@@ -157,7 +158,7 @@ private:
 
     juce::String labelName;
     std::function<juce::String (double)> valueFormatter;
-    juce::Colour labelColour { 0xffddd3b7 };
+    juce::Colour labelColour { 0xff0e1b20 };
     juce::Colour valueColour { 0xffe66c0b };
     bool engravedCaption { true };
     TransparentControlsLookAndFeel transparentLnf;

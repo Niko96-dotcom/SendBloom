@@ -21,13 +21,13 @@ bool wantsHiResArt (juce::Graphics& g);
     parks its invisible hit-targets on the same ones, so art and interaction
     cannot drift apart.
 
-    The background render fills the editor frame exactly; the black wrinkle
-    plate spans x 38..383, y 60..702 with its centreline at x = 210. */
+    The background render fills the editor frame exactly; the bright clear
+    polycarbonate shell spans x 38..383, y 60..702 with its centreline at x = 210. */
 namespace facelayout
 {
     constexpr int kFaceCentreX = 210;
 
-    // The visible powder-coated plate (inside the chassis lip) after the background crop.
+    // The visible clear-shell face (inside the chassis lip) after the background crop.
     inline const juce::Rectangle<float> kPlate { 38.0f, 60.0f, 345.0f, 642.0f };
     constexpr float kPlateCornerRadius = 19.0f;
 
@@ -92,7 +92,7 @@ namespace lighting
 /** True when footswitch pressed overlay should draw (press/amount — not connection alone). */
 bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, float sendAmountNorm) noexcept;
 
-/** Draw the production photographed chassis and its live control-state artwork. */
+/** Draw the production clear-shell composite and its live control-state artwork. */
 void paintPedalFaceplate (juce::Graphics& g,
                           juce::Rectangle<float> bounds,
                           juce::Colour cyan,

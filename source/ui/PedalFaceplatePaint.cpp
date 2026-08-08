@@ -25,15 +25,15 @@ struct Art
 };
 
 /** Every asset here is a Cycles render from tools/render_ui.py: the whole
-    pedal modelled and lit as one scene, so the shadows, occlusion and bounce
-    between parts were computed together instead of drawn per part. The
-    background carries the knob contact shadows; each moving part is an
-    alpha overlay that carries its own state-correct cast shadow. All art is
-    rendered at 2x for hi-DPI backing stores. */
+    bright-register pedal, clear shell, populated cavity, and moving parts are
+    modelled and lit as one scene. The background carries the knob contact
+    shadows; each moving part is an alpha overlay with its state-correct cast
+    shadow. All art is rendered at 2x for hi-DPI backing stores. */
 struct PedalArtwork
 {
-    // Opaque full-frame backdrop, so it ships as JPEG (a tenth of the PNG).
-    Art background { loadImage (BinaryData::pedal_background_jpg, BinaryData::pedal_background_jpgSize) };
+    // Bright-register clear-shell composite. Keep the lossless PNG: refracted
+    // board edges and pale shell highlights show JPEG ringing at 1x.
+    Art background { loadImage (BinaryData::pedal_background_png, BinaryData::pedal_background_pngSize) };
     Art darkOff { loadImage (BinaryData::dark_off_png, BinaryData::dark_off_pngSize) };
     Art darkOn { loadImage (BinaryData::dark_on_png, BinaryData::dark_on_pngSize) };
     Art gatePre { loadImage (BinaryData::gate_pre_png, BinaryData::gate_pre_pngSize) };
@@ -50,7 +50,8 @@ const PedalArtwork& artwork()
     return images;
 }
 
-const auto kInk = juce::Colour (0xffddd3b7);
+// Bright register: permanent second-surface print is the darkest value band.
+const auto kInk = juce::Colour (0xff0e1b20);
 const auto kOrange = juce::Colour (0xffe66c0b);
 
 // Overlay draw rects. Each matches the render crop in tools/render_ui.py
@@ -106,9 +107,9 @@ const juce::Image& drawerShadowImage()
     return image;
 }
 
-// Runtime labels must stay dynamic, but should share the physical plate's visual
-// language. A tiny dark registration shadow plus dry ivory top coat reads as
-// pad-print on black wrinkle powder rather than digitally embossed text.
+// Runtime labels must stay dynamic, but should share the physical clear-shell
+// language. A tiny registration shadow plus dark top coat reads as second-surface
+// print over the frosted carrier rather than digitally embossed text.
 void drawEngravedText (juce::Graphics& g, const juce::String& text,
                        juce::Rectangle<int> area, float fontHeight, juce::Colour ink,
                        juce::Justification justification = juce::Justification::centred)

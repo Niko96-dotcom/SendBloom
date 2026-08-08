@@ -1,5 +1,34 @@
 # SendBloom UI render notes
 
+## 2026-08-08 bright/clear shell pass
+
+The production register is now **bright/clear**.  `tools/render_ui.py` builds a
+single near-water-clear polycarbonate lid (`IOR 1.585`) with a 2.35 mm wall and
+2.10 mm top skin, an open rear chassis tray, and a populated cavity.  The shell
+uses volume absorption (`density 0.0042`) so the tint follows path length; it is
+not an alpha overlay.  Transmission is budgeted at 24 bounces (32 total), the
+glass remains opaque to alpha, and a camera-derived glossy-only black flag keeps
+the key from mirroring as a white pane.
+
+The cavity contains a light soldermask PCB, copper pour/traces/pads/vias,
+11 designator-checked component footprints (`U1`–`H2`), red/blue/gate flying
+leads, four nylon/brass standoffs, and the backs of all panel-mounted controls
+and jacks.  Frosted transmissive legend bands sit below the dark second-surface
+print.  `_validate_internals_layout()` rejects board overhangs, panel keep-out
+intrusions, and duplicate designators before rendering.
+
+The shared rig uses one `RIG_GAIN = 0.72`, plus a rear rim and a board-targeted
+interior wash.  The measured 840×1560 preview composite was:
+
+| shell over interior | plated hardware | shell edge | darkest print (`min`) | print ground |
+|---:|---:|---:|---:|---:|
+| 154.3 | 107.5 | 114.3 | 63.0 | 160.3 |
+
+These are source/render gates, not a claim of physical or perceptual hardware
+equivalence.  The JUCE editor embeds the lossless `pedal_background.png` so
+refracted board edges do not inherit JPEG ringing; live preset text and
+readouts remain runtime-rendered.
+
 All faceplate art in `resources/ui/` is path-traced by `tools/render_ui.py`
 (Blender 5.2 LTS, Cycles, Metal GPU). One procedural scene builds the whole
 pedal; every asset is a crop of that scene from the same orthographic camera,

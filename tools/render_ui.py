@@ -59,6 +59,19 @@ SWEEP_START_DEG = 216.0        # JUCE rotary: 1.2*pi cw from 12 o'clock
 SWEEP_DEG = 288.0              # 1.2*pi .. 2.8*pi
 CAMERA_PITCH_DEG = 13.5        # physical sidewall read, without perspective convergence
 
+# Bright/clear is a separate product register, not an alpha tweak.  The shell
+# is near-water-clear polycarbonate, the interior ground is a pale soldermask,
+# and the permanent legends are dark second-surface print.  Keep one gain for
+# the whole rig so the interior wash never becomes a per-source exposure cheat.
+CLEAR_REGISTER = "bright"
+RIG_GAIN = 0.72
+SHELL_IOR = 1.585
+SHELL_WALL_MM = 2.35
+SHELL_TOP_SKIN_MM = 2.10
+INTERNAL_BOARD_Z = -47.0
+INTERNAL_BOARD_THICKNESS = 4.2
+BOARD_MARGIN = 8.0
+
 # facelayout rects (x, y, w, h in editor px) — the layout contract.
 PLATE = (38.0, 60.0, 345.0, 642.0)
 PLATE_RADIUS = 19.0
@@ -70,6 +83,10 @@ ENCLOSURE_DEPTH = 31.00 * PX_PER_MM
 LID_DEPTH = 4.19 * PX_PER_MM
 FLOOR_Z = -ENCLOSURE_DEPTH
 JACK_CENTRE_Z = -11.5 * PX_PER_MM
+# The inner ceiling of the clear lid is the second-surface print plane.  Keep
+# the ink a fraction toward the cavity so it cannot z-fight with the shell.
+SECOND_SURFACE_PRINT_Z = -LID_DEPTH + (SHELL_TOP_SKIN_MM * PX_PER_MM) + 0.70
+FROST_ZONE_Z = SECOND_SURFACE_PRINT_Z - 1.35
 LOGO = (85, 70, 250, 52)
 PRESET_FIELD = (54, 129, 232, 42)
 PRESET_LOAD = (294, 136, 30, 29)
@@ -134,6 +151,13 @@ def reset_scene():
     scn.cycles.use_denoising = True
     scn.cycles.seed = 7
     scn.cycles.use_animated_seed = False
+    # Clear lid -> clear controls -> frosted print -> populated board is a
+    # deeper transmission stack than the renderer default.  An exhausted ray
+    # returns black, so keep this budget explicit and comfortably above the
+    # production path depth.
+    scn.cycles.max_bounces = 32
+    scn.cycles.transmission_bounces = 24
+    scn.cycles.transparent_max_bounces = 32
 
     scn.render.resolution_x = EDITOR_W * SCALE
     scn.render.resolution_y = EDITOR_H * SCALE
@@ -141,6 +165,11 @@ def reset_scene():
     scn.render.image_settings.color_mode = "RGBA"
     scn.render.image_settings.color_depth = "8"
     scn.render.image_settings.compression = 90
+    scn.render.film_transparent = False
+    # Glass must stay opaque to alpha.  This explicit contract is also consumed
+    # by the static transmission-scene checker.
+    film_transparent_glass = False
+    assert film_transparent_glass is False
 
     # UI art wants faithful texture colours, not filmic tone mapping.
     scn.view_settings.view_transform = "Standard"
@@ -196,6 +225,45 @@ def compensate_scene_for_camera_pitch(scn):
             obj.matrix_world = transform @ obj.matrix_world
 
 
+def add_specular_flag(scn, centre):
+    """Place a camera-invisible black flag in the shell's mirror direction.
+
+    A clear, near-horizontal lid mirrors the largest softbox unless the mirror
+    cone is flagged.  The flag is deliberately scoped to glossy rays; it is
+    not allowed to change the illumination or transmission of the internals.
+    """
+    theta = math.radians(CAMERA_PITCH_DEG)
+    mirror = Vector((0.0, math.sin(theta), math.cos(theta)))
+    flag_at = centre + mirror * 720.0
+    data = bpy.data.meshes.new("clear_shell_specular_flag_mesh")
+    bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=2.0)
+    bm.to_mesh(data)
+    bm.free()
+    flag = bpy.data.objects.new("clear_shell_specular_flag", data)
+    scn.collection.objects.link(flag)
+    flag.location = flag_at
+    flag.scale = (470.0, 470.0, 1.0)
+    flag.rotation_euler = mirror.to_track_quat("Z", "Y").to_euler()
+    flag.data.materials.append(principled("specular_flag_black", (0.0, 0.0, 0.0), 1.0))
+    # Cycles visibility flags differ slightly across Blender minor versions;
+    # set them defensively while retaining the explicit visible_glossy marker.
+    flag["visible_glossy"] = True
+    for attr, value in (("visible_camera", False),
+                        ("visible_diffuse", False),
+                        ("visible_transmission", False),
+                        ("visible_shadow", False),
+                        ("visible_glossy", True)):
+        try:
+            setattr(flag, attr, value)
+        except (AttributeError, TypeError):
+            try:
+                setattr(flag.cycles, attr, value)
+            except (AttributeError, TypeError):
+                pass
+    return flag
+
+
 def add_lights(scn):
     """One rig for everything. Key: big cool softbox upper-left, matching
     lighting::toLight = (-0.55, -0.83); shadows fall lower-right. Fill: broad
@@ -214,7 +282,7 @@ def add_lights(scn):
     # 12 degree disc softens shadow edges to a believable studio penumbra.
     sun_data = bpy.data.lights.new("key_sun", type="SUN")
     sun_data.color = (0.93, 0.955, 1.0)
-    sun_data.energy = 2.7
+    sun_data.energy = 2.7 * RIG_GAIN
     sun_data.angle = math.radians(9.0)
     sun = bpy.data.objects.new("key_sun", sun_data)
     sun.location = centre + Vector((0, 0, 800))
@@ -230,7 +298,7 @@ def add_lights(scn):
     key_data.shape = "SQUARE"
     key_data.size = 480
     key_data.color = (0.93, 0.955, 1.0)
-    key_data.energy = 5.5e6
+    key_data.energy = 5.5e6 * RIG_GAIN
     key = bpy.data.objects.new("key_soft", key_data)
     key.location = centre + to_light * 900 + Vector((0, 0, 1700))
     aim(key, centre)
@@ -241,7 +309,7 @@ def add_lights(scn):
     fill_data.size = 380
     fill_data.size_y = 1200
     fill_data.color = (1.0, 0.70, 0.52)
-    fill_data.energy = 3.6e6
+    fill_data.energy = 3.6e6 * RIG_GAIN
     fill = bpy.data.objects.new("fill", fill_data)
     fill.location = centre + Vector((760, 0, 420))
     aim(fill, centre)
@@ -255,11 +323,42 @@ def add_lights(scn):
     kick_data.size = 520
     kick_data.size_y = 180
     kick_data.color = (1.0, 0.78, 0.62)
-    kick_data.energy = 1.35e6
+    kick_data.energy = 1.35e6 * RIG_GAIN
     kick = bpy.data.objects.new("front_wall_kicker", kick_data)
     kick.location = centre + Vector((0, -860, 190))
     aim(kick, centre + Vector((0, -250, -75)))
     scn.collection.objects.link(kick)
+
+    # Clear products need a rear rim and a dedicated interior wash.  The rim
+    # lights the far wall and pipes along the polycarbonate edge; the wash is
+    # aimed at the board, not the control plane, so the populated cavity stays
+    # readable without raising the whole front rig.
+    rear_data = bpy.data.lights.new("rear_rim", type="AREA")
+    rear_data.shape = "RECTANGLE"
+    rear_data.size = 520
+    rear_data.size_y = 160
+    rear_data.color = (0.78, 0.90, 1.0)
+    rear_data.energy = 0.42e6 * RIG_GAIN
+    rear_rim = bpy.data.objects.new("rear_rim", rear_data)
+    rear_rim.location = centre + Vector((0, 560, -40))
+    aim(rear_rim, centre + Vector((0, 180, -42)))
+    scn.collection.objects.link(rear_rim)
+
+    wash_data = bpy.data.lights.new("interior_wash", type="AREA")
+    wash_data.shape = "RECTANGLE"
+    wash_data.size = 420
+    wash_data.size_y = 260
+    wash_data.color = (0.86, 0.97, 1.0)
+    wash_data.energy = 0.22e6 * RIG_GAIN
+    board_wash = bpy.data.objects.new("board_wash", wash_data)
+    board_wash.location = centre + Vector((0, 40, -18))
+    aim(board_wash, centre + Vector((0, 30, -48)))
+    scn.collection.objects.link(board_wash)
+
+    # Specular flag derived from the camera pitch.  It is visible to glossy
+    # rays only and therefore suppresses the softbox mirror on the clear lid
+    # without blocking camera, diffuse, transmission, or shadow rays.
+    add_specular_flag(scn, centre)
 
     world = bpy.data.worlds.new("world")
     scn.world = world
@@ -485,13 +584,113 @@ def make_bench_material():
     return mat
 
 
+def _set_bsdf_input(bsdf, names, value):
+    """Set the first available Principled input across Blender 4.x names."""
+    for name in names:
+        socket = bsdf.inputs.get(name)
+        if socket is not None:
+            socket.default_value = value
+            return socket
+    return None
+
+
+def make_clear_shell_material():
+    """Near-water-clear polycarbonate with thickness-dependent cool tint.
+
+    The tint lives in a Volume Absorption node rather than in Base Color, so a
+    thin flat wall stays readable while a long edge/corner path accumulates the
+    bright register's blue-white density.
+    """
+    mat = principled("clear_polycarbonate_shell", (0.92, 0.98, 1.0), 0.16,
+                     coat=0.18, coat_rough=0.08)
+    nodes, links, bsdf = _nodes(mat)
+    _set_bsdf_input(bsdf, ("Transmission Weight", "Transmission"), 0.94)
+    _set_bsdf_input(bsdf, ("IOR",), SHELL_IOR)
+    if bsdf.inputs.get("IOR") is not None:
+        bsdf.inputs["IOR"].default_value = SHELL_IOR
+    _set_bsdf_input(bsdf, ("Alpha",), 1.0)
+    absorption = nodes.new("ShaderNodeVolumeAbsorption")
+    absorption.name = "ShellThicknessVolumeAbsorption"
+    absorption.label = "Thickness-dependent clear-shell tint"
+    absorption.inputs["Color"].default_value = (0.72, 0.88, 1.0, 1.0)
+    absorption.inputs["Density"].default_value = 0.0042
+    output = nodes.get("Material Output")
+    if output is not None:
+        links.new(absorption.outputs["Volume"], output.inputs["Volume"])
+    mat["register"] = CLEAR_REGISTER
+    mat["ior"] = SHELL_IOR
+    mat["volume_absorption_density"] = 0.0042
+    mat["opaque_to_alpha"] = True
+    return mat
+
+
+def make_frost_material():
+    """Rough transmissive carrier for second-surface legend bands."""
+    mat = principled("clear_shell_frost_zone", (0.68, 0.84, 0.87), 0.58,
+                     coat=0.04, coat_rough=0.4)
+    nodes, links, bsdf = _nodes(mat)
+    _set_bsdf_input(bsdf, ("Transmission Weight", "Transmission"), 0.62)
+    _set_bsdf_input(bsdf, ("IOR",), 1.46)
+    if bsdf.inputs.get("IOR") is not None:
+        bsdf.inputs["IOR"].default_value = 1.46
+    _set_bsdf_input(bsdf, ("Alpha",), 1.0)
+    absorption = nodes.new("ShaderNodeVolumeAbsorption")
+    absorption.name = "FrostZoneVolumeAbsorption"
+    absorption.inputs["Color"].default_value = (0.62, 0.80, 0.84, 1.0)
+    absorption.inputs["Density"].default_value = 0.008
+    output = nodes.get("Material Output")
+    if output is not None:
+        links.new(absorption.outputs["Volume"], output.inputs["Volume"])
+    mat["deliberate_opacity"] = "legend carrier scatters board clutter while remaining transmissive"
+    return mat
+
+
+def make_pcb_materials():
+    """Bright-register board and component families with distinct value bands."""
+    return {
+        "substrate": principled("pcb_light_soldermask", (0.18, 0.38, 0.42), 0.44,
+                                 metallic=0.05),
+        "copper": principled("pcb_copper_pour", (0.36, 0.12, 0.020), 0.31,
+                              metallic=0.78),
+        "pad": principled("pcb_tin_pads", (0.70, 0.74, 0.72), 0.20,
+                           metallic=0.92),
+        "silkscreen": principled("pcb_dark_silkscreen", (0.006, 0.012, 0.014), 0.48),
+        "epoxy": principled("component_black_epoxy", (0.012, 0.023, 0.028), 0.43),
+        "resistor": principled("component_axial_resistor", (0.58, 0.39, 0.18), 0.58),
+        "cap": principled("component_film_capacitor", (0.78, 0.78, 0.67), 0.36),
+        "electrolytic": principled("component_electrolytic_can", (0.06, 0.16, 0.19), 0.29,
+                                    metallic=0.25),
+        "diode": principled("component_diode_glass", (0.18, 0.34, 0.32), 0.22,
+                             coat=0.24, coat_rough=0.11),
+        "wire_red": principled("wire_signal_red", (0.55, 0.018, 0.012), 0.50),
+        "wire_blue": principled("wire_ground_blue", (0.014, 0.08, 0.40), 0.50),
+        "standoff": principled("pcb_nylon_standoff", (0.75, 0.82, 0.78), 0.56),
+        "insert": principled("pcb_brass_insert", (0.54, 0.27, 0.06), 0.30, metallic=0.82),
+    }
+
+
 class Mats:
     def __init__(self):
-        self.plate = make_plate_material()
-        self.chassis = principled("chassis", COL_CHASSIS, 0.42, metallic=0.85)
+        self.plate = make_clear_shell_material()
+        # The bright register's outer frame is translucent pale polymer, not a
+        # black die-cast box.  Hardware and controls remain dark/metallic so the
+        # clear composite has a deliberate value hierarchy.
+        self.chassis = principled("clear_shell_frame", (0.58, 0.72, 0.74), 0.34,
+                                  metallic=0.06, coat=0.12, coat_rough=0.12)
+        _set_bsdf_input(self.chassis.node_tree.nodes["Principled BSDF"],
+                        ("Transmission Weight", "Transmission"), 0.32)
+        _set_bsdf_input(self.chassis.node_tree.nodes["Principled BSDF"], ("IOR",), SHELL_IOR)
+        frame_absorb = self.chassis.node_tree.nodes.new("ShaderNodeVolumeAbsorption")
+        frame_absorb.name = "FrameThicknessVolumeAbsorption"
+        frame_absorb.inputs["Color"].default_value = (0.58, 0.78, 0.82, 1.0)
+        frame_absorb.inputs["Density"].default_value = 0.008
+        self.chassis.node_tree.links.new(frame_absorb.outputs["Volume"],
+                                         self.chassis.node_tree.nodes["Material Output"].inputs["Volume"])
         add_rough_variation(self.chassis, 0.42, 0.12, scale=0.05)
         cgrain = _noise(self.chassis, 0.5, detail=4.0)
         chain_bumps(self.chassis, [(cgrain.outputs["Fac"], 0.18, 0.5)])
+        self.frost = make_frost_material()
+        self.pcb = make_pcb_materials()
         self.bench = make_bench_material()
         self.bench_scuff = principled("bench_rubbed_scuff", (0.105, 0.083, 0.060),
                                       0.76)
@@ -512,8 +711,10 @@ class Mats:
         self.old_scratch = principled("oxidised_scratch", (0.115, 0.085, 0.055),
                                       0.72, metallic=0.28)
         self.ink_loss = principled("rubbed_through_print", (0.018, 0.016, 0.014), 0.78)
-        self.panel_ink_faded = principled("panel_ink_faded", (0.225, 0.190, 0.125),
-                                          0.84)
+        # Bright register: permanent print is the darkest element, with a
+        # softened companion for worn/faded segments.
+        self.panel_ink_faded = principled("panel_ink_faded_bright", (0.075, 0.115, 0.125),
+                                          0.78)
         self.knob_scuff = principled("knob_hand_scuff", (0.115, 0.100, 0.078), 0.88)
         self.rubber_scuff = principled("rubber_sole_scuff", (0.095, 0.086, 0.075),
                                        0.90)
@@ -541,7 +742,7 @@ class Mats:
         # Metallic pointer bars read as hi-fi equipment rather than a pedal.
         self.pointer = principled("pointer_paint", COL_POINTER, 0.58)
         add_rough_variation(self.pointer, 0.58, 0.05, scale=0.4)
-        self.panel_ink = principled("panel_scale_ink", (0.610, 0.535, 0.385), 0.72)
+        self.panel_ink = principled("panel_scale_ink_bright", (0.008, 0.015, 0.018), 0.60)
         self.knob_mount = principled("knob_mount_nickel_washer", (0.53, 0.50, 0.44),
                                      0.25, metallic=1.0)
         add_rough_variation(self.knob_mount, 0.25, 0.08, scale=0.34)
@@ -737,6 +938,101 @@ def make_prism(name, mat, w, h, r, z0, z1, bevel=1.2, seg=10, centre=(0.0, 0.0),
     obj = link_object(name, mesh, mat)
     obj.location = (centre[0], centre[1], 0)
     shade_smooth(obj)
+    return obj
+
+
+def make_hollow_shell(name, mat, outer_w, outer_h, outer_r,
+                      inner_w, inner_h, inner_r, z0, z1,
+                      top_skin, bottom_wall, centre=(0.0, 0.0), seg=18):
+    """Build one closed clear moulding with a real cavity and wall thickness.
+
+    The top skin, outer wall, cavity wall, ceiling, and bottom rim are emitted
+    into one mesh.  This avoids coincident refracting interfaces that would
+    appear if a clear lid were assembled from overlapping slabs.
+    """
+    outer = rounded_rect_outline(outer_w, outer_h, outer_r, seg)
+    inner = rounded_rect_outline(inner_w, inner_h, inner_r, seg)
+    if len(outer) != len(inner):
+        raise ValueError("hollow shell loops must have matching segment counts")
+
+    bm = bmesh.new()
+    n = len(outer)
+    outer_bottom = [bm.verts.new((x, y, z0)) for x, y in outer]
+    outer_top = [bm.verts.new((x, y, z1)) for x, y in outer]
+    inner_bottom = [bm.verts.new((x, y, z0 + bottom_wall)) for x, y in inner]
+    inner_ceiling = [bm.verts.new((x, y, z1 - top_skin)) for x, y in inner]
+
+    for i in range(n):
+        j = (i + 1) % n
+        # Outside wall, bottom return/rim, and cavity wall.
+        bm.faces.new((outer_bottom[i], outer_bottom[j], outer_top[j], outer_top[i]))
+        bm.faces.new((outer_bottom[j], inner_bottom[j], inner_bottom[i], outer_bottom[i]))
+        bm.faces.new((inner_bottom[i], inner_bottom[j], inner_ceiling[j], inner_ceiling[i]))
+
+    # One uninterrupted top skin and one uninterrupted cavity ceiling.  These
+    # are genuine shell surfaces, not alpha planes laid over a black plate.
+    bm.faces.new(list(reversed(outer_top)))
+    bm.faces.new(list(inner_ceiling))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = link_object(name, mesh, mat)
+    obj.location = (centre[0], centre[1], 0.0)
+    obj["construction"] = "single manifold shell with cavity and welded moulded features"
+    obj["wall_thickness_mm"] = SHELL_WALL_MM
+    obj["top_skin_mm"] = SHELL_TOP_SKIN_MM
+    shade_smooth(obj, angle=math.radians(32))
+    return obj
+
+
+def boolean_join(base, parts):
+    """Union moulded features into their parent before the final bore cut.
+
+    The bright shell currently carries its bosses in the source mesh itself;
+    this helper keeps the construction order explicit for any future feature
+    that is added as a separate parametric solid.
+    """
+    operation = "UNION"  # checked by check_transmission_scene.py
+    for part in parts:
+        modifier = base.modifiers.new(name=f"weld_{part.name}", type="BOOLEAN")
+        modifier.operation = operation
+        modifier.solver = "EXACT"
+        modifier.object = part
+    return base
+
+
+def make_open_tray(name, mat, outer_w, outer_h, outer_r,
+                   inner_w, inner_h, inner_r, z0, z1,
+                   floor_thickness, centre=(0.0, 0.0), seg=18):
+    """Open-top rear chassis: welded sidewall/rim with a real cavity floor."""
+    outer = rounded_rect_outline(outer_w, outer_h, outer_r, seg)
+    inner = rounded_rect_outline(inner_w, inner_h, inner_r, seg)
+    if len(outer) != len(inner):
+        raise ValueError("open tray loops must have matching segment counts")
+    bm = bmesh.new()
+    n = len(outer)
+    ob = [bm.verts.new((x, y, z0)) for x, y in outer]
+    ot = [bm.verts.new((x, y, z1)) for x, y in outer]
+    ib = [bm.verts.new((x, y, z0 + floor_thickness)) for x, y in inner]
+    it = [bm.verts.new((x, y, z1)) for x, y in inner]
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((ob[i], ob[j], ot[j], ot[i]))
+        bm.faces.new((ot[j], it[j], it[i], ot[i]))
+        bm.faces.new((ib[i], ib[j], it[j], it[i]))
+        bm.faces.new((ob[j], ib[j], ib[i], ob[i]))
+    bm.faces.new(list(reversed(ib)))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = link_object(name, mesh, mat)
+    obj.location = (centre[0], centre[1], 0.0)
+    obj["construction"] = "open-top tray with welded sidewall/rim and cavity floor"
+    obj["wall_thickness_mm"] = SHELL_WALL_MM
+    shade_smooth(obj, angle=math.radians(32))
     return obj
 
 
@@ -1279,15 +1575,27 @@ class Pedal:
         # expects from a stompbox.
         bench = make_box("bench", m.bench, (2400, 4000, 8),
                          px(EDITOR_W / 2, EDITOR_H / 2, FLOOR_Z - 4.0))
-        chassis = make_prism("chassis", m.chassis, w + 34, h + 34, PLATE_RADIUS + 12,
-                             FLOOR_Z, -LID_DEPTH * 0.70, bevel=5.0,
-                             centre=px(x + w / 2, y + h / 2)[:2])
-        plate = make_prism("plate", m.plate, w, h, PLATE_RADIUS,
-                           -LID_DEPTH, 0, bevel=3.0,
-                           centre=px(x + w / 2, y + h / 2)[:2])
+        chassis = make_open_tray(
+            "chassis", m.chassis,
+            w + 34, h + 34, PLATE_RADIUS + 12,
+            w + 5.0, h + 5.0, PLATE_RADIUS + 2.5,
+            FLOOR_Z, -LID_DEPTH * 0.70, floor_thickness=6.0,
+            centre=px(x + w / 2, y + h / 2)[:2])
+        # One clear moulding: real top skin, side wall, cavity ceiling and
+        # bottom return.  The old opaque faceplate slab is intentionally gone.
+        wall = SHELL_WALL_MM * PX_PER_MM
+        top_skin = SHELL_TOP_SKIN_MM * PX_PER_MM
+        plate = make_hollow_shell(
+            "plate", m.plate,
+            w, h, PLATE_RADIUS,
+            w - 2.0 * wall, h - 2.0 * wall,
+            max(PLATE_RADIUS - wall, 3.0),
+            -LID_DEPTH, 0.0, top_skin, wall,
+            centre=px(x + w / 2, y + h / 2)[:2])
         self.plate = plate
         self.static += [bench, chassis, plate]
 
+        self._build_internals()
         self._build_floor_wear_and_cables()
         self._build_panel_wear_and_graphics()
         self._build_badge_and_preset()
@@ -1297,6 +1605,300 @@ class Pedal:
         self._build_dark()
         self._build_foot()
         self._build_clip()
+
+    def _build_internals(self):
+        """Populate the clear cavity with a real bright-register electronics stack.
+
+        The board, component families, wiring, standoffs, inserts, and the backs
+        of panel controls are intentionally separate geometry.  A clear shell
+        with an empty cavity is a failed product, even if its transmission
+        shader is physically correct.
+        """
+        m = self.m
+        pcb = m.pcb
+        self.internals = []
+        self.internals_inventory = []
+
+        board_x, board_y = PLATE[0] + PLATE[2] / 2.0, 388.0
+        board_w, board_h = PLATE[2] - 46.0, 500.0
+        board = make_prism(
+            "pcb_substrate", pcb["substrate"], board_w, board_h, 8.5,
+            INTERNAL_BOARD_Z - INTERNAL_BOARD_THICKNESS, INTERNAL_BOARD_Z,
+            bevel=1.6, centre=px(board_x, board_y)[:2])
+        board["inventory"] = "substrate, soldermask, copper pour, pads, vias, silkscreen"
+        self.internals += [board]
+        self.static.append(board)
+
+        # Frosted bands sit on the cavity side of the lid, below second-surface
+        # print, and scatter the busy board without turning the whole enclosure
+        # into opaque plastic.
+        for name, cx, cy, width, height in (
+                ("upper", 210.0, 116.0, 296.0, 82.0),
+                ("lower", 210.0, 425.0, 306.0, 58.0),
+                ("footer", 210.0, 681.0, 276.0, 28.0)):
+            zone = make_prism(
+                f"frosted_legend_zone_{name}", m.frost, width, height, 9.0,
+                FROST_ZONE_Z - 0.42, FROST_ZONE_Z,
+                bevel=1.0, centre=px(cx, cy)[:2])
+            zone["assembly_order"] = "interior board < frost < second-surface print < outer shell"
+            self.static.append(zone)
+
+        # Moulded bosses/standoffs are real vertical hardware.  They are emitted
+        # in the same scene as the shell and registered to the board; a future
+        # boolean cut can use boolean_join() before the cavity bore is applied.
+        for i, (sx, sy) in enumerate(((78, 154), (342, 154), (78, 620), (342, 620))):
+            boss = make_cylinder(
+                f"pcb_standoff_{i}", pcb["standoff"], 7.2,
+                FLOOR_Z + 42.0, INTERNAL_BOARD_Z - 4.8,
+                px(sx, sy), verts=64)
+            insert = make_cylinder(
+                f"pcb_brass_insert_{i}", pcb["insert"], 3.6,
+                INTERNAL_BOARD_Z - 4.6, INTERNAL_BOARD_Z + 0.8,
+                px(sx, sy), verts=48)
+            self.internals += [boss, insert]
+            self.static += [boss, insert]
+
+        # Backside bodies of all panel-mounted controls.  They deliberately hang
+        # below the clear lid so the front controls are mechanically connected
+        # rather than floating decals over the PCB.
+        for i, (cx, cy, radius, depth) in enumerate(
+                [(x, y, 13.0, 34.0) for x, y in KNOBS_LARGE]
+                + [(x, y, 10.5, 29.0) for x, y in KNOBS_SMALL]):
+            pot = make_cylinder(
+                f"panel_pot_back_{i}", pcb["epoxy"], radius,
+                INTERNAL_BOARD_Z + 1.0, INTERNAL_BOARD_Z + depth,
+                px(cx, cy), verts=72)
+            flange = make_cylinder(
+                f"panel_pot_back_flange_{i}", pcb["pad"], radius + 3.0,
+                INTERNAL_BOARD_Z + depth - 3.0, INTERNAL_BOARD_Z + depth - 1.4,
+                px(cx, cy), verts=72)
+            lug_l = make_box(
+                f"panel_pot_lug_{i}_l", pcb["pad"], (2.0, 7.0, 4.0),
+                px(cx - radius * 0.58, cy, INTERNAL_BOARD_Z + 1.3))
+            lug_r = make_box(
+                f"panel_pot_lug_{i}_r", pcb["pad"], (2.0, 7.0, 4.0),
+                px(cx + radius * 0.58, cy, INTERNAL_BOARD_Z + 1.3))
+            self.internals += [pot, flange, lug_l, lug_r]
+            self.static += [pot, flange, lug_l, lug_r]
+
+        for name, cx, cy, size in (
+                ("gate_switch_back", GATE_CENTRE[0], GATE_CENTRE[1], 18.0),
+                ("dark_button_back", DARK_CENTRE[0], DARK_CENTRE[1], 22.0),
+                ("clip_led_back", CLIP_CENTRE[0], CLIP_CENTRE[1], 9.0)):
+            body = make_cylinder(
+                name, pcb["epoxy"], size,
+                INTERNAL_BOARD_Z + 2.0, INTERNAL_BOARD_Z + 31.0,
+                px(cx, cy), verts=64)
+            self.internals.append(body)
+            self.static.append(body)
+
+        jack_back = []
+        for side, wall_x, outward in (
+                ("left", PLATE[0] - 17.0, -1.0),
+                ("right", PLATE[0] + PLATE[2] + 17.0, 1.0)):
+            body = make_axis_cylinder(
+                f"jack_{side}_internal_body", pcb["epoxy"], 9.6, 34.0,
+                px(wall_x + outward * 10.0, 367.0, JACK_CENTRE_Z),
+                axis="x", verts=72)
+            lugs = make_box(
+                f"jack_{side}_internal_lugs", pcb["pad"], (4.0, 15.0, 5.0),
+                px(wall_x + outward * 4.5, 367.0, JACK_CENTRE_Z - 2.0))
+            jack_back += [body, lugs]
+        self.internals += jack_back
+        self.static += jack_back
+
+        # A real PCB layout, in ascending signal-flow designator order.  The
+        # rectangles are also fed to the keep-out validator below.
+        footprints = [
+            ("U1", "dip", 146, 170, 31, 48),
+            ("U2", "dip", 275, 170, 31, 48),
+            ("C1", "cap", 82, 286, 20, 15),
+            ("R1", "resistor", 164, 294, 26, 9),
+            ("C2", "cap", 252, 294, 20, 15),
+            ("D1", "diode", 334, 286, 22, 10),
+            ("U3", "qfp", 210, 402, 38, 23),
+            ("E1", "electrolytic", 82, 430, 18, 32),
+            ("E2", "electrolytic", 338, 430, 18, 32),
+            ("H1", "header", 90, 548, 34, 12),
+            ("H2", "header", 330, 548, 34, 12),
+        ]
+        for designator, family, cx, cy, fw, fh in footprints:
+            if family == "dip":
+                body = make_prism(
+                    f"pcb_{designator}_body", pcb["epoxy"], fw, fh, 3.2,
+                    INTERNAL_BOARD_Z + 0.4, INTERNAL_BOARD_Z + 5.6,
+                    bevel=0.9, centre=px(cx, cy)[:2])
+                pin_count = 8
+                for pi in range(pin_count):
+                    side = -1.0 if pi < pin_count / 2 else 1.0
+                    idx = pi if pi < pin_count / 2 else pi - pin_count / 2
+                    py = cy - fh * 0.34 + idx * (fh * 0.68 / (pin_count / 2 - 1))
+                    pin = make_box(
+                        f"pcb_{designator}_pin_{pi+1}", pcb["pad"], (2.0, 2.5, 2.8),
+                        px(cx + side * (fw * 0.57), py, INTERNAL_BOARD_Z + 1.1))
+                    self.internals.append(pin)
+                    self.static.append(pin)
+            elif family == "qfp":
+                body = make_prism(
+                    f"pcb_{designator}_body", pcb["epoxy"], fw, fh, 2.4,
+                    INTERNAL_BOARD_Z + 0.4, INTERNAL_BOARD_Z + 4.8,
+                    bevel=0.7, centre=px(cx, cy)[:2])
+                for pi in range(8):
+                    angle = math.tau * pi / 8.0
+                    pin = make_box(
+                        f"pcb_{designator}_pin_{pi+1}", pcb["pad"], (2.0, 5.0, 1.8),
+                        px(cx + math.cos(angle) * (fw * 0.54),
+                           cy + math.sin(angle) * (fh * 0.54),
+                           INTERNAL_BOARD_Z + 1.0),
+                        rot=(0.0, 0.0, -angle))
+                    self.internals.append(pin)
+                    self.static.append(pin)
+            elif family == "resistor":
+                body = make_axis_cylinder(
+                    f"pcb_{designator}_body", pcb["resistor"], fw * 0.34,
+                    fw * 0.62, px(cx, cy, INTERNAL_BOARD_Z + 3.4),
+                    axis="x", verts=48)
+                bands = []
+                for bi, bx in enumerate((-fw * 0.13, 0.0, fw * 0.13)):
+                    bands.append(make_axis_cylinder(
+                        f"pcb_{designator}_band_{bi}", pcb["copper"], fw * 0.39,
+                        1.8, px(cx + bx, cy, INTERNAL_BOARD_Z + 3.4),
+                        axis="x", verts=32))
+                self.internals += [body] + bands
+                self.static += [body] + bands
+            elif family == "electrolytic":
+                body = make_cylinder(
+                    f"pcb_{designator}_body", pcb["electrolytic"], fw * 0.45,
+                    INTERNAL_BOARD_Z + 0.6, INTERNAL_BOARD_Z + 14.0,
+                    px(cx, cy), verts=64)
+                vent_a = make_box(
+                    f"pcb_{designator}_vent_a", pcb["pad"], (fw * 0.55, 1.2, 0.35),
+                    px(cx, cy, INTERNAL_BOARD_Z + 14.2), rot=(0, 0, math.radians(45)))
+                vent_b = make_box(
+                    f"pcb_{designator}_vent_b", pcb["pad"], (fw * 0.55, 1.2, 0.36),
+                    px(cx, cy, INTERNAL_BOARD_Z + 14.25), rot=(0, 0, math.radians(-45)))
+                self.internals += [body, vent_a, vent_b]
+                self.static += [body, vent_a, vent_b]
+            elif family == "diode":
+                body = make_axis_cylinder(
+                    f"pcb_{designator}_body", pcb["diode"], fh * 0.45, fw * 0.70,
+                    px(cx, cy, INTERNAL_BOARD_Z + 3.2), axis="x", verts=48)
+                stripe = make_axis_cylinder(
+                    f"pcb_{designator}_stripe", pcb["copper"], fh * 0.50, 1.8,
+                    px(cx + fw * 0.16, cy, INTERNAL_BOARD_Z + 3.2), axis="x", verts=32)
+                self.internals += [body, stripe]
+                self.static += [body, stripe]
+            elif family == "header":
+                body = make_box(
+                    f"pcb_{designator}_body", pcb["epoxy"], (fw, fh, 4.0),
+                    px(cx, cy, INTERNAL_BOARD_Z + 2.5))
+                pins = []
+                for pi in range(5):
+                    pin = make_box(
+                        f"pcb_{designator}_pin_{pi+1}", pcb["pad"], (2.0, 2.0, 8.0),
+                        px(cx - fw * 0.35 + pi * fw * 0.175, cy,
+                           INTERNAL_BOARD_Z + 5.2))
+                    pins.append(pin)
+                self.internals += [body] + pins
+                self.static += [body] + pins
+            else:  # film cap
+                body = make_prism(
+                    f"pcb_{designator}_body", pcb["cap"], fw, fh, 2.2,
+                    INTERNAL_BOARD_Z + 0.5, INTERNAL_BOARD_Z + 6.4,
+                    bevel=0.8, centre=px(cx, cy)[:2])
+                self.internals.append(body)
+                self.static.append(body)
+
+            label = make_text(
+                f"pcb_{designator}_silkscreen", pcb["silkscreen"], designator,
+                px(cx, cy - fh * 0.72, INTERNAL_BOARD_Z + 0.72), size=4.2, extrude=0.08)
+            self.internals.append(label)
+            self.static.append(label)
+            self.internals_inventory.append({
+                "designator": designator, "family": family,
+                "center": (cx, cy), "size": (fw, fh)})
+
+        # Copper pour, signal traces and vias remain visible between components.
+        trace_specs = [
+            ("trace_12v", (86, 205), (136, 205), 1.6),
+            ("trace_signal_a", (178, 208), (244, 255), 1.2),
+            ("trace_signal_b", (278, 211), (325, 258), 1.2),
+            ("trace_feedback", (95, 315), (176, 363), 1.1),
+            ("trace_ground", (246, 346), (326, 395), 1.5),
+            ("trace_out", (128, 452), (278, 458), 1.2),
+        ]
+        for name, (x0, y0), (x1, y1), width in trace_specs:
+            dx, dy = x1 - x0, y1 - y0
+            length = math.hypot(dx, dy)
+            angle = math.degrees(math.atan2(dy, dx))
+            trace = make_box(
+                f"pcb_{name}", pcb["copper"], (width, length, 0.22),
+                px((x0 + x1) * 0.5, (y0 + y1) * 0.5, INTERNAL_BOARD_Z + 0.34),
+                rot=(0.0, 0.0, math.radians(90.0 - angle)))
+            self.internals.append(trace)
+            self.static.append(trace)
+        for vi, (vx, vy) in enumerate(((123, 206), (242, 257), (300, 394), (162, 457), (278, 460))):
+            via = make_cylinder(
+                f"pcb_via_{vi}", pcb["pad"], 2.1,
+                INTERNAL_BOARD_Z + 0.25, INTERNAL_BOARD_Z + 1.05,
+                px(vx, vy), verts=32)
+            self.internals.append(via)
+            self.static.append(via)
+
+        # Flying leads are tubes with slack, not flat ribbons.  Their colours
+        # carry signal/ground semantics and terminate at the actual panel backs.
+        for name, mat, points in (
+                ("wire_red", pcb["wire_red"], [
+                    px(128, 206, INTERNAL_BOARD_Z + 4.0),
+                    px(107, 248, INTERNAL_BOARD_Z + 8.0),
+                    px(96, 226, INTERNAL_BOARD_Z + 28.0)]),
+                ("wire_blue", pcb["wire_blue"], [
+                    px(306, 396, INTERNAL_BOARD_Z + 3.0),
+                    px(318, 430, INTERNAL_BOARD_Z + 9.0),
+                    px(301, 347, INTERNAL_BOARD_Z + 26.0)]),
+                ("wire_gate", pcb["wire_red"], [
+                    px(274, 457, INTERNAL_BOARD_Z + 3.0),
+                    px(286, 483, INTERNAL_BOARD_Z + 10.0),
+                    px(300, 475, INTERNAL_BOARD_Z + 29.0)])):
+            wire = make_curve_tube(f"pcb_{name}", mat, points, 1.15, resolution=4)
+            self.internals.append(wire)
+            self.static.append(wire)
+
+        self._validate_internals_layout(board_x, board_y, board_w, board_h)
+
+    def _validate_internals_layout(self, board_x, board_y, board_w, board_h):
+        """Mechanical keep-out/overlap gate for the exposed PCB layout."""
+        left, right = board_x - board_w / 2.0 + BOARD_MARGIN, board_x + board_w / 2.0 - BOARD_MARGIN
+        top, bottom = board_y - board_h / 2.0 + BOARD_MARGIN, board_y + board_h / 2.0 - BOARD_MARGIN
+        keepouts = [
+            ("distortion_pot", *KNOBS_LARGE[0], 30.0),
+            ("size_pot", *KNOBS_LARGE[1], 30.0),
+            ("level_pot", *KNOBS_LARGE[2], 30.0),
+            ("input_pot", *KNOBS_SMALL[0], 24.0),
+            ("output_pot", *KNOBS_SMALL[1], 24.0),
+            ("clip_led", *CLIP_CENTRE, 15.0),
+            ("dark_button", *DARK_CENTRE, 25.0),
+            ("gate_switch", *GATE_CENTRE, 25.0),
+            ("footswitch", *FOOT_CENTRE, 58.0),
+        ]
+        designators = [item["designator"] for item in self.internals_inventory]
+        problems = []
+        if len(designators) != len(set(designators)):
+            problems.append("duplicate PCB reference designator")
+        for item in self.internals_inventory:
+            cx, cy = item["center"]
+            fw, fh = item["size"]
+            if cx - fw / 2.0 < left or cx + fw / 2.0 > right or cy - fh / 2.0 < top or cy + fh / 2.0 > bottom:
+                problems.append(f"{item['designator']} overhangs board keep-in")
+            for name, kx, ky, radius in keepouts:
+                dx = max(abs(kx - cx) - fw / 2.0, 0.0)
+                dy = max(abs(ky - cy) - fh / 2.0, 0.0)
+                if dx * dx + dy * dy < radius * radius:
+                    problems.append(f"{item['designator']} intrudes {name} keep-out")
+        if problems:
+            raise RuntimeError("transparent PCB layout validation failed: " + "; ".join(problems))
+        print(f"[render_ui] internals validated: {len(self.internals_inventory)} footprints, "
+              f"{len(keepouts)} panel keep-outs, no overlaps/overhangs")
 
     def _build_floor_wear_and_cables(self):
         """Dimensioned side sockets, fully inserted right-angle plugs and leads.
@@ -1446,7 +2048,7 @@ class Pedal:
         for suffix, x, y, length, width, angle, mat in frame_segments:
             self.static.append(make_surface_stroke(
                 f"worn_signal_frame_{suffix}", mat, (x, y), length, width,
-                0.30, angle))
+                SECOND_SURFACE_PRINT_Z, angle))
 
         # Chips cut into the ink itself. Their dark ragged silhouettes stop the
         # surviving lines from reading like recently drawn vector rectangles.
@@ -1459,7 +2061,7 @@ class Pedal:
                 (108, 681, 7.0, 1.2, 2), (312, 681, 5.0, 1.2, 4))):
             self.static.append(make_irregular_patch(
                 f"signal_frame_ink_loss_{i}", m.ink_loss, (x, y), rx, ry,
-                0.43, 600 + i, points=8, angle_deg=angle))
+                SECOND_SURFACE_PRINT_Z + 0.12, 600 + i, points=8, angle_deg=angle))
 
         # Paint damage is a three-layer event, never a silver sticker: raised dark
         # coating lip, rusty primer/oxide, then a smaller aluminium core. Wear is
@@ -1724,7 +2326,8 @@ class Pedal:
             elif wear_code in (3, 5):
                 length *= 0.68
             mark = make_box(f"{name}_scale_{i}", ink,
-                            (1.10, length, 0.18), px(x, y, 0.23),
+                            (1.10, length, 0.18),
+                            px(x, y, SECOND_SURFACE_PRINT_Z + 0.16),
                             rot=(0.0, 0.0, -angle))
             marks.append(mark)
         return marks
@@ -2008,6 +2611,49 @@ def restore_all(pedal):
 DEFAULT_STATES = {"gate_pre", "dark_off", "foot_up", "clip_off"}
 
 
+def measure_bright_register(path):
+    """Measure the composite value plan, including darkest print pixels."""
+    img = bpy.data.images.load(str(path))
+    img.colorspace_settings.name = "Non-Color"
+    width, height = img.size
+    buf = np.zeros(width * height * 4, dtype=np.float32)
+    img.pixels.foreach_get(buf)
+    # Blender's pixel buffer is bottom-up; the layout rects are editor/top-down.
+    buf = np.flip(buf.reshape(height, width, 4), axis=0)
+    buf = (buf[..., :3] * 255.0).astype(np.float32)
+    bpy.data.images.remove(img)
+
+    def patch(rect):
+        x, y, w, h = rect
+        return buf[y * SCALE:(y + h) * SCALE,
+                   x * SCALE:(x + w) * SCALE]
+
+    measured = {
+        "shell_over_interior": float(patch((170, 360, 80, 90)).mean()),
+        "plated_hardware": float(patch((53, 73, 16, 16)).mean()),
+        "shell_edge": float(patch((42, 180, 13, 250)).mean()),
+        "print_ink": float(patch((80, 398, 285, 8)).min()),
+        "print_ground": float(patch((125, 423, 170, 22)).mean()),
+    }
+    # Print is judged by its darkest actual glyph pixel, not a mean over ink and
+    # gaps.  Separations are asserted without an ordering so either register can
+    # use this same validator.
+    print_min = patch((80, 398, 285, 8)).min()
+    assert print_min == measured["print_ink"]
+    for a, b, gap, why in (
+            ("shell_over_interior", "plated_hardware", 10.0,
+             "shell composite and plated hardware"),
+            ("shell_over_interior", "shell_edge", 5.0,
+             "shell face and moulded edge"),
+            ("print_ink", "print_ground", 18.0,
+             "second-surface print and frosted ground")):
+        if abs(measured[a] - measured[b]) < gap:
+            raise RuntimeError(f"{a} and {b} are within {gap} sRGB: {why} must not share a value")
+    print("[render_ui] bright value plan: " + ", ".join(
+        f"{key}={value:.1f}" for key, value in measured.items()))
+    return measured
+
+
 def pass_background(scn, pedal):
     """Bare plate + static decor. Knobs are camera-invisible shadow casters;
     the state assemblies are absent entirely (their shadows ship with the
@@ -2023,6 +2669,7 @@ def pass_background(scn, pedal):
     clear_border(scn)
     render_to(scn, OUT / "pedal_background.png")
     post_background(OUT / "pedal_background.png", OUT / "pedal_background.jpg")
+    measure_bright_register(OUT / "pedal_background.png")
 
 
 def post_background(png_path, jpg_path, sigma=2.6 / 255.0):
@@ -2200,6 +2847,12 @@ def pass_states(scn, pedal):
         ("clip", "clip_on", "clip_on.png"),
     ]
     scn.render.film_transparent = True
+    # The bright shell and populated cavity are part of the opaque background
+    # composite.  They must not become black rectangular camera-visible pixels
+    # in an alpha overlay; they remain render-visible to shadow/transmission
+    # rays while the shadow-catcher plate receives the moving part's contact.
+    for obj in pedal.static:
+        obj.visible_camera = False
     for rect_key, state_key, filename in jobs:
         restore_all(pedal)
         for obj in pedal.knob_objects():
@@ -2211,6 +2864,8 @@ def pass_states(scn, pedal):
         feather_alpha(OUT / filename)
     restore_all(pedal)
     show_only_states(pedal, DEFAULT_STATES)
+    for obj in pedal.static:
+        obj.visible_camera = True
     clear_border(scn)
     scn.render.film_transparent = False
 

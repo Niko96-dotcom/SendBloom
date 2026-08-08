@@ -1,5 +1,11 @@
 # SendBloom UI — 3D render pipeline brief
 
+> **Current production direction (2026-08-08):** the approved register is
+> bright/clear polycarbonate with the populated cavity described in
+> [see-through-ui-contract.md](see-through-ui-contract.md).  The black-wrinkle
+> notes below are retained as historical construction rationale for controls,
+> wear, and the shared camera/rig; they are no longer the shell value plan.
+
 Hand this to the agent doing the UI. It is the whole job: model, light, render,
 and wire a photoreal faceplate for a JUCE plugin, replacing hand-drawn art.
 

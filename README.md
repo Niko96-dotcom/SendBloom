@@ -19,7 +19,8 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 - Pressure send pad and MIDI CC1 momentary control
 - Optional Extended Stereo wet return in the Advanced drawer
 - 8 factory presets with host save/load round-trip
-- Pedal-style UI with clip LED and advanced drawer
+- Bright/clear polycarbonate pedal UI with a populated visible cavity, clip LED,
+  and advanced drawer
 - Zero reported latency, mono-first wet return
 - Catch2 test suite + pluginval strictness 10 in CI
 

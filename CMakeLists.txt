@@ -89,7 +89,7 @@ juce_add_binary_data(SendBloomPresets
         resources/presets/Hot_Clip.xml
         resources/ui/knob_large_strip.png
         resources/ui/knob_small_strip.png
-        resources/ui/pedal_background.jpg
+        resources/ui/pedal_background.png
         resources/ui/dark_off.png
         resources/ui/dark_on.png
         resources/ui/gate_pre.png
