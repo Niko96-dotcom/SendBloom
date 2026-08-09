@@ -38,6 +38,23 @@ juce_add_plugin("${PROJECT_NAME}"
     AU_SANDBOX_SAFE TRUE
     NEEDS_MIDI_INPUT TRUE)
 
+if(APPLE)
+    function(sendbloom_add_final_bundle_seal target)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}"
+                "-Dsrc=$<TARGET_BUNDLE_DIR:${target}>"
+                "-DSENDBLOOM_ADHOC_SIGN_IF_NEEDED=ON"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/release/VerifyStrictBundleSignature.cmake"
+            VERBATIM)
+    endfunction()
+
+    # JUCE's own signing hook precedes VST3 module-info generation and is
+    # skipped for AU when copy-after-build is off.  Seal both final bundles
+    # before any optional copy/install step can observe them.
+    sendbloom_add_final_bundle_seal(SendBloom_VST3)
+    sendbloom_add_final_bundle_seal(SendBloom_AU)
+endif()
+
 add_library(SharedCode INTERFACE)
 
 include(R8brain)
@@ -131,4 +148,16 @@ target_link_libraries(RenderTank PRIVATE SharedCode)
 include(Tests)
 target_compile_definitions(Tests PRIVATE SENDBLOOM_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(Tests PRIVATE SENDBLOOM_ENABLE_DIAGNOSTICS=1)
+
+if(APPLE)
+    add_test(NAME SendBloom.VST3.StrictBundleSignature
+        COMMAND "${CMAKE_COMMAND}"
+            "-Dsrc=$<TARGET_BUNDLE_DIR:SendBloom_VST3>"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/release/VerifyStrictBundleSignature.cmake")
+    add_test(NAME SendBloom.AU.StrictBundleSignature
+        COMMAND "${CMAKE_COMMAND}"
+            "-Dsrc=$<TARGET_BUNDLE_DIR:SendBloom_AU>"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/release/VerifyStrictBundleSignature.cmake")
+endif()
+
 include(GitHubENV)
