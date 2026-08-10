@@ -24,7 +24,10 @@ pedal face or from MIDI CC1.
 - Pressure send pad plus sample-accurate MIDI CC1 momentary control.
 - Optional Extended Stereo wet return in the Advanced drawer.
 - Eight factory presets with host save/load round-trip.
-- Zero reported latency, mono-first wet return.
+- Truthful normal host PDC: the live prepared ProperSRC latency is reported,
+  while the clean direct and bypass paths are delayed to match it. The shipping
+  ProperSRC topology has no exposed zero-latency mode; the wet return remains
+  mono-first.
 
 Full detail: [CHANGELOG.md](CHANGELOG.md).
 
