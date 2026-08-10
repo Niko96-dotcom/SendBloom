@@ -45,6 +45,11 @@ public:
     EnvelopeDetector& getEnvelope() noexcept { return envelope; }
     const EnvelopeDetector& getEnvelope() const noexcept { return envelope; }
 
+    int getPdcLatencySamples() const noexcept
+    {
+        return reverb != nullptr ? reverb->getPdcLatencySamples() : 0;
+    }
+
     /** Placement crossfade (ADR-V1-11c).
 
         `postDepth` is 0 with the gate ahead of the effect and 1 with it behind,

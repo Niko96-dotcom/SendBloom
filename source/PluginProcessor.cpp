@@ -221,6 +221,16 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     chain.prepare (sampleRate, samplesPerBlock);
     inputStage.prepare (sampleRate);
     dryBuffer.setSize (getTotalNumOutputChannels(), samplesPerBlock);
+    directPathChannels_ = juce::jmax (1, getTotalNumOutputChannels());
+    const auto pdcLatency = chain.getPdcLatencySamples();
+    directPathDelay_.setMaximumDelayInSamples (pdcLatency);
+    juce::dsp::ProcessSpec directPathSpec;
+    directPathSpec.sampleRate = sampleRate;
+    directPathSpec.maximumBlockSize = static_cast<juce::uint32> (samplesPerBlock);
+    directPathSpec.numChannels = static_cast<juce::uint32> (directPathChannels_);
+    directPathDelay_.prepare (directPathSpec);
+    directPathDelay_.setDelay (static_cast<float> (pdcLatency));
+    setLatencySamples (pdcLatency);
     preparedMaxBlock_ = samplesPerBlock;
     monoScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
     envelopeScratch_.assign (static_cast<size_t> (samplesPerBlock), 0.0f);
@@ -247,6 +257,8 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 void PluginProcessor::releaseResources()
 {
     preparedMaxBlock_ = 0;
+    directPathChannels_ = 0;
+    directPathDelay_.reset();
     pressureController.reset();
     monoScratch_.clear();
     envelopeScratch_.clear();
@@ -258,6 +270,24 @@ void PluginProcessor::releaseResources()
     gatePostDepthScratch_.clear();
     bypassWetScratch_.clear();
     outputGainScratch_.clear();
+}
+
+void PluginProcessor::delayDirectPaths (juce::AudioBuffer<float>& buffer,
+                                        int offset,
+                                        int span) noexcept
+{
+    const auto numChannels = juce::jmin (buffer.getNumChannels(), directPathChannels_);
+
+    for (int channel = 0; channel < numChannels; ++channel)
+    {
+        auto* samples = buffer.getWritePointer (channel, offset);
+
+        for (int sample = 0; sample < span; ++sample)
+        {
+            directPathDelay_.pushSample (channel, samples[sample]);
+            samples[sample] = directPathDelay_.popSample (channel);
+        }
+    }
 }
 
 bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -367,6 +397,31 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     clipHoldFlag.store (inputStage.isClipHoldActive());
 }
 
+void PluginProcessor::processBlockBypassed (juce::AudioBuffer<float>& buffer,
+                                            juce::MidiBuffer& midiMessages)
+{
+    juce::ignoreUnused (midiMessages);
+    juce::ScopedNoDenormals noDenormals;
+    const auto totalNumInputChannels = getTotalNumInputChannels();
+    const auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+        buffer.clear (i, 0, buffer.getNumSamples());
+
+    if (preparedMaxBlock_ <= 0)
+        return;
+
+    const auto numSamples = buffer.getNumSamples();
+    int offset = 0;
+
+    while (offset < numSamples)
+    {
+        const auto span = juce::jmin (numSamples - offset, preparedMaxBlock_);
+        delayDirectPaths (buffer, offset, span);
+        offset += span;
+    }
+}
+
 void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
                                    int offset,
                                    int span,
@@ -423,6 +478,11 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
                         spanRt60, spanDark,
                         distnScratch_.data(), sendGainScratch_.data(), thresholdLinearScratch_.data(),
                         gatePostDepthScratch_.data());
+
+    // The wet ProperSRC path carries its measured priming delay. Keep the raw
+    // direct samples above until the wet path has consumed them, then delay the
+    // direct path by the same fixed prepared latency for both mix and bypass.
+    delayDirectPaths (dryBuffer, 0, span);
 
     // ADR-V1-10: build output-gained engaged path first, then crossfade against
     // original per-channel dry. Never apply OutputStage after the bypass mix.

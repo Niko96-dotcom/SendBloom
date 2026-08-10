@@ -49,6 +49,11 @@ public:
         fixedRate_.processBlock (input, output, numSamples, rt60Seconds, darkMix);
     }
 
+    int getPdcLatencySamples() const noexcept override
+    {
+        return fixedRate_.getRoundTripLatencySamples();
+    }
+
 #if defined(SENDBLOOM_ENABLE_DIAGNOSTICS) && SENDBLOOM_ENABLE_DIAGNOSTICS
     void setAuthentic32ModeForDiagnostics (Authentic32Mode mode) noexcept
     {

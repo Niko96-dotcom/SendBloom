@@ -58,6 +58,10 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ### Fixed
 
+- Production ProperSRC now reports its live prepared SRC latency to the host and
+  delay-aligns the direct, APVTS-bypass, and host-bypass paths to that same
+  amount. The production topology has no latency-free mode, so no VST3
+  Low-Latency Mode is advertised.
 - The Pre gate position had no on-audio test coverage: the only test that named
   it fed a silent input and asserted the wet mixer's own formula, so it passed
   with the gate removed. Added `tests/GatePlacementTest.cpp` covering hum

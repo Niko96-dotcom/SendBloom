@@ -108,12 +108,19 @@ TEST_CASE ("Extended Stereo preserves the dry channel image", "[io][stereo][inte
     fillStereoSine (buffer, 0.75f, 0.25f, 0.03f);
     juce::AudioBuffer<float> expected (buffer);
     juce::MidiBuffer midi;
+    const auto latencySamples = plugin.getLatencySamples();
+    REQUIRE (latencySamples > 0);
+    REQUIRE (latencySamples < buffer.getNumSamples());
     plugin.processBlock (buffer, midi);
 
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
-        REQUIRE (buffer.getSample (0, i) == Catch::Approx (expected.getSample (0, i)).margin (1.0e-6f));
-        REQUIRE (buffer.getSample (1, i) == Catch::Approx (expected.getSample (1, i)).margin (1.0e-6f));
+        const auto expectedLeft = i < latencySamples ? 0.0f
+                                                     : expected.getSample (0, i - latencySamples);
+        const auto expectedRight = i < latencySamples ? 0.0f
+                                                      : expected.getSample (1, i - latencySamples);
+        REQUIRE (buffer.getSample (0, i) == Catch::Approx (expectedLeft).margin (1.0e-6f));
+        REQUIRE (buffer.getSample (1, i) == Catch::Approx (expectedRight).margin (1.0e-6f));
     }
 }
 

@@ -50,12 +50,29 @@ output. Run one case with `bash tests/release/run-release-tests.sh T09`.
 | 3.1 | Clean universal Release build | `scripts/release/build-macos.sh` | yes |
 | 3.2 | Bundle metadata matches the version | re-run of 1.4 after the build | yes |
 | 3.3 | Full Catch2 suite | `ctest --test-dir build-release -C Release --output-on-failure` | yes |
-| 3.4 | ProperSRC / HF acceptance gates | `BUILD_DIR=build-release scripts/enab-acceptance-gates.sh` | yes |
+| 3.4 | ProperSRC / PDC / HF acceptance gates | `BUILD_DIR=build-release scripts/enab-acceptance-gates.sh` | yes |
 | 3.5 | pluginval strictness 10 on the VST3 | `pluginval --strictness-level 10 --validate build-release/SendBloom_artefacts/Release/VST3/SendBloom.vst3` | yes for public |
 | 3.6 | auval on the Audio Unit | `AU_TYPE="$(plutil -extract 'AudioComponents.0.type' raw -o - /Library/Audio/Plug-Ins/Components/SendBloom.component/Contents/Info.plist)"; auval -v "$AU_TYPE" SbLm NkMo` | skipped-with-note if unavailable |
 
 3.1 removes the build tree first. Reusing a tree with `KEEP_BUILD_DIR=1` is a
 debugging aid and prints a warning; it is not a release build.
+
+### 3a. Human host PDC receipt
+
+Automated contracts prove the prepared latency query and direct-route
+alignment; they do not prove a DAW's scan, compensation, or playback. Before a
+host-coverage claim, collect a separate receipt for each actual host/version.
+
+- In Cubase, load the VST3 at 44.1 and 48 kHz, record the host version, OS,
+  driver/buffer setting, and the plug-in's reported delay.
+- Verify an impulse or short transient through engaged, APVTS-bypass, and
+  host-bypass states against a dry reference in both realtime and offline
+  render. Preserve the host project and exported comparison as evidence.
+- Record automation and preset recall after the normal-PDC check.
+
+The current ProperSRC production path has no zero-latency topology. Do not
+claim Cubase Low-Latency Mode support, a Cubase scan, or Cubase playback until
+that separate host receipt exists.
 
 ## 4. Sign, notarize, staple, package
 

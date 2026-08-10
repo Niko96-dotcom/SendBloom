@@ -30,12 +30,13 @@ void configureBypassPlugin (sendbloom::PluginProcessor& plugin)
 
 } // namespace
 
-TEST_CASE ("v1 settled true bypass is per-channel unity ignoring output gain",
+TEST_CASE ("v1 settled true bypass is per-channel unity after normal PDC",
            "[v1][contract][true-bypass][CORE-14]")
 {
-    // CORE-14..16 / ADR-V1-10: after bypass settle (>5 ms), each output channel
-    // matches its input within 1e-6 and ignores Output/Input/Distn/Gate/Level.
-    // Current path mono-sums and applies OutputStage.
+    // CORE-14..16 / ADR-V1-10: after bypass settle, each output channel stays
+    // unity and ignores Output/Input/Distn/Gate/Level. ProperSRC has real
+    // priming, so normal PDC deliberately delays that direct path by the same
+    // reported amount instead of returning it early.
 
     sendbloom::PluginProcessor plugin;
     configureBypassPlugin (plugin);
@@ -51,6 +52,9 @@ TEST_CASE ("v1 settled true bypass is per-channel unity ignoring output gain",
     }
 
     REQUIRE_FALSE (plugin.smoothedBank.getBypassWetMixSmoother().isSmoothing());
+    const auto latencySamples = plugin.getLatencySamples();
+    REQUIRE (latencySamples > 0);
+    REQUIRE (latencySamples < kBlockSize);
 
     constexpr float kLeft = 0.37f;
     constexpr float kRight = -0.21f;
@@ -66,16 +70,21 @@ TEST_CASE ("v1 settled true bypass is per-channel unity ignoring output gain",
     float maxErrL = 0.0f;
     float maxErrR = 0.0f;
 
-    for (int i = 0; i < kBlockSize; ++i)
+    for (int i = latencySamples; i < kBlockSize; ++i)
     {
         maxErrL = std::max (maxErrL, std::abs (buffer.getSample (0, i) - kLeft));
         maxErrR = std::max (maxErrR, std::abs (buffer.getSample (1, i) - kRight));
     }
 
-    // Intended failure: mono-sum collapse and/or output gain applied.
+    for (int i = 0; i < latencySamples; ++i)
+    {
+        REQUIRE (buffer.getSample (0, i) == Catch::Approx (0.0f).margin (1.0e-6f));
+        REQUIRE (buffer.getSample (1, i) == Catch::Approx (0.0f).margin (1.0e-6f));
+    }
+
     REQUIRE (maxErrL < 1.0e-6f);
     REQUIRE (maxErrR < 1.0e-6f);
 
     // Distinct inputs must remain unequal after settled bypass (no mono collapse).
-    REQUIRE (std::abs (buffer.getSample (0, 0) - buffer.getSample (1, 0)) > 1.0e-3f);
+    REQUIRE (std::abs (buffer.getSample (0, latencySamples) - buffer.getSample (1, latencySamples)) > 1.0e-3f);
 }

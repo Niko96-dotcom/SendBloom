@@ -3,6 +3,7 @@
 #include <atomic>
 #include <vector>
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 #include "ParameterSnapshot.h"
 #include "SmoothedParameterBank.h"
 #include "GatedBloomChain.h"
@@ -26,6 +27,7 @@ public:
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    void processBlockBypassed (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
@@ -84,6 +86,10 @@ private:
     std::vector<float> gatePostDepthScratch_;
     std::vector<float> bypassWetScratch_;
     std::vector<float> outputGainScratch_;
+    using DirectPathDelayLine = juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::None>;
+    DirectPathDelayLine directPathDelay_;
+    int directPathChannels_ { 0 };
+    void delayDirectPaths (juce::AudioBuffer<float>& buffer, int offset, int span) noexcept;
     void applyPressureMidiAtSample (const juce::MidiBuffer& midiMessages,
                                     int samplePosition) noexcept;
     int findNextPressureMidiSampleAfter (const juce::MidiBuffer& midiMessages,

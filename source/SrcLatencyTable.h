@@ -7,10 +7,11 @@
 namespace sendbloom
 {
 
-// Measured host-domain round-trip SRC priming delay per supported host rate.
-// Values are RateConverterPair::getRoundTripLatencySamples() after
-// prepare(hostRate, kMaxHostBlock) with kProperSrcQuality (TB=25%, Atten=90 dB,
-// linear-phase). Upsampler priming is already in host samples; downsampler
+// Canonical regression samples for the measured host-domain round-trip SRC
+// priming delay. Production PDC always queries the prepared RateConverterPair
+// live; this table pins the four supported-rate measurements made with
+// kProperSrcQuality (TB=25%, Atten=90 dB, linear-phase) and
+// maxHostBlock=512. Upsampler priming is already in host samples; downsampler
 // priming is scaled from 32,768 Hz → host. Offline probe 2026-07-09.
 
 struct LatencyRow
@@ -38,10 +39,5 @@ inline constexpr int lookupRoundTripLatencySamples (double hostRateHz) noexcept
 
     return 0;
 }
-
-// Product policy (ADR-003 Path B): with kProperSrcQuality the wet-only SRC delay
-// is ~3.9–4.1 ms. RC1 keeps setLatencySamples(0) always (CHN-04). Diagnostic
-// getRoundTripLatencySamples() remains available for LAT-01.
-inline constexpr int kMaxAcceptableReportedSrcLatencySamples = 0;
 
 } // namespace sendbloom

@@ -11,7 +11,8 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 
 ## Features
 
-- Parallel dry/wet routing — dry path never gated or distorted
+- Parallel dry/wet routing — dry path never gated or distorted, and it is
+  delay-aligned to the measured ProperSRC wet-path priming for normal host PDC
 - One fixed-rate reverb engine — an **allpass ring** (four `allpass → delay → shelving` blocks, fed by four series input diffusers), built to the architecture the reference DSP chip class's manufacturer publishes, and sized to its real 32,768-word delay-RAM budget. Every host rate is bandlimited-converted to and from the **32,768 Hz** tank via r8brain ProperSRC (`FixedRateAdapter`). There is no sample-rate, fidelity, or color control. The rate, the delay-memory budget, and the loop topology come from the chip vendor's own published datasheet and design articles — this is a software model built to documented public constraints, not a verified match to any product and not a firmware-derived implementation. See [docs/fv1-reverb-architecture.md](docs/fv1-reverb-architecture.md) for the design rules, the measurements, and what changed from the previous Schroeder comb tank; the legacy comb, accumulator, and host-rate engines are retained only for diagnostics.
 - Size spans **1.2 s to 6.0 s**. Public reference material specifies the 5–6 s maximum, not a minimum; 1.2 s is SendBloom's chosen useful floor because lower feedback targets collapse toward the current ring's measured ~0.9 s feed-forward tail.
 - Wet-only overdrive blended independently via `distn`
@@ -21,14 +22,17 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
 - 8 factory presets with host save/load round-trip
 - Bright/clear polycarbonate pedal UI with a populated visible cavity, clip LED,
   and advanced drawer
-- Zero reported latency, mono-first wet return
+- Truthful normal host PDC: the prepared ProperSRC latency is reported live and
+  the direct/APVTS-bypass/host-bypass paths are aligned to it; this production
+  topology has no exposed zero-latency route, so it does not advertise a VST3
+  Low-Latency Mode
 - Catch2 test suite + pluginval strictness 10 in CI
 
 ## Signal routing
 
 SendBloom uses a parallel pedal topology:
 
-- **Dry path:** Unity copy of the mono-summed input, taken **before** input gain. Never gated or distorted.
+- **Dry path:** Unity copy of the mono-summed input, taken **before** input gain. Never gated or distorted; delayed by the same prepared ProperSRC latency as the wet path so normal host PDC and internal wet/dry timing agree.
 - **Wet path:** Mono sum → `InputStage` (input gain + soft clip) → gated reverb chain → wet return.
 - **Output:** The engaged path writes dual-mono (identical L/R) unless Extended Stereo is enabled.
 

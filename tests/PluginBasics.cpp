@@ -53,7 +53,7 @@ void renderPlugin (sendbloom::PluginProcessor& plugin,
 
 } // namespace
 
-TEST_CASE ("Passthrough preserves audio at unity gain", "[dsp][passthrough]")
+TEST_CASE ("Passthrough preserves audio at unity gain after normal PDC", "[dsp][passthrough]")
 {
     using namespace sendbloom::ParameterIDs;
 
@@ -70,15 +70,21 @@ TEST_CASE ("Passthrough preserves audio at unity gain", "[dsp][passthrough]")
         for (int i = 0; i < 512; ++i)
             buffer.setSample (ch, i, std::sin (0.01f * static_cast<float> (i)));
 
-    const auto expected = buffer;
+    const auto latencySamples = plugin.getLatencySamples();
+    REQUIRE (latencySamples > 0);
+    REQUIRE (latencySamples < buffer.getNumSamples());
     juce::MidiBuffer midi;
-
-    for (int block = 0; block < 4; ++block)
-        plugin.processBlock (buffer, midi);
+    plugin.processBlock (buffer, midi);
 
     for (int ch = 0; ch < 2; ++ch)
-        for (int i = 400; i < 512; ++i)
-            REQUIRE (buffer.getSample (ch, i) == Catch::Approx (expected.getSample (ch, i)).margin (0.02f));
+    {
+        for (int i = 0; i < latencySamples; ++i)
+            REQUIRE (buffer.getSample (ch, i) == Catch::Approx (0.0f).margin (1.0e-6f));
+
+        for (int i = latencySamples; i < buffer.getNumSamples(); ++i)
+            REQUIRE (buffer.getSample (ch, i)
+                     == Catch::Approx (std::sin (0.01f * static_cast<float> (i - latencySamples))).margin (0.02f));
+    }
 }
 
 TEST_CASE ("APVTS state round-trip", "[parm][state]")

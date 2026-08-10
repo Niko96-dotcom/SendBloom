@@ -186,6 +186,9 @@ TEST_CASE ("v1 wet level scales wet contribution (RT-07 sample-resolved path)",
         juce::MidiBuffer midi;
         auto phase = 0.0f;
         double energy = 0.0;
+        std::vector<float> inputHistory;
+        inputHistory.reserve (16 * 256);
+        const auto latencySamples = plugin.getLatencySamples();
 
         for (int b = 0; b < 16; ++b)
         {
@@ -193,25 +196,23 @@ TEST_CASE ("v1 wet level scales wet contribution (RT-07 sample-resolved path)",
             {
                 const auto s = 0.35f * std::sin (phase);
                 phase += 0.05f;
+                inputHistory.push_back (s);
                 buffer.setSample (0, i, s);
                 buffer.setSample (1, i, s);
-            }
-
-            // Mono-first engaged path uses mono dry; isolate wet via output - dryTap.
-            std::vector<float> dryL (256), dryR (256);
-
-            for (int i = 0; i < 256; ++i)
-            {
-                dryL[static_cast<size_t> (i)] = buffer.getSample (0, i);
-                dryR[static_cast<size_t> (i)] = buffer.getSample (1, i);
             }
 
             plugin.processBlock (buffer, midi);
 
             for (int i = 0; i < 256; ++i)
             {
-                energy += std::abs (buffer.getSample (0, i) - dryL[static_cast<size_t> (i)]);
-                energy += std::abs (buffer.getSample (1, i) - dryR[static_cast<size_t> (i)]);
+                const auto outputIndex = static_cast<size_t> (b * 256 + i);
+
+                if (outputIndex < static_cast<size_t> (latencySamples))
+                    continue;
+
+                const auto direct = inputHistory[outputIndex - static_cast<size_t> (latencySamples)];
+                energy += std::abs (buffer.getSample (0, i) - direct);
+                energy += std::abs (buffer.getSample (1, i) - direct);
             }
         }
 

@@ -57,15 +57,19 @@ float maxAbsDiff (const juce::AudioBuffer<float>& a, const juce::AudioBuffer<flo
     return maxDiff;
 }
 
-float wetEnergyProxy (const juce::AudioBuffer<float>& output, const std::vector<float>& dryInput)
+float wetEnergyProxy (const juce::AudioBuffer<float>& output,
+                      const std::vector<float>& dryInput,
+                      int pdcLatencySamples)
 {
-    // With level=1 and bypass off, wet contribution is output − dry (extended stereo).
+    // With level=1 and bypass off, wet contribution is output minus the direct
+    // path. Normal PDC delays that direct path by the live ProperSRC latency.
     double energy = 0.0;
     const auto n = juce::jmin (output.getNumSamples(), static_cast<int> (dryInput.size()));
 
-    for (int i = 0; i < n; ++i)
+    for (int i = pdcLatencySamples; i < n; ++i)
     {
-        const auto wetApprox = output.getSample (0, i) - dryInput[static_cast<size_t> (i)];
+        const auto wetApprox = output.getSample (0, i)
+                             - dryInput[static_cast<size_t> (i - pdcLatencySamples)];
         energy += static_cast<double> (wetApprox) * static_cast<double> (wetApprox);
     }
 
@@ -122,7 +126,7 @@ TEST_CASE ("v1 oversized block matches chunked reference with wet continuity",
 
     oneshot.processBlock (oversized, midi);
 
-    const auto wetEnergy = wetEnergyProxy (oversized, input);
+    const auto wetEnergy = wetEnergyProxy (oversized, input, oneshot.getLatencySamples());
     // Intended failure: oversized dry-fallback forces wet≈0.
     REQUIRE (wetEnergy > 1.0e-4f);
 

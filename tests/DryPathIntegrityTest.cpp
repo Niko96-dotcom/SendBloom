@@ -25,6 +25,8 @@ struct RenderCapture
     std::vector<float> output;
     std::vector<float> wet;
     std::vector<float> dryExtract;
+    std::vector<float> input;
+    int pdcLatencySamples { 0 };
 };
 
 RenderCapture renderWithDistn (float distnValue)
@@ -60,12 +62,11 @@ RenderCapture renderWithDistn (float distnValue)
     const auto darkModeMix = snap.darkMode ? 1.0f : 0.0f;
 
     RenderCapture capture;
+    capture.pdcLatencySamples = plugin.getLatencySamples();
     capture.output.reserve (static_cast<size_t> (kWarmupBlocks * kBlockSize));
     capture.wet.reserve (capture.output.capacity());
     capture.dryExtract.reserve (capture.output.capacity());
-
-    std::vector<float> inputHistory;
-    inputHistory.reserve (capture.output.capacity());
+    capture.input.reserve (capture.output.capacity());
 
     juce::AudioBuffer<float> buffer (1, kBlockSize);
     juce::MidiBuffer midi;
@@ -77,7 +78,7 @@ RenderCapture renderWithDistn (float distnValue)
         for (int i = 0; i < kBlockSize; ++i)
         {
             const auto input = 0.22f * std::sin (phaseInc * static_cast<float> (sampleIndex++));
-            inputHistory.push_back (input);
+            capture.input.push_back (input);
             buffer.setSample (0, i, input);
         }
 
@@ -86,7 +87,7 @@ RenderCapture renderWithDistn (float distnValue)
         for (int i = 0; i < kBlockSize; ++i)
         {
             const auto historyIndex = static_cast<size_t> (block * kBlockSize + i);
-            const auto dryTap = inputHistory[historyIndex];
+            const auto dryTap = capture.input[historyIndex];
             const auto monoIn = inputStage.processSample (dryTap, inputGainLinear);
             const auto env = chain.getEnvelope().process (std::abs (monoIn));
             const auto wet = chain.processSample (monoIn, env, rt60, darkModeMix,
@@ -108,12 +109,13 @@ TEST_CASE ("dry tap extract matches input at level max", "[chain][od][thd][DryPa
 {
     const auto capture = renderWithDistn (1.0f);
     const auto start = capture.dryExtract.size() - kMeasureSamples;
+    REQUIRE (start >= static_cast<size_t> (capture.pdcLatencySamples));
 
     float maxDelta = 0.0f;
 
     for (size_t i = start; i < capture.dryExtract.size(); ++i)
     {
-        const auto input = 0.22f * std::sin (0.03f * static_cast<float> (i));
+        const auto input = capture.input[i - static_cast<size_t> (capture.pdcLatencySamples)];
         maxDelta = std::max (maxDelta, std::abs (capture.dryExtract[i] - input));
     }
 

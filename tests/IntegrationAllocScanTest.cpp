@@ -115,6 +115,34 @@ std::string extractCppProcessBlockBody (const std::string& source)
     return {};
 }
 
+std::string extractCppFunctionBody (const std::string& source, const char* signature)
+{
+    const auto start = source.find (signature);
+    if (start == std::string::npos)
+        return {};
+
+    const auto openBrace = source.find ('{', start);
+    if (openBrace == std::string::npos)
+        return {};
+
+    int depth = 0;
+
+    for (size_t i = openBrace; i < source.size(); ++i)
+    {
+        if (source[i] == '{')
+            ++depth;
+        else if (source[i] == '}')
+        {
+            --depth;
+
+            if (depth == 0)
+                return source.substr (openBrace, i - openBrace + 1);
+        }
+    }
+
+    return {};
+}
+
 std::string extractProcessBlockBody (const std::string& source, const char* path)
 {
     const auto isCpp = std::string (path).find (".cpp") != std::string::npos;
@@ -158,6 +186,27 @@ TEST_CASE ("integrated processBlock bodies have no heap allocation tokens",
             REQUIRE_FALSE (body.empty());
 
             requireNoAllocTokens (stripComments (body));
+        }
+    }
+}
+
+TEST_CASE ("PDC direct-path callbacks allocate only during prepare",
+           "[realtime][PDC-03][static][integration]")
+{
+    const auto source = readSourceFile ("source/PluginProcessor.cpp");
+    REQUIRE_FALSE (source.empty());
+
+    for (const auto* signature : { "void PluginProcessor::delayDirectPaths",
+                                   "void PluginProcessor::processBlockBypassed" })
+    {
+        DYNAMIC_SECTION (signature)
+        {
+            const auto body = stripComments (extractCppFunctionBody (source, signature));
+            REQUIRE_FALSE (body.empty());
+            requireNoAllocTokens (body);
+            REQUIRE (body.find ("setMaximumDelayInSamples") == std::string::npos);
+            REQUIRE (body.find ("setLatencySamples") == std::string::npos);
+            REQUIRE (body.find (".prepare") == std::string::npos);
         }
     }
 }

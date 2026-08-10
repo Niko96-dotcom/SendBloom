@@ -1,12 +1,12 @@
 # ADR-003: Proper 32 kHz SRC Architecture and PDC Policy
 
-**Status:** ACCEPTED (fixed production engine / Path B low-latency ProperSRC)
+**Status:** ACCEPTED — amended 2026-08-10 for truthful normal host PDC
 **Date:** 2026-07-13
 **Supersedes:** VERB-05 accumulator description for the production ProperSRC path; prior Policy A ~100 ms default-r8brain measurement
 
 ## Context
 
-SendBloom runs its Schroeder tank at a fixed **32,768 Hz** while the host delivers audio at **44.1–96 kHz**. This is the project's strongest current engineering approximation for host-rate-independent digital-pedal behavior; it is not a published or verified hardware specification. Milestone v1 promises **zero reported plugin latency** (CHN-04).
+SendBloom runs its Schroeder tank at a fixed **32,768 Hz** while the host delivers audio at **44.1–96 kHz**. This is the project's strongest current engineering approximation for host-rate-independent digital-pedal behavior; it is not a published or verified hardware specification. A prior development policy reported zero latency even though the production ProperSRC path has measurable priming. That was not a truthful normal-host PDC contract.
 
 The production adapter exposes one path. Additional modes compile only into diagnostics:
 
@@ -37,7 +37,7 @@ Pinned in `cmake-local/R8brain.cmake`:
 GIT_TAG e71c31bf320f84210bb4bdcb57e296c39ce940f9
 ```
 
-### 3. SRC quality — `kProperSrcQuality` (Path B / Policy E)
+### 3. SRC quality — `kProperSrcQuality`
 
 Default r8brain construction (`ReqTransBand=2%`, `ReqAtten≈207 dB`, **linear-phase**) produced **~90–118 ms** priming — rejected as a product tradeoff.
 
@@ -61,14 +61,17 @@ upHost + downInternal * (hostRate / 32768)
 
 Naively summing the two integers (prior ADR) mixed sample domains and inflated the reported figure.
 
-### 5. PDC policy — Path B (always report zero)
+### 5. PDC policy — truthful normal host alignment
 
 | Condition | Reported latency | Rationale |
 |-----------|------------------|-----------|
-| Production ProperSRC | `setLatencySamples(0)` | Preserves CHN-04; wet-only delay ~4 ms is musically acceptable for parallel reverb |
-| Diagnostics | `getRoundTripLatencySamples()` / `SrcLatencyTable` | LAT-01 still measures real priming |
+| Production ProperSRC | Live `RateConverterPair::getRoundTripLatencySamples()` after `prepareToPlay` | Host PDC sees the actual prepared priming; direct, APVTS-bypass, and host-bypass paths receive the same fixed delay |
+| Diagnostics | The same live query; `SrcLatencyTable` remains a canonical-rate regression table | Avoids a divergent measurement policy |
 
-Policy A (report SRC delay) and Policy B (delay dry by SRC amount) remain available if listening tests reject Path B.
+The production path has no latency-free topology. It must not map VST3
+Low-Latency Mode or imply a zero-latency bypass route. A future low-latency
+route requires a separately measured topology and a host-specific verification
+receipt; normal PDC remains correct in the meantime.
 
 ## Why accumulator / hold is insufficient
 
@@ -87,18 +90,21 @@ Policy A (report SRC delay) and Policy B (delay dry by SRC amount) remain availa
 
 Canonical constants: `source/SrcLatencyTable.h`.
 
-## Parallel wet/dry caveat
+## Parallel wet/dry alignment
 
-Dry tap is still immediate. ~4 ms wet lag is typically inaudible for gated ambience; revisit Policy B (internal dry delay) only if listening fails.
+The direct tap remains clean, pre-input-gain, ungated, and undistorted. It is
+delayed by the live prepared SRC amount only to align it with the wet return;
+that delay also applies during APVTS and host bypass so a host cannot receive
+an early direct signal relative to reported PDC.
 
 ## Alternatives considered
 
 | Policy | Disposition |
 |--------|-------------|
-| **A — Conditional host PDC** | Deferred — unnecessary once Path B quality lands |
-| **B — Internal dry delay** | Deferred |
+| **A — Normal host PDC plus direct-path alignment** | **Accepted** |
+| **B — Unreported wet-only delay** | Rejected — breaks wet/dry timing and makes host PDC false |
 | **C — Zero always with default r8brain** | Rejected — lied about ~100 ms wet delay |
-| **E — Low-latency SRC preset** | **Accepted** (this ADR) |
+| **E — Short-quality ProperSRC preset** | **Accepted**; it remains nonzero and is reported truthfully |
 
 ## References
 
