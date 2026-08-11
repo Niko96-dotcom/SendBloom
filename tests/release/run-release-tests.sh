@@ -227,6 +227,7 @@ RELEASE_ENV_TO_CLEAR=(
   BUNDLE_ID PKG_IDENTIFIER VST3_INSTALL_DIR AU_INSTALL_DIR
   DEVELOPER_ID_APPLICATION DEVELOPER_ID_INSTALLER NOTARY_PROFILE
   KEEP_BUILD_DIR PLUGINVAL_BIN
+  SENDBLOOM_SYSTEM_VST3_PATH SENDBLOOM_USER_VST3_PATH
 )
 
 CLEAR_ARGS=()
@@ -636,6 +637,45 @@ if test_case T18 "a dirty working tree blocks a public release"; then
   rc=$?
   check "packaging refuses" test "$rc" -ne 0
   check_contains "explains why" "$out" "dirty working tree"
+  rm -rf "$sb"
+  end_case
+fi
+
+# --- T19 -------------------------------------------------------------------
+if test_case T19 "duplicate VST3 delivery requires a strictly newer candidate"; then
+  sb="$(make_sandbox 1.0.1 --with-build)"
+  candidate="$sb/build-release/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
+  system="$sb/installed-system/SendBloom.vst3"
+  user="$sb/installed-user/SendBloom.vst3"
+  mkdir -p "$system/Contents" "$user/Contents"
+
+  make_plist "$system/Contents/Info.plist" 1.0.0
+  out="$(run_in "$sb" env \
+    SENDBLOOM_SYSTEM_VST3_PATH="$system" \
+    SENDBLOOM_USER_VST3_PATH="$sb/not-installed-user/SendBloom.vst3" \
+    bash scripts/release/check-duplicate-vst3-versions-macos.sh "$candidate")"
+  rc=$?
+  check "a 1.0.1 candidate is allowed beside installed 1.0.0" test "$rc" -eq 0
+  check_contains "the accepted ordering is explicit" "$out" "strictly newer than 1.0.0"
+  check_contains "host proof remains separate" "$out" "target DAW must still prove"
+
+  make_plist "$system/Contents/Info.plist" 1.0.1
+  out_equal="$(run_in "$sb" env \
+    SENDBLOOM_SYSTEM_VST3_PATH="$system" \
+    SENDBLOOM_USER_VST3_PATH="$sb/not-installed-user/SendBloom.vst3" \
+    bash scripts/release/check-duplicate-vst3-versions-macos.sh "$candidate")"
+  rc_equal=$?
+  check "an equal-version duplicate is blocked" test "$rc_equal" -ne 0
+  check_contains "the equal-version ambiguity is named" "$out_equal" "not strictly newer"
+
+  make_plist "$system/Contents/Info.plist" 1.0.2
+  out_older="$(run_in "$sb" env \
+    SENDBLOOM_SYSTEM_VST3_PATH="$system" \
+    SENDBLOOM_USER_VST3_PATH="$sb/not-installed-user/SendBloom.vst3" \
+    bash scripts/release/check-duplicate-vst3-versions-macos.sh "$candidate")"
+  rc_older=$?
+  check "an older candidate is blocked" test "$rc_older" -ne 0
+
   rm -rf "$sb"
   end_case
 fi

@@ -106,6 +106,13 @@ step "Install from the shipped artifact"
 
 [[ -f "$DMG_PATH" ]] || die "no disk image to install from: $DMG_PATH"
 
+# A stable VST3 class ID is required for session compatibility. Before adding
+# another copy in a default scan location, require the candidate to carry a
+# strictly newer version than every installed SendBloom duplicate. This does
+# not claim how a particular host resolves duplicates; that remains a DAW
+# observation after installation.
+bash "$(dirname "${BASH_SOURCE[0]}")/check-duplicate-vst3-versions-macos.sh" "$VST3_BUNDLE"
+
 MOUNTPOINT="$(mktemp -d -t sendbloom-install.XXXXXX)"
 cleanup() { hdiutil detach "$MOUNTPOINT" -quiet -force >/dev/null 2>&1 || true; }
 trap cleanup EXIT

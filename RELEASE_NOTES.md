@@ -1,6 +1,12 @@
-# SendBloom 1.0.0
+# SendBloom 1.0.1
 
 Gated dirty ambience for guitar, as an Audio Unit and a VST3 for macOS.
+
+This maintenance update keeps the existing DSP, interface, parameter IDs,
+bundle IDs, and VST3 class IDs unchanged. It advances the plug-in version so
+hosts can order a new user-local copy ahead of an older system-wide 1.0.0
+installation, and adds a delivery preflight that blocks equal- or older-version
+duplicates. Host selection is still verified in the target DAW after install.
 
 The dry guitar stays clean and untouched while a parallel wet path blooms,
 overdrives, and then chops hard the moment you stop playing — the "edited

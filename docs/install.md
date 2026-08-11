@@ -93,6 +93,13 @@ bundles in place. Then quit and reopen your DAW, and confirm the version with
 the commands above — a host that was running during the install will still be
 showing you the previous build.
 
+Do not keep equal-version SendBloom VST3 bundles in both the system and
+user-local plug-in folders. They share the stable class ID required for session
+compatibility, so an equal version gives the host no reliable ordering signal.
+The release tooling checks this before an installation and requires the new
+candidate to be strictly newer; the DAW must still confirm which binary it
+actually instantiated afterwards.
+
 If you have the earlier `1.0.0-rc0` candidate installed from a manual copy, it
 left no receipts. Remove it as described below before installing a release, so
 there is no ambiguity about which build a host loaded.

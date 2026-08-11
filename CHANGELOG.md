@@ -71,6 +71,17 @@ release otherwise. Historical entries below are never rewritten on a bump.
   mirror the chain, which uses 2 ms — it was guarding a slower detector than
   ships.
 
+## [1.0.1]
+
+### Fixed
+
+- Advanced the product patch version without changing DSP, UI, saved-state,
+  parameter, bundle, AU, or VST3 class identities. This gives hosts a truthful
+  version-ordering signal when an older system-wide SendBloom remains present.
+- Added a fail-closed delivery guard that refuses to install a candidate beside
+  an equal or newer SendBloom VST3 in the system or user plug-in locations.
+  The guard does not substitute for observing the selected binary in a DAW.
+
 ## [1.0.0]
 
 First public release of SendBloom — a gated dirty ambience guitar effect,
@@ -143,6 +154,7 @@ Internal release candidate. Never published as a hosted release; the
 - Channel-preserving true bypass.
 - Corrected Input/Level/Gate behaviour and reverb continuity fixes.
 
-[Unreleased]: https://github.com/Niko96-dotcom/SendBloom/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Niko96-dotcom/SendBloom/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Niko96-dotcom/SendBloom/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Niko96-dotcom/SendBloom/releases/tag/v1.0.0
 [1.0.0-rc0]: https://github.com/Niko96-dotcom/SendBloom/releases/tag/v1.0.0-rc0

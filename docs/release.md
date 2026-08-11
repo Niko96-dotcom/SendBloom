@@ -38,6 +38,8 @@ scripts/release/
   publish-github.sh             tag + GitHub Release (dry run by default)
   verify-hosted-release.sh      download the hosted assets and revalidate
   verify-installed-macos.sh     inspect what is actually installed
+  check-duplicate-vst3-versions-macos.sh
+                                block ambiguous same-identity VST3 delivery
   install-smoke-macos.sh        destructive install/upgrade/uninstall test
   release-all.sh                the orchestrator
 
