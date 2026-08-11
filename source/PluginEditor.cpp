@@ -15,7 +15,9 @@ constexpr int kEditorHeight = 780;
 
 juce::String upperPresetName (PluginProcessor& processor, int index)
 {
-    return processor.getProgramName (index).toUpperCase();
+    // Editor furniture stays compact and musical.  The host-only API carries
+    // the Factory: qualifier needed to distinguish user/project programs.
+    return processor.getProgramDisplayName (index).toUpperCase();
 }
 
 juce::String formatInputGainDb (double norm)

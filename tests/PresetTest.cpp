@@ -27,9 +27,14 @@ TEST_CASE ("Program model exposes Init followed by all eight factory presets", "
 {
     sendbloom::PluginProcessor plugin;
     REQUIRE (plugin.getNumPrograms() == sendbloom::FactoryPresets::kNumPresets + 1);
-    REQUIRE (plugin.getProgramName (0) == "Init");
-    REQUIRE (plugin.getProgramName (1) == "Sparkle Verb");
-    REQUIRE (plugin.getProgramName (8) == "Hot Clip");
+    REQUIRE (plugin.getProgramName (0) == "Factory: Init");
+    REQUIRE (plugin.getProgramName (1) == "Factory: Sparkle Verb");
+    REQUIRE (plugin.getProgramName (8) == "Factory: Hot Clip");
+    REQUIRE (plugin.getProgramDisplayName (0) == "Init");
+    REQUIRE (plugin.getProgramDisplayName (1) == "Sparkle Verb");
+    REQUIRE (plugin.getProgramDisplayName (8) == "Hot Clip");
+    REQUIRE (plugin.getProgramDisplayName (-1).isEmpty());
+    REQUIRE (plugin.getProgramName (9).isEmpty());
 }
 
 TEST_CASE ("Init state is real and differs from Sparkle Verb", "[preset][PRST-01][regression]")
@@ -188,7 +193,9 @@ TEST_CASE ("Factory presets match specification 9.7 send resting matrix (SEND-11
     for (const auto& row : kMatrix)
     {
         sendbloom::PluginProcessor plugin;
-        REQUIRE (plugin.getProgramName (row.index) == row.name);
+        REQUIRE (plugin.getProgramDisplayName (row.index) == row.name);
+        REQUIRE (plugin.getProgramName (row.index)
+                 == juce::String ("Factory: ") + row.name);
         plugin.setCurrentProgram (row.index);
 
         const auto connected = plugin.getAPVTS().getRawParameterValue (sendConnected)->load();

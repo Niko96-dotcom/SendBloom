@@ -43,6 +43,7 @@ public:
     int getCurrentProgram() override;
     void setCurrentProgram (int index) override;
     const juce::String getProgramName (int index) override;
+    juce::String getProgramDisplayName (int index) const;
     void changeProgramName (int index, const juce::String& newName) override;
     bool isCurrentProgramCustom() const noexcept { return currentProgramCustom_.load(); }
     juce::String getCurrentProgramDisplayName() const;

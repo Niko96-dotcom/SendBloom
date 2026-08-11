@@ -194,6 +194,15 @@ void PluginProcessor::setCurrentProgram (int index)
 
 const juce::String PluginProcessor::getProgramName (int index)
 {
+    const auto displayName = getProgramDisplayName (index);
+    return displayName.isEmpty() ? juce::String() : juce::String ("Factory: ") + displayName;
+}
+
+juce::String PluginProcessor::getProgramDisplayName (int index) const
+{
+    if (index < 0 || index >= FactoryPresets::kNumPresets + 1)
+        return {};
+
     if (index == 0)
         return "Init";
 
@@ -206,7 +215,7 @@ juce::String PluginProcessor::getCurrentProgramDisplayName() const
         return "Custom";
 
     const auto index = currentProgramIndex_.load();
-    return index == 0 ? juce::String ("Init") : FactoryPresets::getPresetName (index - 1);
+    return getProgramDisplayName (index);
 }
 
 void PluginProcessor::changeProgramName (int index, const juce::String& newName)

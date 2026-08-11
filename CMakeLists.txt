@@ -13,7 +13,9 @@ include(JUCEDefaults)
 
 set(PROJECT_NAME "SendBloom")
 set(PRODUCT_NAME "SendBloom")
-set(COMPANY_NAME "Niko Audio Labs")
+# Portfolio-facing vendor.  BUNDLE_ID and the four-character AU/VST3 contracts
+# below are intentionally retained for existing projects and sessions.
+set(COMPANY_NAME "Niko Music")
 set(BUNDLE_ID "com.nikoaudiolabs.sendbloom")
 set(FORMATS AU VST3)
 

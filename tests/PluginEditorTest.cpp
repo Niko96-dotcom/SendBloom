@@ -172,6 +172,8 @@ TEST_CASE ("Editor program selector follows project state restore",
 
     REQUIRE (presetBox != nullptr);
     REQUIRE (presetBox->getSelectedId() == 1); // Init
+    REQUIRE (presetBox->getItemText (1) == "INIT");
+    REQUIRE (presetBox->getItemText (8) == "GATED ROOM");
 
     sendbloom::PluginProcessor source;
     source.setCurrentProgram (7); // Gated Room
