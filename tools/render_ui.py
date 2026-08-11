@@ -59,12 +59,13 @@ SWEEP_START_DEG = 216.0        # JUCE rotary: 1.2*pi cw from 12 o'clock
 SWEEP_DEG = 288.0              # 1.2*pi .. 2.8*pi
 CAMERA_PITCH_DEG = 13.5        # physical sidewall read, without perspective convergence
 
-# Bright/clear is a separate product register, not an alpha tweak.  The shell
-# is near-water-clear polycarbonate, the interior ground is a pale soldermask,
-# and the permanent legends are dark second-surface print.  Keep one gain for
-# the whole rig so the interior wash never becomes a per-source exposure cheat.
+# Bright/clear is a separate product register, not an alpha tweak.  Phase 45 is
+# the portfolio's value reference: water-clear polycarbonate over a neutral
+# white soldermask, dark second-surface print, cool dark metal, and one scarce
+# warm-orange identity note.  Keep one gain for the whole rig so the interior
+# wash never becomes a per-source exposure cheat.
 CLEAR_REGISTER = "bright"
-RIG_GAIN = 0.72
+RIG_GAIN = 0.55
 SHELL_IOR = 1.585
 SHELL_WALL_MM = 2.35
 SHELL_TOP_SKIN_MM = 2.10
@@ -87,7 +88,6 @@ JACK_CENTRE_Z = -11.5 * PX_PER_MM
 # the ink a fraction toward the cavity so it cannot z-fight with the shell.
 SECOND_SURFACE_PRINT_Z = -LID_DEPTH + (SHELL_TOP_SKIN_MM * PX_PER_MM) + 0.70
 FROST_ZONE_Z = SECOND_SURFACE_PRINT_Z - 1.35
-LOGO = (85, 70, 250, 52)
 PRESET_FIELD = (54, 129, 232, 42)
 PRESET_LOAD = (294, 136, 30, 29)
 PRESET_SAVE = (331, 136, 30, 29)
@@ -112,15 +112,18 @@ ART_RECTS = {
     "clip": (186, 320, 48, 48),
 }
 
-# Materials are tuned around a black wrinkle-powder enclosure, warm ivory
-# pad-print and the established SendBloom orange accent.
-COL_PLATE = (0.024, 0.021, 0.018)
-COL_CHASSIS = (0.010, 0.009, 0.008)
-COL_BENCH = (0.012, 0.011, 0.010)
-COL_KNOB = (0.035, 0.032, 0.027)
-COL_POINTER = (0.710, 0.630, 0.455)
-COL_RUBBER = (0.022, 0.022, 0.024)
-LOGO_RELIEF = 1.00 * PX_PER_MM   # one physical millimetre above the orange inlay
+# Bright-neutral material anchors.  The shell and board intentionally share the
+# Phase 45 value *register*, while SendBloom keeps its tall pedal, dark control
+# family, pressure treadle, and side-plug construction.
+COL_SHELL = (0.902, 0.918, 0.936)
+COL_SHELL_PASS = (0.844, 0.878, 0.912)
+COL_PCB = (0.300, 0.310, 0.320)
+COL_BENCH = (0.206, 0.213, 0.220)
+COL_KNOB = (0.030, 0.031, 0.033)
+COL_POINTER = (0.720, 0.250, 0.038)
+COL_RUBBER = (0.020, 0.021, 0.023)
+COL_INK = (0.0295, 0.0288, 0.0272)
+COL_ORANGE = (0.720, 0.250, 0.038)
 
 
 def px(x, y, z=0.0):
@@ -158,6 +161,12 @@ def reset_scene():
     scn.cycles.max_bounces = 32
     scn.cycles.transmission_bounces = 24
     scn.cycles.transparent_max_bounces = 32
+    scn.cycles.glossy_bounces = 8
+    scn.cycles.diffuse_bounces = 6
+    scn.cycles.caustics_refractive = True
+    scn.cycles.caustics_reflective = False
+    scn.cycles.sample_clamp_indirect = 8.0
+    scn.cycles.blur_glossy = 0.6
 
     scn.render.resolution_x = EDITOR_W * SCALE
     scn.render.resolution_y = EDITOR_H * SCALE
@@ -171,8 +180,12 @@ def reset_scene():
     film_transparent_glass = False
     assert film_transparent_glass is False
 
-    # UI art wants faithful texture colours, not filmic tone mapping.
-    scn.view_settings.view_transform = "Standard"
+    # Match the Phase 45 bright-clear render transform: a neutral product view
+    # rolls highlights without draining the scarce orange accent or pushing the
+    # white board toward cyan.
+    scn.view_settings.view_transform = "Khronos PBR Neutral"
+    if scn.view_settings.view_transform != "Khronos PBR Neutral":
+        raise SystemExit("Khronos PBR Neutral view transform is unavailable")
     scn.view_settings.look = "None"
     scn.view_settings.exposure = 0.0
 
@@ -243,7 +256,11 @@ def add_specular_flag(scn, centre):
     flag = bpy.data.objects.new("clear_shell_specular_flag", data)
     scn.collection.objects.link(flag)
     flag.location = flag_at
-    flag.scale = (470.0, 470.0, 1.0)
+    # The tall SendBloom lid is nearly twice the aspect of a compact pedal. A
+    # narrow card only covered the upper reflection cone, leaving the lower PCB
+    # under a hard white room reflection. The oversized flag is intentional:
+    # it creates one continuous cross-polarised window over the whole cavity.
+    flag.scale = (1700.0, 1700.0, 1.0)
     flag.rotation_euler = mirror.to_track_quat("Z", "Y").to_euler()
     flag.data.materials.append(principled("specular_flag_black", (0.0, 0.0, 0.0), 1.0))
     # Cycles visibility flags differ slightly across Blender minor versions;
@@ -282,8 +299,9 @@ def add_lights(scn):
     # 12 degree disc softens shadow edges to a believable studio penumbra.
     sun_data = bpy.data.lights.new("key_sun", type="SUN")
     sun_data.color = (0.93, 0.955, 1.0)
-    sun_data.energy = 2.7 * RIG_GAIN
+    sun_data.energy = 7.5 * RIG_GAIN
     sun_data.angle = math.radians(9.0)
+    sun_data.specular_factor = 0.35
     sun = bpy.data.objects.new("key_sun", sun_data)
     sun.location = centre + Vector((0, 0, 800))
     elev = math.radians(62.0)
@@ -298,7 +316,8 @@ def add_lights(scn):
     key_data.shape = "SQUARE"
     key_data.size = 480
     key_data.color = (0.93, 0.955, 1.0)
-    key_data.energy = 5.5e6 * RIG_GAIN
+    key_data.energy = 0.8e6 * RIG_GAIN
+    key_data.specular_factor = 0.20
     key = bpy.data.objects.new("key_soft", key_data)
     key.location = centre + to_light * 900 + Vector((0, 0, 1700))
     aim(key, centre)
@@ -308,8 +327,9 @@ def add_lights(scn):
     fill_data.shape = "RECTANGLE"
     fill_data.size = 380
     fill_data.size_y = 1200
-    fill_data.color = (1.0, 0.70, 0.52)
-    fill_data.energy = 3.6e6 * RIG_GAIN
+    fill_data.specular_factor = 0.20
+    fill_data.color = (1.0, 0.84, 0.72)
+    fill_data.energy = 0.6e6 * RIG_GAIN
     fill = bpy.data.objects.new("fill", fill_data)
     fill.location = centre + Vector((760, 0, 420))
     aim(fill, centre)
@@ -323,7 +343,8 @@ def add_lights(scn):
     kick_data.size = 520
     kick_data.size_y = 180
     kick_data.color = (1.0, 0.78, 0.62)
-    kick_data.energy = 1.35e6 * RIG_GAIN
+    kick_data.energy = 0.8e6 * RIG_GAIN
+    kick_data.specular_factor = 0.30
     kick = bpy.data.objects.new("front_wall_kicker", kick_data)
     kick.location = centre + Vector((0, -860, 190))
     aim(kick, centre + Vector((0, -250, -75)))
@@ -338,7 +359,8 @@ def add_lights(scn):
     rear_data.size = 520
     rear_data.size_y = 160
     rear_data.color = (0.78, 0.90, 1.0)
-    rear_data.energy = 0.42e6 * RIG_GAIN
+    rear_data.energy = 1.6e6 * RIG_GAIN
+    rear_data.specular_factor = 0.22
     rear_rim = bpy.data.objects.new("rear_rim", rear_data)
     rear_rim.location = centre + Vector((0, 560, -40))
     aim(rear_rim, centre + Vector((0, 180, -42)))
@@ -348,8 +370,12 @@ def add_lights(scn):
     wash_data.shape = "RECTANGLE"
     wash_data.size = 420
     wash_data.size_y = 260
-    wash_data.color = (0.86, 0.97, 1.0)
-    wash_data.energy = 0.22e6 * RIG_GAIN
+    # The interior card is a soft reveal, not a white-background light.  A
+    # stronger value clips the populated white-soldermask board through two
+    # transmissive layers and makes it read like a paper insert at editor size.
+    wash_data.color = (1.0, 0.94, 0.88)
+    wash_data.energy = 0.72e6 * RIG_GAIN
+    wash_data.specular_factor = 0.05
     board_wash = bpy.data.objects.new("board_wash", wash_data)
     board_wash.location = centre + Vector((0, 40, -18))
     aim(board_wash, centre + Vector((0, 30, -48)))
@@ -368,10 +394,10 @@ def add_lights(scn):
     nodes.clear()
     out = nodes.new("ShaderNodeOutputWorld")
     bg = nodes.new("ShaderNodeBackground")
-    bg.inputs["Strength"].default_value = 0.42
+    bg.inputs["Strength"].default_value = 0.55
     ramp = nodes.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].color = (0.055, 0.045, 0.038, 1)  # floor: warm dark
-    ramp.color_ramp.elements[1].color = (0.16, 0.19, 0.24, 1)     # zenith: cool
+    ramp.color_ramp.elements[0].color = (0.300, 0.296, 0.288, 1)  # warm neutral floor
+    ramp.color_ramp.elements[1].color = (0.640, 0.680, 0.740, 1)  # cool bright room
     sep = nodes.new("ShaderNodeSeparateXYZ")
     coord = nodes.new("ShaderNodeTexCoord")
     map_ = nodes.new("ShaderNodeMapRange")
@@ -549,13 +575,13 @@ def make_plate_material():
 
 
 def make_bench_material():
-    """Scarred black workbench rather than an empty studio backdrop.
+    """Neutral studio bench, darker than the bright transparent product.
 
     The shader supplies the continuous dirty surface; larger scratches and
     rubbed-through patches are separate geometry so they remain legible after
     the UI is reduced to its 420 px display size.
     """
-    mat = principled("bench_scarred_black", (0.010, 0.009, 0.008), 0.82)
+    mat = principled("bench_neutral_sweep", COL_BENCH, 0.82)
     nodes, links, bsdf = _nodes(mat)
     broad = _noise(mat, 3.6, detail=7.0, w=21.0)
     fine = _noise(mat, 34.0, detail=4.0, w=8.0)
@@ -565,11 +591,11 @@ def make_bench_material():
     tone = nodes.new("ShaderNodeValToRGB")
     tone.color_ramp.interpolation = "EASE"
     tone.color_ramp.elements[0].position = 0.20
-    tone.color_ramp.elements[0].color = (0.003, 0.003, 0.003, 1.0)
+    tone.color_ramp.elements[0].color = (*[c * 0.80 for c in COL_BENCH], 1.0)
     mid = tone.color_ramp.elements.new(0.54)
-    mid.color = (0.014, 0.012, 0.010, 1.0)
+    mid.color = (*COL_BENCH, 1.0)
     tone.color_ramp.elements[-1].position = 0.82
-    tone.color_ramp.elements[-1].color = (0.040, 0.034, 0.027, 1.0)
+    tone.color_ramp.elements[-1].color = (*[c * 1.20 for c in COL_BENCH], 1.0)
     links.new(broad.outputs["Fac"], tone.inputs["Fac"])
     links.new(tone.outputs["Color"], bsdf.inputs["Base Color"])
 
@@ -595,38 +621,41 @@ def _set_bsdf_input(bsdf, names, value):
 
 
 def make_clear_shell_material():
-    """Near-water-clear polycarbonate with thickness-dependent cool tint.
+    """Near-water-clear polycarbonate with thickness-dependent neutral tint.
 
     The tint lives in a Volume Absorption node rather than in Base Color, so a
     thin flat wall stays readable while a long edge/corner path accumulates the
-    bright register's blue-white density.
+    bright register's cool-neutral density.
     """
-    mat = principled("clear_polycarbonate_shell", (0.92, 0.98, 1.0), 0.16,
-                     coat=0.18, coat_rough=0.08)
-    nodes, links, bsdf = _nodes(mat)
-    _set_bsdf_input(bsdf, ("Transmission Weight", "Transmission"), 0.94)
-    _set_bsdf_input(bsdf, ("IOR",), SHELL_IOR)
-    if bsdf.inputs.get("IOR") is not None:
-        bsdf.inputs["IOR"].default_value = SHELL_IOR
-    _set_bsdf_input(bsdf, ("Alpha",), 1.0)
+    mat = bpy.data.materials.new("clear_polycarbonate_shell")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+    glass = nodes.new("ShaderNodeBsdfGlass")
+    glass.name = "PhysicalPolycarbonateGlass"
+    glass.distribution = "BECKMANN"
+    glass.inputs["Color"].default_value = (*COL_SHELL, 1.0)
+    glass.inputs["Roughness"].default_value = 0.018
+    glass.inputs["IOR"].default_value = SHELL_IOR
+    output = nodes.new("ShaderNodeOutputMaterial")
+    links.new(glass.outputs["BSDF"], output.inputs["Surface"])
     absorption = nodes.new("ShaderNodeVolumeAbsorption")
     absorption.name = "ShellThicknessVolumeAbsorption"
     absorption.label = "Thickness-dependent clear-shell tint"
-    absorption.inputs["Color"].default_value = (0.72, 0.88, 1.0, 1.0)
-    absorption.inputs["Density"].default_value = 0.0042
-    output = nodes.get("Material Output")
-    if output is not None:
-        links.new(absorption.outputs["Volume"], output.inputs["Volume"])
+    absorption.inputs["Color"].default_value = (*COL_SHELL_PASS, 1.0)
+    absorption.inputs["Density"].default_value = 0.0060
+    links.new(absorption.outputs["Volume"], output.inputs["Volume"])
     mat["register"] = CLEAR_REGISTER
     mat["ior"] = SHELL_IOR
-    mat["volume_absorption_density"] = 0.0042
+    mat["volume_absorption_density"] = 0.0060
     mat["opaque_to_alpha"] = True
     return mat
 
 
 def make_frost_material():
     """Rough transmissive carrier for second-surface legend bands."""
-    mat = principled("clear_shell_frost_zone", (0.68, 0.84, 0.87), 0.58,
+    mat = principled("clear_shell_frost_zone", (0.82, 0.84, 0.86), 0.58,
                      coat=0.04, coat_rough=0.4)
     nodes, links, bsdf = _nodes(mat)
     _set_bsdf_input(bsdf, ("Transmission Weight", "Transmission"), 0.62)
@@ -636,8 +665,8 @@ def make_frost_material():
     _set_bsdf_input(bsdf, ("Alpha",), 1.0)
     absorption = nodes.new("ShaderNodeVolumeAbsorption")
     absorption.name = "FrostZoneVolumeAbsorption"
-    absorption.inputs["Color"].default_value = (0.62, 0.80, 0.84, 1.0)
-    absorption.inputs["Density"].default_value = 0.008
+    absorption.inputs["Color"].default_value = (0.80, 0.82, 0.85, 1.0)
+    absorption.inputs["Density"].default_value = 0.005
     output = nodes.get("Material Output")
     if output is not None:
         links.new(absorption.outputs["Volume"], output.inputs["Volume"])
@@ -647,9 +676,33 @@ def make_frost_material():
 
 def make_pcb_materials():
     """Bright-register board and component families with distinct value bands."""
+    substrate = principled("pcb_white_soldermask", COL_PCB, 0.38,
+                           metallic=0.0, coat=0.28, coat_rough=0.42)
+    nodes, links, bsdf = _nodes(substrate)
+    pour = _noise(substrate, 0.030, detail=3.0, w=5.0)
+    routing = _noise(substrate, 0.115, detail=5.0, stretch=(1.0, 2.6), w=11.0)
+    weave = _noise(substrate, 1.9, detail=3.0, w=21.0)
+    tone = nodes.new("ShaderNodeValToRGB")
+    tone.color_ramp.interpolation = "CONSTANT"
+    tone.color_ramp.elements[0].position = 0.0
+    tone.color_ramp.elements[0].color = (*[c * 0.955 for c in COL_PCB], 1.0)
+    lit = tone.color_ramp.elements.new(0.47)
+    lit.color = (*[c * 1.030 for c in COL_PCB], 1.0)
+    links.new(pour.outputs["Fac"], tone.inputs["Fac"])
+    links.new(tone.outputs["Color"], bsdf.inputs["Base Color"])
+    add_rough_variation(substrate, 0.38, 0.055, scale=0.24)
+    chain_bumps(substrate, [
+        (pour.outputs["Fac"], 0.20, 0.42),
+        (routing.outputs["Fac"], 0.14, 0.18),
+        (weave.outputs["Fac"], 0.08, 0.08),
+    ])
+
     return {
-        "substrate": principled("pcb_light_soldermask", (0.18, 0.38, 0.42), 0.44,
-                                 metallic=0.05),
+        "substrate": substrate,
+        "sensor_mask": principled("pressure_sensor_white_soldermask",
+                                   (0.085, 0.095, 0.105), 0.42,
+                                   coat=0.18, coat_rough=0.46),
+        "core": principled("pcb_routed_fr4_edge", (0.055, 0.050, 0.043), 0.64),
         "copper": principled("pcb_copper_pour", (0.36, 0.12, 0.020), 0.31,
                               metallic=0.78),
         "pad": principled("pcb_tin_pads", (0.70, 0.74, 0.72), 0.20,
@@ -658,13 +711,13 @@ def make_pcb_materials():
         "epoxy": principled("component_black_epoxy", (0.012, 0.023, 0.028), 0.43),
         "resistor": principled("component_axial_resistor", (0.58, 0.39, 0.18), 0.58),
         "cap": principled("component_film_capacitor", (0.78, 0.78, 0.67), 0.36),
-        "electrolytic": principled("component_electrolytic_can", (0.06, 0.16, 0.19), 0.29,
+        "electrolytic": principled("component_electrolytic_can", (0.035, 0.042, 0.050), 0.29,
                                     metallic=0.25),
-        "diode": principled("component_diode_glass", (0.18, 0.34, 0.32), 0.22,
+        "diode": principled("component_diode_glass", (0.12, 0.13, 0.14), 0.22,
                              coat=0.24, coat_rough=0.11),
         "wire_red": principled("wire_signal_red", (0.55, 0.018, 0.012), 0.50),
-        "wire_blue": principled("wire_ground_blue", (0.014, 0.08, 0.40), 0.50),
-        "standoff": principled("pcb_nylon_standoff", (0.75, 0.82, 0.78), 0.56),
+        "wire_blue": principled("wire_ground_graphite", (0.025, 0.030, 0.040), 0.50),
+        "standoff": principled("pcb_nylon_standoff", (0.82, 0.83, 0.82), 0.56),
         "insert": principled("pcb_brass_insert", (0.54, 0.27, 0.06), 0.30, metallic=0.82),
     }
 
@@ -672,48 +725,54 @@ def make_pcb_materials():
 class Mats:
     def __init__(self):
         self.plate = make_clear_shell_material()
-        # The bright register's outer frame is translucent pale polymer, not a
-        # black die-cast box.  Hardware and controls remain dark/metallic so the
-        # clear composite has a deliberate value hierarchy.
-        self.chassis = principled("clear_shell_frame", (0.58, 0.72, 0.74), 0.34,
-                                  metallic=0.06, coat=0.12, coat_rough=0.12)
+        # The bright register's outer frame is clear neutral polymer. Hardware
+        # and controls remain dark/metallic so the composite preserves the
+        # SendBloom pedal silhouette without inheriting the old green cast.
+        self.chassis = principled("clear_shell_frame", (0.84, 0.87, 0.90), 0.20,
+                                  metallic=0.02, coat=0.18, coat_rough=0.09)
         _set_bsdf_input(self.chassis.node_tree.nodes["Principled BSDF"],
-                        ("Transmission Weight", "Transmission"), 0.32)
+                        ("Transmission Weight", "Transmission"), 0.70)
         _set_bsdf_input(self.chassis.node_tree.nodes["Principled BSDF"], ("IOR",), SHELL_IOR)
         frame_absorb = self.chassis.node_tree.nodes.new("ShaderNodeVolumeAbsorption")
         frame_absorb.name = "FrameThicknessVolumeAbsorption"
-        frame_absorb.inputs["Color"].default_value = (0.58, 0.78, 0.82, 1.0)
-        frame_absorb.inputs["Density"].default_value = 0.008
+        frame_absorb.inputs["Color"].default_value = (*COL_SHELL_PASS, 1.0)
+        frame_absorb.inputs["Density"].default_value = 0.0055
         self.chassis.node_tree.links.new(frame_absorb.outputs["Volume"],
                                          self.chassis.node_tree.nodes["Material Output"].inputs["Volume"])
-        add_rough_variation(self.chassis, 0.42, 0.12, scale=0.05)
+        add_rough_variation(self.chassis, 0.24, 0.07, scale=0.05)
         cgrain = _noise(self.chassis, 0.5, detail=4.0)
         chain_bumps(self.chassis, [(cgrain.outputs["Fac"], 0.18, 0.5)])
         self.frost = make_frost_material()
+        self.polymer_abrasion = principled("clear_shell_handling_haze",
+                                           (0.88, 0.89, 0.90), 0.82,
+                                           coat=0.04, coat_rough=0.72)
+        _set_bsdf_input(self.polymer_abrasion.node_tree.nodes["Principled BSDF"],
+                        ("Transmission Weight", "Transmission"), 0.46)
+        _set_bsdf_input(self.polymer_abrasion.node_tree.nodes["Principled BSDF"],
+                        ("IOR",), 1.49)
+        self.polymer_abrasion["wear_cause"] = "handling abrasion scatters and lightens clear polymer"
         self.pcb = make_pcb_materials()
         self.bench = make_bench_material()
-        self.bench_scuff = principled("bench_rubbed_scuff", (0.105, 0.083, 0.060),
+        self.bench_scuff = principled("bench_rubbed_scuff", (0.145, 0.148, 0.150),
                                       0.76)
-        self.bench_gouge = principled("bench_gouge", (0.0025, 0.0022, 0.0020),
+        self.bench_gouge = principled("bench_gouge", (0.025, 0.026, 0.028),
                                       0.38)
-        self.dust = principled("bench_dust", (0.115, 0.087, 0.055), 0.96)
-        # Old aluminium is oxidised and dirty, not bright silver leaf. Keeping it
-        # mid-dark also stops chips from looking pasted onto a black enclosure.
-        self.exposed_metal = principled("exposed_aluminium", (0.225, 0.195, 0.145),
+        self.dust = principled("bench_dust", (0.235, 0.226, 0.210), 0.96)
+        self.exposed_metal = principled("handled_nickel", (0.36, 0.37, 0.38),
                                         0.58, metallic=0.82)
         add_rough_variation(self.exposed_metal, 0.58, 0.14, scale=0.9)
-        self.damage_primer = principled("damage_oxide_primer", (0.060, 0.026, 0.012),
+        self.damage_primer = principled("legacy_damage_oxide_primer", (0.060, 0.026, 0.012),
                                         0.92, metallic=0.12)
-        self.damage_lip = principled("damage_raised_paint_lip", (0.006, 0.005, 0.004),
+        self.damage_lip = principled("legacy_damage_raised_paint_lip", (0.006, 0.005, 0.004),
                                      0.66)
-        self.scratch_groove = principled("scratch_groove_shadow", (0.003, 0.0025, 0.002),
+        self.scratch_groove = principled("legacy_scratch_groove_shadow", (0.003, 0.0025, 0.002),
                                          0.50)
-        self.old_scratch = principled("oxidised_scratch", (0.115, 0.085, 0.055),
+        self.old_scratch = principled("handled_metal_rub", (0.22, 0.22, 0.21),
                                       0.72, metallic=0.28)
-        self.ink_loss = principled("rubbed_through_print", (0.018, 0.016, 0.014), 0.78)
+        self.ink_loss = principled("rubbed_through_print", COL_INK, 0.78)
         # Bright register: permanent print is the darkest element, with a
         # softened companion for worn/faded segments.
-        self.panel_ink_faded = principled("panel_ink_faded_bright", (0.075, 0.115, 0.125),
+        self.panel_ink_faded = principled("panel_ink_faded_bright", (0.10, 0.10, 0.10),
                                           0.78)
         self.knob_scuff = principled("knob_hand_scuff", (0.115, 0.100, 0.078), 0.88)
         self.rubber_scuff = principled("rubber_sole_scuff", (0.095, 0.086, 0.075),
@@ -723,7 +782,7 @@ class Mats:
         self.cable = principled("cable_black_rubber", (0.006, 0.006, 0.007), 0.64)
         cable_grain = _noise(self.cable, 1.1, detail=4.0, stretch=(1.0, 8.0))
         chain_bumps(self.cable, [(cable_grain.outputs["Fac"], 0.13, 0.28)])
-        self.heatshrink = principled("cable_orange_heatshrink", (0.42, 0.055, 0.012),
+        self.heatshrink = principled("cable_orange_heatshrink", COL_ORANGE,
                                      0.64)
         # Injection-moulded pedal knobs are satin phenolic/ABS, not piano-black.
         # The broad, soft response and fine mould grain keep the ribs readable
@@ -742,7 +801,7 @@ class Mats:
         # Metallic pointer bars read as hi-fi equipment rather than a pedal.
         self.pointer = principled("pointer_paint", COL_POINTER, 0.58)
         add_rough_variation(self.pointer, 0.58, 0.05, scale=0.4)
-        self.panel_ink = principled("panel_scale_ink_bright", (0.008, 0.015, 0.018), 0.60)
+        self.panel_ink = principled("panel_scale_ink_bright", COL_INK, 0.60)
         self.knob_mount = principled("knob_mount_nickel_washer", (0.53, 0.50, 0.44),
                                      0.25, metallic=1.0)
         add_rough_variation(self.knob_mount, 0.25, 0.08, scale=0.34)
@@ -755,15 +814,15 @@ class Mats:
         # The mini-toggle is touched constantly and lives beside a cable path;
         # pristine mirror chrome made it read like jewellery. Its own hardware
         # family is warmer, rougher and visibly handled.
-        self.gate_nickel = principled("gate_aged_warm_nickel",
-                                      (0.410, 0.365, 0.285), 0.39, metallic=0.92)
+        self.gate_nickel = principled("gate_handled_nickel",
+                                      (0.36, 0.37, 0.39), 0.39, metallic=0.92)
         add_rough_variation(self.gate_nickel, 0.39, 0.13, scale=0.34)
         gate_nickel_grain = _noise(self.gate_nickel, 1.35, detail=4.0)
         chain_bumps(self.gate_nickel,
                     [(gate_nickel_grain.outputs["Fac"], 0.075, 0.17)])
         add_ao_grime(self.gate_nickel, amount=0.42, distance=2.2)
         self.gate_steel = principled("gate_dark_threaded_steel",
-                                     (0.115, 0.095, 0.070), 0.48, metallic=0.84)
+                                     (0.070, 0.073, 0.078), 0.48, metallic=0.84)
         add_rough_variation(self.gate_steel, 0.48, 0.11, scale=0.52)
         add_ao_grime(self.gate_steel, amount=0.46, distance=1.8)
         self.gate_phenolic = principled("gate_black_phenolic_tip",
@@ -773,40 +832,24 @@ class Mats:
         chain_bumps(self.gate_phenolic,
                     [(gate_tip_grain.outputs["Fac"], 0.085, 0.15)])
         self.gate_tarnish = principled("gate_contact_tarnish",
-                                       (0.055, 0.024, 0.010), 0.70, metallic=0.30)
-        # The badge is now built from the exact vector paths as separate solids.
-        # These materials therefore describe real surfaces rather than regions
-        # of one photograph: nickel rim, black recessed bed, orange enamel and
-        # blackened raised letters all respond independently to the light rig.
-        self.badge_face = principled("badge_recessed_black_enamel",
-                                     (0.006, 0.005, 0.004), 0.34,
-                                     metallic=0.58, coat=0.16, coat_rough=0.25)
-        add_rough_variation(self.badge_face, 0.34, 0.055, scale=0.62)
-        badge_face_grain = _noise(self.badge_face, 1.8, detail=4.0)
-        chain_bumps(self.badge_face, [(badge_face_grain.outputs["Fac"], 0.055, 0.16)])
-        add_ao_grime(self.badge_face, amount=0.42, distance=3.6)
+                                       (0.10, 0.095, 0.085), 0.70, metallic=0.30)
+        self.identity_carrier = principled("identity_frosted_opaque_carrier",
+                                           (0.62, 0.64, 0.66), 0.72,
+                                           metallic=0.0, coat=0.06,
+                                           coat_rough=0.55)
+        self.identity_carrier["deliberate_opacity"] = "protects product and vendor names from internal clutter"
         self.badge_orange = principled("badge_orange_baked_enamel",
-                                       (0.690, 0.155, 0.037), 0.37,
+                                       COL_ORANGE, 0.37,
                                        metallic=0.08, coat=0.30, coat_rough=0.27)
         add_rough_variation(self.badge_orange, 0.37, 0.055, scale=0.75)
         badge_orange_peel = _noise(self.badge_orange, 2.4, detail=4.0)
         chain_bumps(self.badge_orange,
                     [(badge_orange_peel.outputs["Fac"], 0.075, 0.18)])
         add_ao_grime(self.badge_orange, amount=0.25, distance=2.8)
-        self.badge_letter = principled("badge_blackened_raised_letters",
-                                       (0.022, 0.019, 0.016), 0.43,
-                                       metallic=0.52, coat=0.10, coat_rough=0.31)
-        add_rough_variation(self.badge_letter, 0.43, 0.065, scale=0.95)
-        badge_letter_grain = _noise(self.badge_letter, 2.9, detail=3.0)
-        chain_bumps(self.badge_letter,
-                    [(badge_letter_grain.outputs["Fac"], 0.050, 0.13)])
-        add_ao_grime(self.badge_letter, amount=0.40, distance=2.5)
         # Preset hardware stays inside the established product palette: smoked
-        # black enamel, nickel, orange inlay and warm-ivory raised markings.
-        # The legacy cream extraction is archival, not a colour reference for
-        # this black-wrinkle enclosure.
-        self.preset_face = principled("preset_smoked_black_enamel",
-                                      (0.018, 0.015, 0.012), 0.43,
+        # graphite enamel, nickel, orange inlay and neutral raised markings.
+        self.preset_face = principled("preset_graphite_enamel",
+                                      (0.025, 0.026, 0.028), 0.43,
                                       metallic=0.22, coat=0.14, coat_rough=0.31)
         add_rough_variation(self.preset_face, 0.43, 0.075, scale=0.72)
         preset_broad = _noise(self.preset_face, 0.42, detail=4.0, w=18.0)
@@ -823,8 +866,8 @@ class Mats:
                                      (0.016, 0.015, 0.013), 0.48,
                                      metallic=0.38)
         add_rough_variation(self.preset_ink, 0.48, 0.05, scale=1.1)
-        self.preset_marking = principled("preset_warm_ivory_marking",
-                                         (0.610, 0.535, 0.385), 0.66)
+        self.preset_marking = principled("preset_neutral_light_marking",
+                                         (0.70, 0.71, 0.72), 0.66)
         add_rough_variation(self.preset_marking, 0.66, 0.045, scale=1.2)
         self.rubber = principled("rubber", COL_RUBBER, 0.62)
         add_rough_variation(self.rubber, 0.60, 0.10, scale=0.08)
@@ -838,7 +881,7 @@ class Mats:
         chain_bumps(self.button_black, [(bgrain.outputs["Fac"], 0.12, 0.4)])
         # Faded warm pad-print: subdued against the moulded cap, but still
         # legible at the editor's real 1x size and after the dark-room overlay.
-        self.button_text = principled("button_text", (0.220, 0.180, 0.110), 0.70)
+        self.button_text = principled("button_text", (0.62, 0.63, 0.64), 0.70)
         add_rough_variation(self.button_text, 0.70, 0.045, scale=1.1)
         self.slot = principled("slot", (0.05, 0.05, 0.05), 0.5, metallic=0.6)
         self.lens_off = principled("lens_off", (0.045, 0.006, 0.005), 0.08, coat=1.0, coat_rough=0.05)
@@ -1252,161 +1295,32 @@ def make_text(name, mat, body, centre, size, extrude=0.6):
     return obj
 
 
-def _append_reversed_bezier_spline(target_curve, source_spline):
-    """Copy a closed SVG Bezier path with opposite winding.
+def make_product_identity(mats):
+    """Quiet second-surface product/vendor identity for the shared Niko line."""
+    carrier = make_prism(
+        "product_identity_legibility_carrier", mats.identity_carrier,
+        296.0, 52.0, 8.0,
+        SECOND_SURFACE_PRINT_Z - 1.20, SECOND_SURFACE_PRINT_Z - 0.38,
+        bevel=1.2, centre=px(210.0, 101.0)[:2])
+    carrier["assembly_order"] = "interior < opaque legend carrier < second-surface print < clear shell"
 
-    Blender's 2D curve fill uses spline winding for holes. The Niko 'o' arrives
-    from the source SVG as separate outline and counter objects; combining them
-    this way makes the counter a real opening with vertical inner walls.
-    """
-    if source_spline.type != "BEZIER":
-        raise RuntimeError("SendBloom badge counter must remain a Bezier path")
-    source_points = list(source_spline.bezier_points)
-    target = target_curve.splines.new("BEZIER")
-    target.bezier_points.add(len(source_points) - 1)
-    target.use_cyclic_u = True
-    target.resolution_u = source_spline.resolution_u
-    for dest, source in zip(target.bezier_points, reversed(source_points)):
-        dest.co = source.co
-        dest.handle_left_type = "FREE"
-        dest.handle_right_type = "FREE"
-        # Reversing traversal also reverses the incoming/outgoing handles.
-        dest.handle_left = source.handle_right
-        dest.handle_right = source.handle_left
+    product = make_text(
+        "product_name_second_surface", mats.panel_ink, "SENDBLOOM",
+        px(158.0, 100.0, SECOND_SURFACE_PRINT_Z), size=21.0, extrude=0.18)
+    product.scale.x = 0.76
+    product["identity_role"] = "product name"
 
+    vendor = make_text(
+        "vendor_mark_second_surface", mats.panel_ink_faded, "NIKO MUSIC",
+        px(307.0, 103.5, SECOND_SURFACE_PRINT_Z), size=10.0, extrude=0.10)
+    vendor.scale.x = 0.82
+    vendor["identity_role"] = "discreet shared vendor mark"
 
-def _finish_logo_curve(obj, name, mat, scale, offset, z0, z1, bevel):
-    """Turn one imported SVG path into a bevelled, dimensioned badge solid."""
-    curve = obj.data
-    # Do not use Curve.transform() here: Blender also scales its later bevel and
-    # extrusion evaluation, turning a 1 mm relief into a metre-high object. SVG
-    # control points and their handles are scaled explicitly in X/Y instead.
-    for spline in curve.splines:
-        if spline.type == "BEZIER":
-            for point in spline.bezier_points:
-                point.co.x *= scale
-                point.co.y *= scale
-                point.handle_left.x *= scale
-                point.handle_left.y *= scale
-                point.handle_right.x *= scale
-                point.handle_right.y *= scale
-        else:
-            for point in spline.points:
-                point.co.x *= scale
-                point.co.y *= scale
-    curve.dimensions = "2D"
-    curve.fill_mode = "BOTH"
-    curve.resolution_u = 16
-    curve.render_resolution_u = 20
-    curve.offset = 0.0
-    # A 2D curve extrudes symmetrically about local z. Subtracting the bevel
-    # keeps the requested finished height exact instead of growing past it.
-    depth = z1 - z0
-    curve.extrude = max(0.01, depth * 0.5 - bevel)
-    curve.bevel_depth = bevel
-    curve.bevel_resolution = 4
-    curve.resolution_v = 4
-    curve.materials.clear()
-    curve.materials.append(mat)
-    curve.name = name + "_mesh"
-    obj.name = name
-    obj.location = (offset[0], offset[1], (z0 + z1) * 0.5)
-    return obj
-
-
-def make_modelled_logo(mats, rect):
-    """Build the plaque from the existing exact wordmark vector paths.
-
-    The raster logo is deliberately not sampled here. The SVG supplies only
-    silhouettes; Cycles supplies the bevel highlights, inner-wall occlusion,
-    contact shadows and material response for each physical layer.
-    """
-    svg_path = OUT / "brand_logo.svg"
-    if not svg_path.exists():
-        raise RuntimeError(f"Missing modelled badge source: {svg_path}")
-
-    before = set(bpy.context.scene.objects)
-    bpy.ops.import_curve.svg(filepath=str(svg_path))
-    imported = [obj for obj in bpy.context.scene.objects if obj not in before]
-    by_name = {obj.name: obj for obj in imported}
-    required = {
-        "outer": "Curve.003",
-        "face": "Curve.004",
-        "inlay": "Curve.011",
-        "N": "n-recess",
-        "i_dot": "i-dot-recess",
-        "i_stem": "i-stem-recess",
-        "k": "k-recess",
-        "o": "o-recess",
-        "o_counter": "o-counter",
-        "F": "f",
-        "X_top": "x-top",
-        "X_main": "x-main",
-        "X_low": "x-low",
-    }
-    missing = [svg_name for svg_name in required.values() if svg_name not in by_name]
-    if missing:
-        raise RuntimeError("Badge SVG path contract changed: " + ", ".join(missing))
-    paths = {key: by_name[value] for key, value in required.items()}
-
-    # Make the O counter an actual hole before deleting the source counter path.
-    _append_reversed_bezier_spline(paths["o"].data,
-                                   paths["o_counter"].data.splines[0])
-
-    # Use the exact outer-rim bounds as the registration contract. A uniform
-    # scale preserves the user's wordmark proportions; any remaining vertical
-    # room is centred rather than stretching the letters to fit the UI rect.
-    src_x0, src_x1 = 0.01608, 0.55522
-    src_y0, src_y1 = 0.24069, 0.34537
-    x, y, w, h = rect
-    scale = min(w / (src_x1 - src_x0), h / (src_y1 - src_y0))
-    source_centre = ((src_x0 + src_x1) * 0.5,
-                     (src_y0 + src_y1) * 0.5)
-    target_centre = (x + w * 0.5, -(y + h * 0.5))
-    offset = (target_centre[0] - source_centre[0] * scale,
-              target_centre[1] - source_centre[1] * scale)
-
-    rim_top = 4.65
-    face_top = 5.65
-    inlay_top = 6.35
-    letter_top = inlay_top + LOGO_RELIEF
-    solids = [
-        _finish_logo_curve(paths["outer"], "badge_nickel_rim", mats.nickel,
-                           scale, offset, 0.10, rim_top, 0.62),
-        _finish_logo_curve(paths["face"], "badge_recessed_face", mats.badge_face,
-                           scale, offset, rim_top - 0.38, face_top, 0.26),
-        _finish_logo_curve(paths["inlay"], "badge_orange_inlay", mats.badge_orange,
-                           scale, offset, face_top - 0.12, inlay_top, 0.22),
-        # The O has a true open counter, but its bottom is the same orange enamel
-        # as the surrounding inlay. Keeping this as a separate recessed solid
-        # preserves the original wordmark while exposing real inner sidewalls.
-        _finish_logo_curve(paths["o_counter"], "badge_o_counter_inlay",
-                           mats.badge_orange, scale, offset,
-                           face_top - 0.12, inlay_top, 0.18),
-    ]
-
-    # N/i/k/o sit through matching apertures in the orange inlay. F/X rise from
-    # the black field. All tops finish in one plane, exactly 1 mm above the
-    # orange surface, so every glyph casts the same physically meaningful shadow.
-    for key, label, material in (
-            ("N", "N", mats.badge_letter),
-            ("i_dot", "i_dot", mats.badge_letter),
-            ("i_stem", "i_stem", mats.badge_letter),
-            ("k", "k", mats.badge_letter),
-            ("o", "o", mats.badge_letter),
-            ("F", "F", mats.badge_orange),
-            ("X_top", "X_top", mats.badge_orange),
-            ("X_main", "X_main", mats.badge_orange),
-            ("X_low", "X_low", mats.badge_orange)):
-        solids.append(_finish_logo_curve(
-            paths[key], "badge_letter_" + label, material, scale, offset,
-            face_top - 0.12, letter_top, 0.52))
-
-    keep = set(solids)
-    for obj in imported:
-        if obj not in keep:
-            bpy.data.objects.remove(obj, do_unlink=True)
-    return solids, letter_top
+    accent = make_surface_stroke(
+        "product_identity_orange_rule", mats.badge_orange,
+        (104.0, 119.0), 42.0, 1.35, SECOND_SURFACE_PRINT_Z, 90.0)
+    accent["identity_role"] = "scarce warm accent"
+    return [carrier, product, vendor, accent], SECOND_SURFACE_PRINT_Z + 0.18
 
 
 def _make_preset_button(mats, name, rect, kind):
@@ -1658,6 +1572,108 @@ class Pedal:
             self.internals += [boss, insert]
             self.static += [boss, insert]
 
+        # The pressure treadle uses a raised U-shaped sensor daughterboard.  Its
+        # routed FR-4 edge, white mask, inter-board standoffs, exposed pads and
+        # sparse sensor parts sit several millimetres above the main PCB.  This
+        # mounting separation is deliberately visible through the lower shell:
+        # a single featureless white plane would read as a paper card at 1x.
+        # The thin sensor PCB is retained directly below the moulded inner
+        # ceiling, like a capacitive pressure-sensor board. Its populated parts
+        # sit on the underside; only the shell-facing mask, pads, vias and
+        # routing occupy the optical window.
+        sensor_core_bottom = -17.0
+        sensor_core_top = -13.2
+        sensor_mask_top = -12.3
+        sensor_sections = (
+            ("left", 95.0, 575.0, 58.0, 184.0),
+            ("right", 325.0, 575.0, 58.0, 184.0),
+            ("bridge", 210.0, 654.0, 230.0, 38.0),
+        )
+        for name, cx, cy, width, height in sensor_sections:
+            core = make_prism(
+                f"pressure_sensor_board_{name}_core", pcb["core"],
+                width, height, 4.0, sensor_core_bottom, sensor_core_top,
+                bevel=1.4, centre=px(cx, cy)[:2])
+            mask = make_prism(
+                f"pressure_sensor_board_{name}_mask", pcb["sensor_mask"],
+                width - 2.2, height - 2.2, 3.2,
+                sensor_core_top - 0.18, sensor_mask_top,
+                bevel=1.0, centre=px(cx, cy)[:2])
+            core["construction"] = "routed FR-4 edge below white soldermask"
+            mask["assembly"] = "raised pressure-sensor daughterboard"
+            self.internals += [core, mask]
+            self.static += [core, mask]
+
+            # Exposed routed-core witness around the shell-facing mask.  These
+            # four thin solids are the actual upper edge of the laminate, not
+            # an outline painted over the final render.
+            edge_z = sensor_mask_top + 0.16
+            for edge_name, edge_w, edge_h, edge_x, edge_y in (
+                    ("top", width - 3.0, 1.35, cx, cy - height * 0.5 + 1.5),
+                    ("bottom", width - 3.0, 1.35, cx, cy + height * 0.5 - 1.5),
+                    ("left", 1.35, height - 3.0, cx - width * 0.5 + 1.5, cy),
+                    ("right", 1.35, height - 3.0, cx + width * 0.5 - 1.5, cy)):
+                edge = make_box(
+                    f"pressure_sensor_board_{name}_{edge_name}_routed_edge",
+                    pcb["core"], (edge_w, edge_h, 0.22),
+                    px(edge_x, edge_y, edge_z))
+                self.internals.append(edge)
+                self.static.append(edge)
+
+        for index, (sx, sy) in enumerate(((95, 498), (325, 498), (95, 650), (325, 650))):
+            spacer = make_cylinder(
+                f"pressure_sensor_board_spacer_{index}", pcb["core"], 4.8,
+                INTERNAL_BOARD_Z + 1.0, sensor_core_bottom + 0.4,
+                px(sx, sy), verts=48)
+            fastener = make_cylinder(
+                f"pressure_sensor_board_fastener_{index}", pcb["pad"], 5.0,
+                sensor_mask_top + 0.03, sensor_mask_top + 0.25,
+                px(sx, sy), verts=40)
+            fastener_bore = make_cylinder(
+                f"pressure_sensor_board_fastener_bore_{index}", pcb["core"], 1.8,
+                sensor_mask_top + 0.23, sensor_mask_top + 0.32,
+                px(sx, sy), verts=32)
+            self.internals += [spacer, fastener, fastener_bore]
+            self.static += [spacer, fastener, fastener_bore]
+
+        # Two visible signal rails, six plated vias per side, and one pressure
+        # sensor package per rail provide restrained electrical evidence without
+        # turning the clear pedal into a schematic.
+        for side, cx in (("left", 95.0), ("right", 325.0)):
+            trace = make_box(
+                f"pressure_sensor_{side}_signal_trace", pcb["copper"],
+                (1.35, 34.0, 0.24), px(cx, 578.0, sensor_mask_top + 0.15))
+            return_trace = make_box(
+                f"pressure_sensor_{side}_return_trace", pcb["copper"],
+                (1.05, 26.0, 0.24),
+                px(cx + (-11.0 if side == "left" else 11.0),
+                   618.0, sensor_mask_top + 0.15))
+            sensor = make_prism(
+                f"pressure_sensor_{side}_hall_body", pcb["epoxy"],
+                22.0, 15.0, 2.0, sensor_core_bottom - 2.8,
+                sensor_core_bottom - 0.20, bevel=0.65,
+                centre=px(cx, 542.0)[:2])
+            label = make_text(
+                f"pressure_sensor_{side}_silkscreen", pcb["silkscreen"],
+                "SENSOR A" if side == "left" else "SENSOR B",
+                px(cx, 562.0, sensor_mask_top + 0.20), size=6.0, extrude=0.08)
+            label.scale.x = 0.72
+            self.internals += [trace, return_trace, sensor, label]
+            self.static += [trace, return_trace, sensor, label]
+
+            for via_index, via_y in enumerate((512, 536, 568, 602, 626, 646)):
+                via_x = cx + (-18.0 if via_index % 2 == 0 else 18.0)
+                pad = make_cylinder(
+                    f"pressure_sensor_{side}_via_pad_{via_index}", pcb["pad"], 4.7,
+                    sensor_mask_top + 0.04, sensor_mask_top + 0.24,
+                    px(via_x, via_y), verts=32)
+                bore = make_cylinder(
+                    f"pressure_sensor_{side}_via_bore_{via_index}", pcb["core"], 2.0,
+                    sensor_mask_top + 0.22, sensor_mask_top + 0.31,
+                    px(via_x, via_y), verts=28)
+                self.internals += [pad, bore]
+                self.static += [pad, bore]
+
         # Backside bodies of all panel-mounted controls.  They deliberately hang
         # below the clear lid so the front controls are mechanically connected
         # rather than floating decals over the PCB.
@@ -1712,15 +1728,32 @@ class Pedal:
         footprints = [
             ("U1", "dip", 146, 170, 31, 48),
             ("U2", "dip", 275, 170, 31, 48),
+            ("R2", "resistor", 88, 180, 26, 9),
+            ("D2", "diode", 335, 180, 22, 10),
             ("C1", "cap", 82, 286, 20, 15),
             ("R1", "resistor", 164, 294, 26, 9),
             ("C2", "cap", 252, 294, 20, 15),
             ("D1", "diode", 334, 286, 22, 10),
+            ("C3", "cap", 84, 382, 20, 15),
+            ("R3", "resistor", 164, 382, 26, 9),
             ("U3", "qfp", 210, 402, 38, 23),
+            ("R4", "resistor", 254, 382, 26, 9),
+            ("C4", "cap", 336, 382, 20, 15),
             ("E1", "electrolytic", 82, 430, 18, 32),
             ("E2", "electrolytic", 338, 430, 18, 32),
+            ("R5", "resistor", 82, 470, 26, 9),
+            ("U4", "dip", 210, 470, 31, 48),
+            ("R6", "resistor", 338, 470, 26, 9),
+            ("C5", "cap", 166, 510, 20, 15),
+            ("C6", "cap", 254, 510, 20, 15),
+            ("U5", "dip", 85, 514, 31, 48),
+            ("U6", "dip", 335, 516, 31, 48),
             ("H1", "header", 90, 548, 34, 12),
             ("H2", "header", 330, 548, 34, 12),
+            ("R7", "resistor", 150, 565, 26, 9),
+            ("R8", "resistor", 270, 565, 26, 9),
+            ("C7", "cap", 84, 604, 20, 15),
+            ("C8", "cap", 336, 604, 20, 15),
         ]
         for designator, family, cx, cy, fw, fh in footprints:
             if family == "dip":
@@ -2023,145 +2056,53 @@ class Pedal:
         build_connection("right", chassis_right, 1.0)
 
     def _build_panel_wear_and_graphics(self):
-        """Readable use-history: chipped powder coat and abraded pad print."""
+        """Second-surface print plus wear a clear moulding can actually take."""
         m = self.m
 
-        # A broken warm-ivory signal frame gives the lower half the large graphic
-        # gesture seen on real pedals. Missing pieces are authored as gaps, so the
-        # line looks rubbed away rather than computer-perfect.
-        # Every segment observes a physical keep-out. In particular, the lower
-        # runs stop outside the screw-head radius and treadle carrier instead of
-        # continuing underneath hardware as if the print were drawn afterward.
+        # The dark signal frame is printed on the cavity side of the lid.  It
+        # stops before screws, the gate sweep, and the treadle carrier; no line
+        # can appear to pass through hardware mounted after the print operation.
         frame_segments = [
-            ("top_l", 79, 401, 36, 1.45, 90, m.panel_ink),
-            ("top_m", 194, 401, 116, 1.45, 90, m.panel_ink_faded),
-            ("top_r", 336, 401, 42, 1.45, 90, m.panel_ink),
-            ("left_a", 59, 439, 62, 1.45, 0, m.panel_ink),
-            ("left_b", 59, 515, 70, 1.45, 0, m.panel_ink_faded),
-            ("left_c", 59, 607, 92, 1.45, 0, m.panel_ink),
-            ("right_a", 361, 441, 66, 1.45, 0, m.panel_ink),
-            ("right_b", 361, 526, 80, 1.45, 0, m.panel_ink_faded),
-            ("right_c", 361, 607, 58, 1.45, 0, m.panel_ink),
-            ("bottom_l", 111, 681, 68, 1.45, 90, m.panel_ink),
-            ("bottom_r", 310, 681, 68, 1.45, 90, m.panel_ink),
+            ("top_l", 79, 401, 36, 1.25, 90),
+            ("top_m", 194, 401, 116, 1.25, 90),
+            ("top_r", 336, 401, 42, 1.25, 90),
+            ("left_a", 59, 439, 62, 1.25, 0),
+            ("left_b", 59, 515, 70, 1.25, 0),
+            ("left_c", 59, 607, 92, 1.25, 0),
+            ("right_a", 361, 441, 66, 1.25, 0),
+            ("right_b", 361, 526, 80, 1.25, 0),
+            ("right_c", 361, 607, 58, 1.25, 0),
+            ("bottom_l", 111, 681, 68, 1.25, 90),
+            ("bottom_r", 310, 681, 68, 1.25, 90),
         ]
-        for suffix, x, y, length, width, angle, mat in frame_segments:
+        for suffix, x, y, length, width, angle in frame_segments:
             self.static.append(make_surface_stroke(
-                f"worn_signal_frame_{suffix}", mat, (x, y), length, width,
-                SECOND_SURFACE_PRINT_Z, angle))
+                f"second_surface_signal_frame_{suffix}", m.panel_ink,
+                (x, y), length, width, SECOND_SURFACE_PRINT_Z, angle))
 
-        # Chips cut into the ink itself. Their dark ragged silhouettes stop the
-        # surviving lines from reading like recently drawn vector rectangles.
-        for i, (x, y, rx, ry, angle) in enumerate((
-                (91, 401, 5.5, 1.2, -7), (165, 401, 7.5, 1.1, 3),
-                (222, 401, 4.5, 1.3, -4), (343, 401, 5.0, 1.2, 6),
-                (59, 463, 1.2, 6.0, -3), (59, 530, 1.2, 7.0, 4),
-                (59, 637, 1.1, 5.5, -5), (361, 470, 1.2, 5.5, 5),
-                (361, 545, 1.2, 7.0, -4), (361, 612, 1.2, 5.0, 3),
-                (108, 681, 7.0, 1.2, 2), (312, 681, 5.0, 1.2, 4))):
-            self.static.append(make_irregular_patch(
-                f"signal_frame_ink_loss_{i}", m.ink_loss, (x, y), rx, ry,
-                SECOND_SURFACE_PRINT_Z + 0.12, 600 + i, points=8, angle_deg=angle))
-
-        # Paint damage is a three-layer event, never a silver sticker: raised dark
-        # coating lip, rusty primer/oxide, then a smaller aluminium core. Wear is
-        # concentrated at perimeter impacts, plug insertion zones and the shoe end.
-        def layered_top_chip(name, x, y, rx, ry, angle, seed):
-            self.static.append(make_irregular_patch(
-                name + "_paint_lip", m.damage_lip, (x, y), rx * 1.24, ry * 1.24,
-                0.16, seed, points=12, angle_deg=angle))
-            self.static.append(make_irregular_patch(
-                name + "_primer", m.damage_primer, (x, y), rx, ry,
-                0.22, seed + 101, points=11, angle_deg=angle))
-            offset = (math.cos(math.radians(angle)) * 0.35,
-                      math.sin(math.radians(angle)) * 0.35)
-            self.static.append(make_irregular_patch(
-                name + "_metal", m.exposed_metal, (x + offset[0], y + offset[1]),
-                rx * 0.56, ry * 0.58, 0.28, seed + 211,
-                points=9, angle_deg=angle + 7.0))
-
-        chip_sites = [
-            # left/right perimeter, including repeated cable-plug handling at y367
-            ("edge_l_top", 40.8, 151, 2.4, 7.5, 2),
-            ("edge_l_jack", 40.6, 367, 3.2, 12.0, -3),
-            ("edge_l_low", 41.2, 646, 2.6, 9.0, 2),
-            ("edge_r_top", 380.2, 179, 2.5, 7.0, -2),
-            ("edge_r_jack", 380.4, 367, 3.1, 11.5, 3),
-            ("edge_r_low", 379.8, 625, 2.8, 10.0, -3),
-            # top/bottom impacts and shoe contact around the treadle end
-            ("edge_t_left", 123, 62.3, 8.0, 2.4, 4),
-            ("edge_t_right", 316, 62.2, 7.0, 2.3, -5),
-            ("edge_b_left", 83, 699.0, 10.5, 2.8, 2),
-            ("edge_b_heel", 189, 699.2, 7.0, 2.4, -3),
-            ("edge_b_right", 336, 698.8, 9.0, 2.7, 4),
-        ]
-        for i, (name, x, y, rx, ry, angle) in enumerate(chip_sites):
-            layered_top_chip(name, x, y, rx, ry, angle, 8080 + i * 17)
-
-        # A scratch is a dark recessed groove with a narrow aluminium shoulder on
-        # the light-facing edge. These are located where tools, plugs or shoes can
-        # actually reach; the previous evenly scattered decorative lines are gone.
-        def groove(name, x, y, length, angle, seed):
-            self.static.append(make_surface_stroke(
-                name + "_recess", m.scratch_groove, (x, y), length, 1.20,
-                0.17, angle))
-            rad = math.radians(angle)
-            hx = x + math.cos(rad) * 0.38
-            hy = y + math.sin(rad) * 0.38
-            self.static.append(make_surface_stroke(
-                name + "_metal_edge", m.exposed_metal, (hx, hy),
-                length * 0.86, 0.34, 0.25, angle))
-
-        for i, (name, x, y, length, angle) in enumerate((
-                ("jack_tool_l", 52, 370, 20, -64),
-                ("jack_tool_r", 368, 372, 18, 57),
-                ("footswitch_shoe_l", 146, 648, 24, -58),
-                ("footswitch_shoe_r", 278, 659, 20, 53),
-                ("screwdriver_tl", 72, 96, 9, -48),
-                ("screwdriver_br", 344, 668, 9, 51))):
-            groove(name, x, y, length, angle, 1200 + i)
-
-        # The now-visible vertical front wall gets its own layered impacts. These
-        # occupy the X/Z plane and therefore catch a different highlight than lid
-        # damage—the cue missing from the previous flat render.
-        front_y = PLATE[1] + PLATE[3] + 17.0
-        for i, (name, x, z, rx, rz, angle) in enumerate((
-                ("front_drop_l", 76, -34, 12, 4.0, 8),
-                ("front_drag_mid", 174, -52, 18, 3.4, -4),
-                ("front_drop_r", 302, -31, 10, 4.2, -8),
-                ("front_corner_r", 358, -78, 8, 3.6, 12))):
-            self.static.append(make_front_wall_patch(
-                name + "_lip", m.damage_lip, x, z, rx * 1.2, rz * 1.25,
-                front_y, 15000 + i, angle_deg=angle, outset=0.16))
-            self.static.append(make_front_wall_patch(
-                name + "_primer", m.damage_primer, x, z, rx, rz,
-                front_y, 15100 + i, angle_deg=angle, outset=0.22))
-            self.static.append(make_front_wall_patch(
-                name + "_metal", m.exposed_metal, x + 0.4, z + 0.2,
-                rx * 0.56, rz * 0.58, front_y, 15200 + i,
-                angle_deg=angle + 5, outset=0.28))
+        # Clear polycarbonate does not chip to primer or metal.  Sparse handling
+        # haze sits on the OUTER skin, goes lighter by scattering, and stays away
+        # from every legend so it cannot erase second-surface print beneath it.
+        for i, (name, x, y, rx, ry, angle) in enumerate((
+                ("front_lift_left", 92, 688, 13.0, 2.0, 4),
+                ("front_lift_right", 324, 688, 11.0, 1.8, -5),
+                ("side_grip_left", 43, 318, 2.1, 11.0, 2),
+                ("side_grip_right", 378, 356, 2.0, 10.0, -3))):
+            patch = make_irregular_patch(
+                f"polycarbonate_abrasion_{name}", m.polymer_abrasion,
+                (x, y), rx, ry, 0.34, 8080 + i * 17,
+                points=12, angle_deg=angle)
+            patch["assembly_order"] = "second-surface print < clear shell < handling abrasion"
+            self.static.append(patch)
 
     def _build_badge_and_preset(self):
         m = self.m
-        badge_solids, badge_top = make_modelled_logo(m, LOGO)
+        identity_solids, _ = make_product_identity(m)
         preset_solids, preset_top = make_modelled_preset_hardware(m)
-        self.static += badge_solids + preset_solids
+        self.static += identity_solids + preset_solids
 
-        # Raised lettering gets sparse contact wear on its own top plane. These
-        # small marks sit on the N/k/F/X reach zones; the earlier bitmap-wide
-        # print-loss slashes have been removed because the letters now have real
-        # bevels and should age as individual objects.
-        for i, (x, y, rx, ry, angle, material) in enumerate((
-                (112, 84, 2.8, 0.55, -7, m.exposed_metal),
-                (224, 107, 2.3, 0.48, 5, m.exposed_metal),
-                (280, 83, 2.0, 0.45, -4, m.ink_loss),
-                (320, 108, 2.6, 0.48, 7, m.ink_loss))):
-            self.static.append(make_irregular_patch(
-                f"badge_letter_contact_wear_{i}", material, (x, y), rx, ry,
-                badge_top + 0.10, 1800 + i, points=9, angle_deg=angle))
         # Handling wear now lands on the actual cap/rim top rather than inside
-        # the old texture slabs. Selector wear stays at its two reach corners;
-        # button wear sits beside, never across, the icon or legend.
+        # the old texture slabs. It stays beside, never across, icon or legend.
         for i, (x, y, rx, ry, angle, z) in enumerate((
                 (81, 135, 2.6, 0.62, 8, 5.02),
                 (271, 164, 3.1, 0.72, -5, 5.02),
@@ -2672,6 +2613,25 @@ def pass_background(scn, pedal):
     measure_bright_register(OUT / "pedal_background.png")
 
 
+def pass_internals_diagnostic(scn, pedal):
+    """Render the physical cavity without lid/legend carriers for asset audit."""
+    restore_all(pedal)
+    show_only_states(pedal, set())
+    for obj in pedal.knob_objects():
+        obj.hide_render = True
+    for proxy in pedal.proxies:
+        proxy.hide_render = False
+        proxy.visible_camera = False
+    for obj in pedal.static:
+        if (obj.name == "plate"
+                or obj.name.startswith("frosted_legend_zone_")
+                or obj.name.startswith("product_identity_")):
+            obj.visible_camera = False
+    scn.render.film_transparent = False
+    clear_border(scn)
+    render_to(scn, TMP / "internals_diagnostic.png")
+
+
 def post_background(png_path, jpg_path, sigma=2.6 / 255.0):
     """Photographic grade over the background render: film grain and a gentle
     vignette. Both are authored at 2-px correlation / large radius so they
@@ -2847,25 +2807,32 @@ def pass_states(scn, pedal):
         ("clip", "clip_on", "clip_on.png"),
     ]
     scn.render.film_transparent = True
+    catcher_material = principled(
+        "state_overlay_shadow_catcher", (0.32, 0.33, 0.34), 0.92)
+    shadow_plane = make_box(
+        "state_overlay_shadow_plane", catcher_material, (520.0, 880.0, 0.18),
+        (EDITOR_W * 0.5, pitch_compensated_world_y(EDITOR_H * 0.5), -0.58))
+    shadow_plane.is_shadow_catcher = True
     # The bright shell and populated cavity are part of the opaque background
-    # composite.  They must not become black rectangular camera-visible pixels
-    # in an alpha overlay; they remain render-visible to shadow/transmission
-    # rays while the shadow-catcher plate receives the moving part's contact.
+    # composite. They are absent from alpha overlays; a dedicated flat catcher
+    # receives only the moving assembly's contact shadow. Using the refractive
+    # shell itself as a catcher produces black transmission rectangles at high
+    # sample counts.
     for obj in pedal.static:
-        obj.visible_camera = False
+        obj.hide_render = True
     for rect_key, state_key, filename in jobs:
         restore_all(pedal)
         for obj in pedal.knob_objects():
             obj.hide_render = True          # keep knob shadows out of catchers
         show_only_states(pedal, {state_key})
-        pedal.plate.is_shadow_catcher = True
         set_border(scn, ART_RECTS[rect_key])
         render_to(scn, OUT / filename)
         feather_alpha(OUT / filename)
     restore_all(pedal)
     show_only_states(pedal, DEFAULT_STATES)
     for obj in pedal.static:
-        obj.visible_camera = True
+        obj.hide_render = False
+    shadow_plane.hide_render = True
     clear_border(scn)
     scn.render.film_transparent = False
 
@@ -2893,6 +2860,8 @@ def main():
 
     if targets == ["all"] or "background" in targets:
         pass_background(scn, pedal)
+    if "internals" in targets:
+        pass_internals_diagnostic(scn, pedal)
     if targets == ["all"] or "knobs" in targets:
         pass_knob_strips(scn, pedal, resume=resume, preview=preview)
     if targets == ["all"] or "states" in targets:

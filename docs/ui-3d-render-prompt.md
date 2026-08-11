@@ -24,12 +24,13 @@ once, path-tracing it, and shipping the renders.
 
 Success is a faceplate where a stranger cannot tell which parts move.
 
-Photoreal does not mean pristine. The approved material direction is a used
-black-wrinkle stompbox on a scarred black workbench: dull exposed aluminium at
-edge impacts, directional scratches from fingers/picks/soles, abraded pad print,
-dirty metal, and two real instrument leads with side plugs. Author the decisive
-wear as deterministic macro geometry so it remains visible at the actual
-420×780 UI size; shader micro-noise alone is not an acceptable realism pass.
+Photoreal does not mean pristine. The approved material direction is bright
+neutral clear/silver polycarbonate over a populated white-soldermask board,
+dark user-contact controls and print, and scarce warm-orange accents on a
+neutral workbench. Wear on the shell is polymer abrasion/haze, never chipped
+paint exposing fictional metal. Author decisive wear as deterministic macro
+geometry so it remains visible at 420×780; shader micro-noise alone is not an
+acceptable realism pass.
 
 ## Why the current UI floats — learn from these, they are paid-for lessons
 
@@ -59,15 +60,15 @@ hi-DPI, and let JUCE downscale.
 **Key light**: `lighting::toLight = { -0.55, -0.83 }` — upper-left, normalised-ish.
 Shadows fall lower-right. Every part shares this. Keep it.
 
-**Plate**: `kPlate { 38, 60, 345, 642 }`, corner radius 19. Black wrinkle powder
-coat with warm-ivory worn pad print. Centre line x = 210.
+**Plate**: `kPlate { 38, 60, 345, 642 }`, corner radius 19. Neutral clear
+polycarbonate with dark second-surface print. Centre line x = 210.
 
 **Layout rects** (`source/ui/PedalFaceplatePaint.h`, namespace `facelayout`) —
 these are the contract; art must land on them exactly:
 
 | Part | Rect (x, y, w, h) |
 |---|---|
-| Logo nameplate | 85, 70, 250, 52 |
+| Product / vendor identity | 62, 75, 296, 52 |
 | Preset field | 54, 129, 232, 42 |
 | Preset load / save | 294,136,30,29 / 331,136,30,29 |
 | Knobs, large (x3) | DISTORTION 54,184 · SIZE 168,184 · LEVEL 282,184 — each **84 x 84** + 16 caption |
@@ -84,11 +85,10 @@ before (the art rested at -15.2°) and every reading was off by that much.
 
 **Colours**: ink `0xff161413`, orange accent `0xffe66c0b`.
 
-**Logo**: `resources/ui/brand_logo.svg` is the exact shape contract, not a
-texture. Import its paths and build the slanted nickel rim, recessed face,
-orange inlay, each N/i/k/o/F/X solid and the recessed orange o counter as scene
-geometry. Glyph tops sit one physical millimetre above the orange inlay. Never
-sample a raster logo in the Blender material.
+**Identity**: build a quiet physical carrier under second-surface print. Keep
+`SENDBLOOM` as the product name and use only the literal compact uppercase
+`NIKO MUSIC` maker mark at the utility edge. The retired oversized Niko FX
+plaque and SVG are not part of this direction; do not invent a symbol.
 
 **Preset furniture**: keep only the selected preset name live in JUCE. Model
 the selector well, bezel, gasket, smoked-black insert, orange arrow and rails;
@@ -96,7 +96,7 @@ model each button's
 well, carrier, gasket, cap, icon and legend as separate solids. Never sample a
 raster preset plate in a Blender material.
 
-The legacy `brand_logo.png`, `preset_field.png`, `preset_load.png` and
+The legacy `brand_logo.svg`, `brand_logo.png`, `preset_field.png`, `preset_load.png` and
 `preset_save.png` rasters these rules warned against were deleted along with
 the photo-extraction script that produced them. Geometry is now the only
 source; if you find yourself wanting one of those files back, model the part
@@ -200,8 +200,9 @@ plugin and look at it there.
   narrow structural highlights instead of making the entire control mirror chrome.
 - The art must land on the `facelayout` rects unchanged. If a rect genuinely has
   to move, say so and why — do not silently reflow the panel.
-- Keep the pedal recognisably SendBloom: black wrinkle enclosure, warm-ivory
-  pad print, orange accent and Niko FX nameplate.
+- Keep the pedal recognisably SendBloom: tall clear pressure-pedal enclosure,
+  populated white board, dark control/treadle family, scarce orange accent and
+  quiet `NIKO MUSIC` second-surface mark.
 - Report render times and file sizes. The last art pass took embedded assets from
   4.32 MB to 542 KB; do not casually undo that.
 

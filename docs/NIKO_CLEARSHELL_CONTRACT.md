@@ -6,17 +6,26 @@ stompbox controls from other products.  The editable construction source remains
 `tools/render_ui.py`; this contract records the portfolio rules that the local
 implementation proves.
 
+The Phase 45 product establishes the portfolio's neutral-white value direction,
+not a shared enclosure template.  SendBloom translates that direction into its
+own tall clear polycarbonate pedal: white-soldermask internals, graphite controls
+and print, neutral metal, and a scarce warm-orange functional accent.  Green/cyan
+colour grading and global tint overlays are prohibited.
+
 ## Surface and live information
 
 - The clear polycarbonate lid, populated PCB, component families, internal
-  leads, and frost legend carriers are genuine construction elements, not a
-  transparent overlay or empty cavity.
-- Live preset text, labels, control faces, LEDs, logo/preset carriers, and
+  leads, raised pressure-sensor daughterboard, and frost legend carriers are
+  genuine construction elements, not a transparent overlay or empty cavity.
+- Live preset text, labels, control faces, LEDs, identity/preset carriers, and
   readable values are deliberately opaque.  They remain dynamic JUCE state;
   permanent panel print stays registered hardware art.
 - The established vertical pedal layout, tangible rotary/treadle interactions,
   keyboard focus, reset, tooltip, and accessibility behavior remain product
   specific and authoritative.
+- The only visible maker mark is the literal uppercase `NIKO MUSIC`, printed
+  discreetly at the quiet utility edge.  `SENDBLOOM` remains the product name;
+  no competing Niko FX plaque or new symbol is introduced.
 
 ## Shared interaction and host vocabulary
 

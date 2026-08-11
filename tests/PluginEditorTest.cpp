@@ -90,8 +90,8 @@ TEST_CASE ("Faceplate knob rendering keeps its moulded body and bright index",
     juce::Graphics g (image);
     editor.paintEntireComponent (g, true);
 
-    // Black control on black wrinkle plate: prove the rendered hardware still
-    // contains both its dark moulded body and bright physical index/washer.
+    // Dark control over the bright clear-shell register: prove the rendered
+    // hardware still contains its moulded body and physical index/washer.
     float darkest = 1.0f;
     float brightest = 0.0f;
     for (int y = levelCentre.y - 30; y <= levelCentre.y + 30; ++y)
@@ -104,6 +104,63 @@ TEST_CASE ("Faceplate knob rendering keeps its moulded body and bright index",
     REQUIRE (darkest < 0.22f);
     REQUIRE (brightest > 0.48f);
     REQUIRE (brightest - darkest > 0.35f);
+#endif
+}
+
+TEST_CASE ("Bright clear-shell board remains neutral and depth-separated at 1x",
+           "[ui][editor][render][clearshell]")
+{
+#if ! JUCE_MAC
+    SKIP ("Rendered-pixel colour is a macOS-referenced contract.");
+#else
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+    editor.setVisible (true);
+    editor.resized();
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (30);
+
+    juce::Image image (juce::Image::ARGB, editor.getWidth(), editor.getHeight(), true);
+    juce::Graphics g (image);
+    editor.paintEntireComponent (g, true);
+
+    // This region includes exposed white-soldermask board, traces, internal
+    // parts and the dark user-contact hardware.  Its mean must stay bright and
+    // neutral, while a material fraction of dark pixels prevents a featureless
+    // white card from satisfying the ClearShell contract.
+    const juce::Rectangle<int> boardRegion { 55, 370, 310, 320 };
+    double red = 0.0;
+    double green = 0.0;
+    double blue = 0.0;
+    int darkPixels = 0;
+    int brightPixels = 0;
+    int sampleCount = 0;
+
+    for (int y = boardRegion.getY(); y < boardRegion.getBottom(); ++y)
+        for (int x = boardRegion.getX(); x < boardRegion.getRight(); ++x)
+        {
+            const auto colour = image.getPixelAt (x, y);
+            red += colour.getFloatRed();
+            green += colour.getFloatGreen();
+            blue += colour.getFloatBlue();
+            const auto brightness = colour.getBrightness();
+            darkPixels += brightness < 0.35f ? 1 : 0;
+            brightPixels += brightness > 0.60f ? 1 : 0;
+            ++sampleCount;
+        }
+
+    const auto meanRed = red / sampleCount;
+    const auto meanGreen = green / sampleCount;
+    const auto meanBlue = blue / sampleCount;
+    const auto meanMax = juce::jmax (meanRed, juce::jmax (meanGreen, meanBlue));
+    const auto meanMin = juce::jmin (meanRed, juce::jmin (meanGreen, meanBlue));
+    const auto darkFraction = static_cast<double> (darkPixels) / sampleCount;
+    const auto brightFraction = static_cast<double> (brightPixels) / sampleCount;
+
+    REQUIRE (meanMin > 0.42);
+    REQUIRE (meanMax - meanMin < 0.06);
+    REQUIRE (brightFraction > 0.50);
+    REQUIRE (darkFraction > 0.06);
 #endif
 }
 

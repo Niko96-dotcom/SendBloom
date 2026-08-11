@@ -38,9 +38,10 @@ Research date: 2026-07-22
    adjustment, tooltips, keyboard focus, and double-click reset.
 7. Remove the exaggerated label bevel so dynamic text reads as screen print on
    the rendered enclosure.
-8. Replace the cream insert with procedural black wrinkle powder and ivory
-   pad-print; the powder signal affects bump, roughness and albedo rather than
-   acting as a flat colour layer.
+8. Use the portfolio's Bright register as a value reference: neutral clear/silver
+   polycarbonate over a physically populated white-soldermask board, with dark
+   print and control faces and only scarce warm-orange functional accents. No
+   cyan/green grade or global tint overlay is allowed.
 9. Use the Hammond 1590B's published 60.5 mm width, 31 mm overall depth and
    4.19 mm lid thickness as the dimensional scale. At the 345 px plate width,
    the enclosure is about 177 render units deep—not the rejected 36-unit shell.
@@ -57,11 +58,10 @@ Research date: 2026-07-22
     screws and shoe-contact areas.
 13. Add a low frontal studio kicker so the deep near wall and chrome retain
     reflected shape instead of collapsing to featureless black.
-14. Treat the brand mark as hardware, not composited artwork: import the exact
-    `brand_logo.svg` silhouettes, model the nickel rim, recessed black bed and
-    orange inlay separately, then extrude every Niko/FX glyph one physical
-    millimetre. Keep the o counter open over a recessed orange insert so inner
-    shadows come from geometry without changing the approved wordmark.
+14. Treat identity as quiet second-surface hardware print, not a composited
+    badge: retain `SENDBLOOM` as the product name and use only a small literal
+    uppercase `NIKO MUSIC` maker mark at the utility edge. The retired Niko FX
+    plaque and its vector source are not part of the current product language.
 15. Apply the same rule to preset furniture. Keep only the selected preset name
     live in JUCE, but build the selector cut-out, nickel bezel, insulating
     gasket, smoked-black carrier, orange arrow inlay and guide rails as solids.
@@ -110,7 +110,7 @@ Research date: 2026-07-22
 ## Deliberate boundaries
 
 - No trademarked knob or enclosure is copied exactly.
-- The fixed 420 x 780 layout, signal order, orange/ivory brand language and
+- The fixed 420 x 780 layout, signal order, neutral-white/orange brand language and
   pressure-send treadle remain recognisably SendBloom.
 - Resizing, a global UAD-style toolbar and A/B state management are valuable
   product features, but are not disguised as visual-realism work. They need a
