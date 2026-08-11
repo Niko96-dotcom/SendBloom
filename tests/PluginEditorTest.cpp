@@ -172,8 +172,10 @@ TEST_CASE ("Editor program selector follows project state restore",
 
     REQUIRE (presetBox != nullptr);
     REQUIRE (presetBox->getSelectedId() == 1); // Init
-    REQUIRE (presetBox->getItemText (1) == "INIT");
-    REQUIRE (presetBox->getItemText (8) == "GATED ROOM");
+    // ComboBox item access is zero-based, unlike the one-based item IDs used
+    // for host program selection below.
+    REQUIRE (presetBox->getItemText (0) == "INIT");
+    REQUIRE (presetBox->getItemText (7) == "GATED ROOM");
 
     sendbloom::PluginProcessor source;
     source.setCurrentProgram (7); // Gated Room
