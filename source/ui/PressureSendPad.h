@@ -17,6 +17,9 @@ public:
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
+    bool keyPressed (const juce::KeyPress& key) override;
+    void focusLost (juce::Component::FocusChangeType cause) override;
+    std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override;
 
     bool isPressed() const noexcept { return pressed; }
     float getDisplayAmount() const noexcept { return displayAmount; }
@@ -32,9 +35,16 @@ public:
     float getPressTravel() const noexcept { return isTimerRunning() ? pressTravel : -1.0f; }
 
 private:
+    class AccessibilityValue;
+
     void timerCallback() override;
     void setConnected (bool connected);
     void setAmountFromY (float y);
+    void setAmountNormalized (float amount);
+    void engageFromKeyboard (float amount);
+    void releasePressure();
+    void toggleKeyboardPressure();
+    void notifyAmountChanged();
     void beginAmountGesture();
     void endAmountGesture();
     void startBloomFade();

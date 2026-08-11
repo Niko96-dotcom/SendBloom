@@ -2,6 +2,7 @@
 #include <PluginProcessor.h>
 #include <ParameterIDs.h>
 #include <ui/PedalFaceplatePaint.h>
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -21,6 +22,104 @@ bool containsButtonText (juce::Component& component, const juce::String& text)
     return false;
 }
 
+juce::Component* findComponentNamed (juce::Component& component, const juce::String& name)
+{
+    if (component.getName() == name)
+        return &component;
+
+    for (auto* child : component.getChildren())
+        if (auto* match = findComponentNamed (*child, name))
+            return match;
+
+    return nullptr;
+}
+
+juce::Image renderEditor (sendbloom::PluginEditor& editor, int scale)
+{
+    editor.setVisible (true);
+    editor.resized();
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (30);
+
+    juce::Image image (juce::Image::ARGB,
+                       editor.getWidth() * scale,
+                       editor.getHeight() * scale,
+                       true);
+    juce::Graphics g (image);
+    g.addTransform (juce::AffineTransform::scale (static_cast<float> (scale)));
+    editor.paintEntireComponent (g, true);
+    return image;
+}
+
+struct PaletteStats
+{
+    double meanMin {};
+    double meanSpread {};
+    double brightFraction {};
+    double darkFraction {};
+};
+
+PaletteStats measurePalette (const juce::Image& image,
+                             juce::Rectangle<int> logicalRegion,
+                             int scale)
+{
+    const auto region = juce::Rectangle<int> (logicalRegion.getX() * scale,
+                                               logicalRegion.getY() * scale,
+                                               logicalRegion.getWidth() * scale,
+                                               logicalRegion.getHeight() * scale);
+    double red = 0.0;
+    double green = 0.0;
+    double blue = 0.0;
+    int darkPixels = 0;
+    int brightPixels = 0;
+    int sampleCount = 0;
+
+    for (int y = region.getY(); y < region.getBottom(); ++y)
+        for (int x = region.getX(); x < region.getRight(); ++x)
+        {
+            const auto colour = image.getPixelAt (x, y);
+            red += colour.getFloatRed();
+            green += colour.getFloatGreen();
+            blue += colour.getFloatBlue();
+            const auto brightness = colour.getBrightness();
+            darkPixels += brightness < 0.35f ? 1 : 0;
+            brightPixels += brightness > 0.60f ? 1 : 0;
+            ++sampleCount;
+        }
+
+    const auto meanRed = red / sampleCount;
+    const auto meanGreen = green / sampleCount;
+    const auto meanBlue = blue / sampleCount;
+    const auto meanMax = juce::jmax (meanRed, juce::jmax (meanGreen, meanBlue));
+    const auto meanMin = juce::jmin (meanRed, juce::jmin (meanGreen, meanBlue));
+    return { meanMin,
+             meanMax - meanMin,
+             static_cast<double> (brightPixels) / sampleCount,
+             static_cast<double> (darkPixels) / sampleCount };
+}
+
+int countOrangePixels (const juce::Image& image,
+                       juce::Rectangle<int> logicalRegion,
+                       int scale)
+{
+    const auto region = juce::Rectangle<int> (logicalRegion.getX() * scale,
+                                               logicalRegion.getY() * scale,
+                                               logicalRegion.getWidth() * scale,
+                                               logicalRegion.getHeight() * scale);
+    int count = 0;
+    for (int y = region.getY(); y < region.getBottom(); ++y)
+        for (int x = region.getX(); x < region.getRight(); ++x)
+        {
+            const auto colour = image.getPixelAt (x, y);
+            count += colour.getFloatRed() > 0.65f
+                     && colour.getFloatGreen() > 0.18f
+                     && colour.getFloatGreen() < 0.62f
+                     && colour.getFloatBlue() < 0.22f
+                       ? 1
+                       : 0;
+        }
+    return count;
+}
+
 } // namespace
 
 TEST_CASE ("PluginEditor instantiates at pedal dimensions", "[ui][editor]")
@@ -32,6 +131,96 @@ TEST_CASE ("PluginEditor instantiates at pedal dimensions", "[ui][editor]")
     REQUIRE (editor.getWidth() == 420);
     REQUIRE (editor.getHeight() == 780);
     REQUIRE (editor.getNumChildComponents() > 5);
+}
+
+TEST_CASE ("Rotaries and preset actions expose truthful accessibility metadata",
+           "[ui][editor][accessibility]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+
+    sendbloom::ui::PedalKnob knob ("LEVEL");
+    auto& slider = knob.getSlider();
+    auto sliderHandler = slider.createAccessibilityHandler();
+    REQUIRE (slider.getWantsKeyboardFocus());
+    REQUIRE (slider.getName() == "LEVEL");
+    REQUIRE (sliderHandler != nullptr);
+    REQUIRE (sliderHandler->getRole() == juce::AccessibilityRole::slider);
+    REQUIRE (sliderHandler->getTitle() == "LEVEL");
+    REQUIRE (sliderHandler->getDescription() == "LEVEL rotary control");
+    REQUIRE_FALSE (sliderHandler->getHelp().isEmpty());
+    REQUIRE (sliderHandler->getValueInterface() != nullptr);
+
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+
+    auto* preset = findComponentNamed (editor, "Preset");
+    REQUIRE (preset != nullptr);
+    auto presetHandler = preset->createAccessibilityHandler();
+    REQUIRE (presetHandler != nullptr);
+    REQUIRE (presetHandler->getRole() == juce::AccessibilityRole::comboBox);
+    REQUIRE (presetHandler->getTitle() == "Preset");
+    REQUIRE_FALSE (presetHandler->getDescription().isEmpty());
+
+    for (const auto& name : { juce::String ("Load preset"), juce::String ("Save preset") })
+    {
+        auto* component = findComponentNamed (editor, name);
+        REQUIRE (component != nullptr);
+        auto handler = component->createAccessibilityHandler();
+        REQUIRE (handler != nullptr);
+        REQUIRE (handler->getRole() == juce::AccessibilityRole::button);
+        REQUIRE (component->getWantsKeyboardFocus());
+        REQUIRE (handler->getTitle() == name);
+        REQUIRE_FALSE (handler->getDescription().isEmpty());
+        REQUIRE_FALSE (handler->getHelp().isEmpty());
+        REQUIRE (handler->getActions().contains (juce::AccessibilityActionType::press));
+    }
+}
+
+TEST_CASE ("Pressure send exposes percentage value and complete keyboard interaction",
+           "[ui][editor][accessibility][pressure]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::ui::PressureSendPad pad (processor.getAPVTS(),
+                                       sendbloom::ParameterIDs::sendConnected,
+                                       sendbloom::ParameterIDs::sendAmount);
+    pad.setBounds (0, 0, 100, 100);
+
+    auto handler = pad.createAccessibilityHandler();
+    REQUIRE (pad.getWantsKeyboardFocus());
+    REQUIRE (handler != nullptr);
+    REQUIRE (handler->getRole() == juce::AccessibilityRole::slider);
+    REQUIRE (handler->getTitle() == "Pressure send");
+    REQUIRE_FALSE (handler->getDescription().isEmpty());
+    REQUIRE_FALSE (handler->getHelp().isEmpty());
+    REQUIRE (handler->getActions().contains (juce::AccessibilityActionType::press));
+
+    auto* value = handler->getValueInterface();
+    REQUIRE (value != nullptr);
+    REQUIRE_FALSE (value->isReadOnly());
+    REQUIRE (value->getRange().isValid());
+    REQUIRE (value->getRange().getMinimumValue() == 0.0);
+    REQUIRE (value->getRange().getMaximumValue() == 100.0);
+    REQUIRE (value->getRange().getInterval() == 5.0);
+
+    REQUIRE (pad.keyPressed (juce::KeyPress (juce::KeyPress::upKey)));
+    REQUIRE (value->getCurrentValue() == Catch::Approx (5.0).margin (0.01));
+    REQUIRE (pad.isPressed());
+
+    value->setValue (60.0);
+    REQUIRE (value->getCurrentValue() == Catch::Approx (60.0).margin (0.01));
+    REQUIRE (pad.isPressed());
+
+    REQUIRE (pad.keyPressed (juce::KeyPress (juce::KeyPress::homeKey)));
+    REQUIRE (value->getCurrentValue() == Catch::Approx (0.0).margin (0.01));
+    REQUIRE_FALSE (pad.isPressed());
+
+    REQUIRE (handler->getActions().invoke (juce::AccessibilityActionType::press));
+    REQUIRE (value->getCurrentValue() == Catch::Approx (100.0).margin (0.01));
+    REQUIRE (pad.isPressed());
+    REQUIRE (pad.keyPressed (juce::KeyPress (juce::KeyPress::returnKey)));
+    REQUIRE (value->getCurrentValue() == Catch::Approx (0.0).margin (0.01));
+    REQUIRE_FALSE (pad.isPressed());
 }
 
 TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][editor][interactive]")
@@ -161,6 +350,89 @@ TEST_CASE ("Bright clear-shell board remains neutral and depth-separated at 1x",
     REQUIRE (meanMax - meanMin < 0.06);
     REQUIRE (brightFraction > 0.50);
     REQUIRE (darkFraction > 0.06);
+#endif
+}
+
+TEST_CASE ("Bright clear-shell palette survives rotary extremes at HiDPI",
+           "[ui][editor][render][clearshell][hidpi][matrix]")
+{
+#if ! JUCE_MAC
+    SKIP ("Rendered-pixel colour is a macOS-referenced contract.");
+#else
+    juce::ScopedJuceInitialiser_GUI gui;
+    using namespace sendbloom::ParameterIDs;
+    const auto boardRegion = juce::Rectangle<int> (55, 370, 310, 320);
+
+    for (const auto value : { 0.0f, 0.5f, 1.0f })
+    {
+        CAPTURE (value);
+        sendbloom::PluginProcessor processor;
+        for (const auto* id : { inputGain, size, level, distn, outputGain })
+            processor.getAPVTS().getParameter (id)->setValueNotifyingHost (value);
+
+        sendbloom::PluginEditor editor (processor);
+        const auto stats = measurePalette (renderEditor (editor, 2), boardRegion, 2);
+        REQUIRE (stats.meanMin > 0.42);
+        REQUIRE (stats.meanSpread < 0.06);
+        REQUIRE (stats.brightFraction > 0.50);
+        REQUIRE (stats.darkFraction > 0.06);
+    }
+#endif
+}
+
+TEST_CASE ("Preset action focus is visible at standard and HiDPI scales",
+           "[ui][editor][render][accessibility][focus][matrix]")
+{
+#if ! JUCE_MAC
+    SKIP ("Rendered-pixel colour is a macOS-referenced contract.");
+#else
+    juce::ScopedJuceInitialiser_GUI gui;
+    using State = sendbloom::PluginEditor::PresetActionSnapshotState;
+    using namespace sendbloom::ui::facelayout;
+
+    for (const auto scale : { 1, 2 })
+    {
+        CAPTURE (scale);
+        sendbloom::PluginProcessor processor;
+        sendbloom::PluginEditor editor (processor);
+        editor.setPresetActionStateForSnapshot (State::none);
+        const auto baseline = renderEditor (editor, scale);
+        editor.setPresetActionStateForSnapshot (State::loadFocus);
+        const auto focused = renderEditor (editor, scale);
+
+        const auto region = kPresetLoad.expanded (4);
+        const auto baselineOrange = countOrangePixels (baseline, region, scale);
+        const auto focusedOrange = countOrangePixels (focused, region, scale);
+        REQUIRE (focusedOrange > baselineOrange + 12 * scale);
+    }
+#endif
+}
+
+TEST_CASE ("Preset menu remains readable with the longest factory name at HiDPI",
+           "[ui][editor][render][preset][hidpi][matrix]")
+{
+#if ! JUCE_MAC
+    SKIP ("Rendered-pixel colour is a macOS-referenced contract.");
+#else
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    processor.setCurrentProgram (2); // Cut Sample Gate, longest factory display name.
+    REQUIRE (processor.getCurrentProgramDisplayName() == "Cut Sample Gate");
+    sendbloom::PluginEditor editor (processor);
+    editor.setVisible (true);
+    editor.resized();
+
+    juce::Image image (juce::Image::ARGB, editor.getWidth() * 2, editor.getHeight() * 2, true);
+    juce::Graphics g (image);
+    g.addTransform (juce::AffineTransform::scale (2.0f));
+    editor.paintEntireComponent (g, true);
+    editor.paintPresetMenuForSnapshot (g);
+
+    const auto menuStats = measurePalette (image, { 54, 174, 270, 251 }, 2);
+    REQUIRE (menuStats.brightFraction > 0.66);
+    REQUIRE (menuStats.darkFraction > 0.025);
+    REQUIRE (countOrangePixels (image, { 54, 174, 270, 251 }, 2) > 4000);
+
 #endif
 }
 

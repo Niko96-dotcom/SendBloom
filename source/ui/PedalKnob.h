@@ -37,6 +37,11 @@ public:
                                           juce::ModifierKeys::shiftModifier);
         slider.setScrollWheelEnabled (true);
         slider.setWantsKeyboardFocus (true);
+        slider.setName (labelName);
+        slider.setTitle (labelName);
+        slider.setDescription (labelName + " rotary control");
+        slider.setHelpText ("Use the arrow keys to adjust; hold Shift for fine control. "
+                            "Option-click or double-click resets the value.");
         slider.setTooltip (labelName + ": drag vertically, Shift-drag for fine control, "
                            "or Option-click/double-click to reset");
         slider.onValueChange = [this] { repaint(); };

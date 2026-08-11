@@ -52,6 +52,10 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         presetBox.addItem (upperPresetName (processorRef, i), i + 1);
 
     presetBox.setSelectedId (processorRef.getCurrentProgram() + 1, juce::dontSendNotification);
+    presetBox.setName ("Preset");
+    presetBox.setTitle ("Preset");
+    presetBox.setDescription ("SendBloom factory and custom preset selector");
+    presetBox.setHelpText ("Choose a factory preset. Edited parameter values are shown as Custom.");
     presetBox.onChange = [this]
     {
         presetChanged();
@@ -112,10 +116,19 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     {
         button->setLookAndFeel (&transparentControls);
         button->setButtonText ({ });
+        button->setWantsKeyboardFocus (true);
         addAndMakeVisible (*button);
     }
     loadPresetButton.setTooltip ("Load a SendBloom preset file");
     savePresetButton.setTooltip ("Save the current SendBloom state");
+    loadPresetButton.setName ("Load preset");
+    loadPresetButton.setTitle ("Load preset");
+    loadPresetButton.setDescription ("Load a SendBloom preset file");
+    loadPresetButton.setHelpText ("Opens a file chooser for a SendBloom preset file.");
+    savePresetButton.setName ("Save preset");
+    savePresetButton.setTitle ("Save preset");
+    savePresetButton.setDescription ("Save the current SendBloom state");
+    savePresetButton.setHelpText ("Opens a file chooser to save the current SendBloom state.");
     loadPresetButton.onClick = [this] { loadPresetFromDisk(); };
     savePresetButton.onClick = [this] { savePresetToDisk(); };
     addChildComponent (advancedDrawer);
@@ -190,6 +203,40 @@ void PluginEditor::paintOverChildren (juce::Graphics& g)
                            getLocalBounds().toFloat(),
                            darkOn,
                            processorRef.isClipHoldActive());
+
+    const auto paintActionFeedback = [&g] (juce::Button& button,
+                                           juce::Rectangle<int> bounds,
+                                           bool forceHover,
+                                           bool forceFocus)
+    {
+        const auto hovered = forceHover || button.isMouseOverOrDragging();
+        const auto focused = forceFocus || button.hasKeyboardFocus (true);
+        const auto down = button.isDown();
+        if (! hovered && ! focused && ! down)
+            return;
+
+        const auto ring = bounds.toFloat().expanded (2.0f);
+        if (hovered || down)
+        {
+            g.setColour (juce::Colour (0xffe66c0b).withAlpha (down ? 0.24f : 0.12f));
+            g.fillRoundedRectangle (ring, 5.0f);
+        }
+
+        g.setColour (juce::Colours::black.withAlpha (0.58f));
+        g.drawRoundedRectangle (ring.expanded (1.0f), 6.0f, 1.0f);
+        g.setColour (juce::Colour (0xffe66c0b).withAlpha (focused ? 0.96f : 0.78f));
+        g.drawRoundedRectangle (ring, 5.0f, focused ? 2.0f : 1.2f);
+    };
+
+    using Snapshot = PresetActionSnapshotState;
+    paintActionFeedback (loadPresetButton,
+                         ui::facelayout::kPresetLoad,
+                         presetActionSnapshotState == Snapshot::loadHover,
+                         presetActionSnapshotState == Snapshot::loadFocus);
+    paintActionFeedback (savePresetButton,
+                         ui::facelayout::kPresetSave,
+                         presetActionSnapshotState == Snapshot::saveHover,
+                         presetActionSnapshotState == Snapshot::saveFocus);
 }
 
 void PluginEditor::resized()
@@ -299,6 +346,57 @@ void PluginEditor::setAdvancedExpandedForSnapshot (bool shouldExpand)
         advancedButton.toFront (false); // keep the close target clickable above the drawer
     }
     repaint();
+}
+
+void PluginEditor::setPresetActionStateForSnapshot (PresetActionSnapshotState state)
+{
+    presetActionSnapshotState = state;
+    repaint();
+}
+
+void PluginEditor::paintPresetMenuForSnapshot (juce::Graphics& g)
+{
+    // PopupMenu uses a separate peer in a host. The snapshot executable paints
+    // the same LookAndFeel calls into the deterministic editor image so the menu
+    // palette, typography, selection, and longest factory name are reviewable.
+    constexpr int rowHeight = 27;
+    constexpr int inset = 4;
+    const auto menuBounds = juce::Rectangle<int> (54, 174, 270,
+                                                   inset * 2 + processorRef.getNumPrograms() * rowHeight);
+
+    g.setColour (juce::Colours::black.withAlpha (0.24f));
+    g.fillRoundedRectangle (menuBounds.toFloat().translated (3.0f, 4.0f), 4.0f);
+
+    juce::Graphics::ScopedSaveState saved (g);
+    g.reduceClipRegion (menuBounds);
+    g.setOrigin (menuBounds.getPosition());
+    transparentControls.drawPopupMenuBackground (g, menuBounds.getWidth(), menuBounds.getHeight());
+
+    for (int i = 0; i < processorRef.getNumPrograms(); ++i)
+    {
+        const auto row = juce::Rectangle<int> (inset,
+                                                inset + i * rowHeight,
+                                                menuBounds.getWidth() - inset * 2,
+                                                rowHeight);
+        transparentControls.drawPopupMenuItem (g,
+                                               row,
+                                               false,
+                                               true,
+                                               i == processorRef.getCurrentProgram(),
+                                               i == processorRef.getCurrentProgram(),
+                                               false,
+                                               upperPresetName (processorRef, i),
+                                               {},
+                                               nullptr,
+                                               nullptr);
+    }
+
+    g.setColour (juce::Colour (0xff16191b).withAlpha (0.82f));
+    g.drawRoundedRectangle (juce::Rectangle<float> (0.5f, 0.5f,
+                                                     static_cast<float> (menuBounds.getWidth() - 1),
+                                                     static_cast<float> (menuBounds.getHeight() - 1)),
+                            4.0f,
+                            1.0f);
 }
 
 void PluginEditor::timerCallback()

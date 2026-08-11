@@ -46,6 +46,13 @@ int main (int argc, char* argv[])
     bool sendPressed = false;
     bool clipActive = false;
     bool bypassed = false;
+    bool rotaryMin = false;
+    bool rotaryCentre = false;
+    bool rotaryMax = false;
+    bool presetMenu = false;
+    bool presetLongest = false;
+    bool presetCustom = false;
+    auto presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::none;
     float renderScale = 1.0f;
 
     for (int i = 1; i < argc; ++i)
@@ -63,6 +70,26 @@ int main (int argc, char* argv[])
             clipActive = true;
         else if (arg == "--bypass")
             bypassed = true;
+        else if (arg == "--rotary-min")
+            rotaryMin = true;
+        else if (arg == "--rotary-centre")
+            rotaryCentre = true;
+        else if (arg == "--rotary-max")
+            rotaryMax = true;
+        else if (arg == "--preset-menu")
+            presetMenu = presetLongest = true;
+        else if (arg == "--preset-longest")
+            presetLongest = true;
+        else if (arg == "--preset-custom")
+            presetCustom = true;
+        else if (arg == "--load-hover")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::loadHover;
+        else if (arg == "--load-focus")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::loadFocus;
+        else if (arg == "--save-hover")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::saveHover;
+        else if (arg == "--save-focus")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::saveFocus;
         else if (arg == "--scale")
         {
             if (i + 1 >= argc)
@@ -96,12 +123,29 @@ int main (int argc, char* argv[])
     if (bypassed)
         setParam (processor, bypass, 1.0f);
 
+    if (presetLongest)
+        processor.setCurrentProgram (2); // CUT SAMPLE GATE: longest factory display name.
+
+    if (rotaryMin || rotaryCentre || rotaryMax)
+    {
+        const auto value = rotaryMin ? 0.0f : (rotaryMax ? 1.0f : 0.5f);
+        for (const auto* id : { inputGain, size, level, distn, outputGain })
+            setParam (processor, id, value);
+    }
+
+    if (presetCustom)
+    {
+        processor.setCurrentProgram (2);
+        setParam (processor, size, 0.731f);
+    }
+
     sendbloom::PluginEditor editor (processor);
     editor.setVisible (true);
     editor.resized();
 
     if (openAdvanced)
         editor.setAdvancedExpandedForSnapshot (true);
+    editor.setPresetActionStateForSnapshot (presetActionState);
 
     // Allow attachments, component visibility, and image-backed child paints to settle
     // before capturing. Immediate construction-frame snapshots can omit child layers.
@@ -113,6 +157,8 @@ int main (int argc, char* argv[])
     juce::Graphics g (image);
     g.addTransform (juce::AffineTransform::scale (renderScale));
     editor.paintEntireComponent (g, true);
+    if (presetMenu)
+        editor.paintPresetMenuForSnapshot (g);
 
     juce::PNGImageFormat format;
     output.deleteFile(); // FileOutputStream appends; a stale first PNG stream would mask every new snapshot

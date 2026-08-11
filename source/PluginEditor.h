@@ -16,6 +16,15 @@ class PluginEditor : public juce::AudioProcessorEditor,
                      private juce::Timer
 {
 public:
+    enum class PresetActionSnapshotState
+    {
+        none,
+        loadHover,
+        loadFocus,
+        saveHover,
+        saveFocus,
+    };
+
     explicit PluginEditor (PluginProcessor&);
     ~PluginEditor() override;
 
@@ -23,6 +32,8 @@ public:
     void paintOverChildren (juce::Graphics&) override;
     void resized() override;
     void setAdvancedExpandedForSnapshot (bool shouldExpand);
+    void setPresetActionStateForSnapshot (PresetActionSnapshotState state);
+    void paintPresetMenuForSnapshot (juce::Graphics& g);
 
 private:
     void presetChanged();
@@ -53,6 +64,7 @@ private:
     juce::TextButton savePresetButton;
     ui::AdvancedDrawer advancedDrawer;
     std::unique_ptr<juce::FileChooser> presetFileChooser;
+    PresetActionSnapshotState presetActionSnapshotState { PresetActionSnapshotState::none };
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> sizeAttachment;

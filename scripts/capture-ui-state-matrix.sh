@@ -16,8 +16,14 @@ fi
 
 mkdir -p "$output_dir"
 
-states=(default dark gate-pre send clip advanced bypass)
-flags=("" "--dark" "--gate-pre" "--send" "--clip" "--advanced" "--bypass")
+states=(default dark gate-pre send clip advanced bypass
+        rotary-min rotary-centre rotary-max
+        preset-menu preset-longest preset-custom
+        load-hover load-focus save-hover save-focus)
+flags=("" "--dark" "--gate-pre" "--send" "--clip" "--advanced" "--bypass"
+       "--rotary-min" "--rotary-centre" "--rotary-max"
+       "--preset-menu" "--preset-longest" "--preset-custom"
+       "--load-hover" "--load-focus" "--save-hover" "--save-focus")
 
 dimensions() {
   local image=$1

@@ -23,6 +23,11 @@ colour grading and global tint overlays are prohibited.
 - The established vertical pedal layout, tangible rotary/treadle interactions,
   keyboard focus, reset, tooltip, and accessibility behavior remain product
   specific and authoritative.
+- Every rotary exposes its printed control name and live value through the
+  child slider's native accessibility value interface.  The Pressure Send pad
+  is a named percentage slider with arrow/Home/End and Space/Return operation;
+  LOAD and SAVE remain visually modelled hardware while exposing truthful
+  button names, descriptions, actions, and visible keyboard-focus rings.
 - The only visible maker mark is the literal uppercase `NIKO MUSIC`, printed
   discreetly at the quiet utility edge.  `SENDBLOOM` remains the product name;
   no competing Niko FX plaque or new symbol is introduced.
@@ -51,3 +56,9 @@ HiDPI, strict signatures, official VST3 validation, pluginval, AU validation,
 reversible installed-bundle comparison, and a separately observed Cubase result
 are required.  A render, source build, or validator alone is not an installation
 or host claim.
+
+The deterministic state matrix covers default, Dark, Gate Pre, Send, Clip,
+Advanced, Bypass, all-rotary minimum/centre/maximum, longest factory preset,
+Custom preset, the open preset menu, and LOAD/SAVE hover/focus feedback at both
+1x and HiDPI.  Render tests enforce the neutral Bright register across the
+HiDPI rotary extremes, not just the default 1x view.

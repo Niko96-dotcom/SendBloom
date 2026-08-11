@@ -18,6 +18,14 @@ public:
 class TransparentControlsLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
+    TransparentControlsLookAndFeel()
+    {
+        setColour (juce::PopupMenu::backgroundColourId, juce::Colour (0xfff6f5ef));
+        setColour (juce::PopupMenu::textColourId, juce::Colour (0xff111416));
+        setColour (juce::PopupMenu::highlightedBackgroundColourId, juce::Colour (0xffe66c0b));
+        setColour (juce::PopupMenu::highlightedTextColourId, juce::Colours::white);
+    }
+
     void drawRotarySlider (juce::Graphics&, int, int, int, int, float, float, float, juce::Slider&) override
     {
     }
@@ -42,6 +50,14 @@ public:
     {
         // Match the baked faceplate preset type size (~13–14 px tall field).
         return juce::FontOptions (13.0f, juce::Font::bold);
+    }
+
+    juce::Font getPopupMenuFont() override
+    {
+        auto font = juce::Font (juce::FontOptions (12.0f, juce::Font::bold));
+        font.setHorizontalScale (0.88f);
+        font.setExtraKerningFactor (0.025f);
+        return font;
     }
 
     void positionComboBoxText (juce::ComboBox& box, juce::Label& label) override

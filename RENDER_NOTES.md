@@ -232,9 +232,11 @@ readable and keeps a stable silhouette across rerenders and moving-part states.
 
 ## Final assembly-clearance pass
 
-The complete editor was captured in default, PRE, POST, pressed, dark, clip and
-open-drawer states at its actual 420×780 size. The last pass treats print and
-software furniture as parts of the assembly rather than independent decoration:
+The complete editor is captured in a deterministic 17-state matrix at both
+420×780 and 840×1560: default, PRE, pressed, dark, clip, open drawer, bypass,
+rotary minimum/centre/maximum, open preset menu, longest factory preset, Custom,
+and LOAD/SAVE hover/focus. The last pass treats print and software furniture as
+parts of the assembly rather than independent decoration:
 
 - the lower signal-frame segments have explicit keep-outs around both screw
   heads and the pressure-treadle carrier;
@@ -307,11 +309,12 @@ impossibly stale again, check the file size.
   sync by hand.
 
 No host-drawn text is baked (knob captions, GATE/PRE/POST, CLIP, PRESSURE
-SEND, ADVANCED, preset name). "DARK MODE" and the Niko FX badge are product
-artwork and stay in the render. The badge is generated from extruded vector
-silhouettes; the preset furniture is also modelled in layers. The selected
-preset name is the sole live element over that hardware. No image-texture
-material path remains in `tools/render_ui.py`.
+SEND, ADVANCED, preset name). "DARK MODE", the quiet `SENDBLOOM` identity, and
+the discreet literal `NIKO MUSIC` second-surface print are product artwork and
+stay in the render. The retired competing Niko FX badge is not loaded or drawn;
+the preset furniture is modelled in layers. The selected preset name is the
+sole live element over that hardware. No image-texture material path remains in
+`tools/render_ui.py`.
 
 ## Samples and times (Apple M5 Pro, Metal, after kernel warm-up)
 

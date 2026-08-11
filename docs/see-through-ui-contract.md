@@ -78,11 +78,13 @@ behind.
 
 ## Runtime state matrix
 
-`scripts/capture-ui-state-matrix.sh` captures the real `EditorSnapshot` in
-default, Dark, Gate Pre, Send, Clip, Advanced, and Bypass states at both 420×780
-and 840×1560.  The script verifies dimensions and fails closed on a missing
-snapshot.  These composites are the 1x/HiDPI review surface; isolated render
-assets do not substitute for them.
+`scripts/capture-ui-state-matrix.sh` captures the real `EditorSnapshot` in 17
+states: default, Dark, Gate Pre, Send, Clip, Advanced, Bypass, all-rotary
+minimum/centre/maximum, open preset menu with the longest factory name, longest
+factory preset, Custom preset, and LOAD/SAVE hover/focus feedback.  Every state
+is captured at both 420×780 and 840×1560.  The script verifies dimensions and
+fails closed on a missing snapshot.  These composites are the 1x/HiDPI review
+surface; isolated render assets do not substitute for them.
 
 ## Evidence boundary
 
