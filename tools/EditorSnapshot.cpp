@@ -45,6 +45,7 @@ int main (int argc, char* argv[])
     bool gatePre = false;
     bool sendPressed = false;
     bool clipActive = false;
+    bool bypassed = false;
     float renderScale = 1.0f;
 
     for (int i = 1; i < argc; ++i)
@@ -60,6 +61,8 @@ int main (int argc, char* argv[])
             sendPressed = true;
         else if (arg == "--clip")
             clipActive = true;
+        else if (arg == "--bypass")
+            bypassed = true;
         else if (arg == "--scale")
         {
             if (i + 1 >= argc)
@@ -90,6 +93,8 @@ int main (int argc, char* argv[])
     }
     if (clipActive)
         triggerClip (processor);
+    if (bypassed)
+        setParam (processor, bypass, 1.0f);
 
     sendbloom::PluginEditor editor (processor);
     editor.setVisible (true);
