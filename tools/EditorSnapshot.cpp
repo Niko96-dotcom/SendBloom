@@ -5,6 +5,8 @@
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <cmath>
+
 namespace
 {
 
@@ -43,6 +45,7 @@ int main (int argc, char* argv[])
     bool gatePre = false;
     bool sendPressed = false;
     bool clipActive = false;
+    float renderScale = 1.0f;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -57,6 +60,17 @@ int main (int argc, char* argv[])
             sendPressed = true;
         else if (arg == "--clip")
             clipActive = true;
+        else if (arg == "--scale")
+        {
+            if (i + 1 >= argc)
+                return 2;
+
+            const auto requestedScale = juce::String { argv[++i] }.getDoubleValue();
+            if (! std::isfinite (requestedScale) || requestedScale < 1.0 || requestedScale > 4.0)
+                return 2;
+
+            renderScale = static_cast<float> (requestedScale);
+        }
         else
             output = juce::File (arg);
     }
@@ -88,8 +102,11 @@ int main (int argc, char* argv[])
     // before capturing. Immediate construction-frame snapshots can omit child layers.
     juce::MessageManager::getInstance()->runDispatchLoopUntil (30);
 
-    juce::Image image (juce::Image::ARGB, editor.getWidth(), editor.getHeight(), true);
+    const auto imageWidth = juce::roundToInt (static_cast<float> (editor.getWidth()) * renderScale);
+    const auto imageHeight = juce::roundToInt (static_cast<float> (editor.getHeight()) * renderScale);
+    juce::Image image (juce::Image::ARGB, imageWidth, imageHeight, true);
     juce::Graphics g (image);
+    g.addTransform (juce::AffineTransform::scale (renderScale));
     editor.paintEntireComponent (g, true);
 
     juce::PNGImageFormat format;
