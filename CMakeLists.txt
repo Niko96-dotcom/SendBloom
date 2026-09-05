@@ -158,6 +158,13 @@ target_compile_definitions(RenderTank PRIVATE
     $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
 target_link_libraries(RenderTank PRIVATE SharedCode)
 
+# Full production processor renderer for reproducible control-interaction audio.
+add_executable(RenderProcessor EXCLUDE_FROM_ALL tools/RenderProcessor.cpp)
+target_compile_features(RenderProcessor PRIVATE cxx_std_20)
+target_compile_definitions(RenderProcessor PRIVATE
+    $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_link_libraries(RenderProcessor PRIVATE SharedCode)
+
 # Opt-in local benchmark, using shipping code without test diagnostics. Never
 # registered with CTest: timing is observational, not a machine-dependent gate.
 add_executable(BenchmarkProcessor EXCLUDE_FROM_ALL tools/BenchmarkProcessor.cpp)

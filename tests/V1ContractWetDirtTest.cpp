@@ -142,19 +142,30 @@ TEST_CASE ("long-run DC offset below 1e-4 after asymmetric clip",
     REQUIRE (dcMean < 1.0e-4);
 }
 
-TEST_CASE ("distn zero returns original wet within tolerance",
+TEST_CASE ("clean reconstruction preserves passband magnitude",
            "[v1][contract][wet-dirt][DSP-12]")
 {
-    sendbloom::WetOverdriveState od;
-    od.prepare (kSampleRate);
-
-    const std::array<float, 5> inputs { -0.4f, -0.05f, 0.0f, 0.12f, 0.38f };
-
-    for (const auto wet : inputs)
-        REQUIRE (od.process (wet, 0.0f) == Catch::Approx (wet).margin (1.0e-6f));
+    for (const auto rate : { 44100.0, 48000.0, 96000.0, 192000.0 })
+        for (const auto frequency : { 100.0, 1000.0, 10000.0 })
+        {
+            sendbloom::WetOverdriveState od;
+            od.prepare (rate);
+            double energy = 0;
+            for (int i = 0; i < static_cast<int> (rate * 2); ++i)
+            {
+                const auto x = static_cast<float> (0.25 * std::sin (2.0 * juce::MathConstants<double>::pi * frequency * i / rate));
+                const auto y = od.process (x, 0);
+                if (i >= static_cast<int> (rate)) energy += y * y;
+            }
+            // IIR reconstruction changes phase; its useful audio passband must
+            // preserve magnitude, independently of the unmeasured dirty tone.
+            const auto gainDb = 10.0 * std::log10 (energy / rate / (0.25 * 0.25 / 2));
+            INFO ("rate=" << rate << " frequency=" << frequency << " gainDb=" << gainDb);
+            REQUIRE (std::abs (gainDb) < 0.1);
+        }
 }
 
-TEST_CASE ("unimplemented dirt_os is not published as a shipping parameter",
+TEST_CASE ("Internal dirt oversampling is not published as a shipping parameter",
            "[v1][contract][wet-dirt][DSP-13][shipping]")
 {
     const auto root = findRepoRoot();

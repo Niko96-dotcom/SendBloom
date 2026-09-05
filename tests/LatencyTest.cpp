@@ -16,11 +16,13 @@ namespace
 
 constexpr int kBlockSize = 512;
 
-int liveProperSrcLatency (double sampleRate, int maxBlockSize)
+int liveProcessingLatency (double sampleRate, int maxBlockSize)
 {
     sendbloom::RateConverterPair converters;
     converters.prepare (sampleRate, maxBlockSize);
-    return converters.getRoundTripLatencySamples();
+    sendbloom::WetOverdriveState dirt;
+    dirt.prepare (sampleRate, maxBlockSize);
+    return converters.getRoundTripLatencySamples() + dirt.getLatencySamples();
 }
 
 enum class DirectRoute
@@ -86,16 +88,16 @@ TEST_CASE ("Plugin has no PDC before it is prepared", "[chain][latency]")
     REQUIRE (plugin.getLatencySamples() == 0);
 }
 
-TEST_CASE ("Plugin reports the live ProperSRC latency after prepare", "[chain][latency][PDC-01]")
+TEST_CASE ("Plugin reports live SRC plus wet reconstruction latency after prepare", "[chain][latency][PDC-01]")
 {
     sendbloom::PluginProcessor plugin;
     plugin.prepareToPlay (48000.0, kBlockSize);
 
-    REQUIRE (plugin.getLatencySamples() == liveProperSrcLatency (48000.0, kBlockSize));
-    REQUIRE (plugin.getLatencySamples() == sendbloom::lookupRoundTripLatencySamples (48000.0));
+    REQUIRE (plugin.getLatencySamples() == liveProcessingLatency (48000.0, kBlockSize));
+    REQUIRE (plugin.getLatencySamples() > sendbloom::lookupRoundTripLatencySamples (48000.0));
 }
 
-TEST_CASE ("Plugin reports canonical ProperSRC PDC across supported host rates",
+TEST_CASE ("Plugin reports SRC plus wet reconstruction PDC across supported host rates",
            "[chain][latency][PDC-01]")
 {
     sendbloom::PluginProcessor plugin;
@@ -103,13 +105,15 @@ TEST_CASE ("Plugin reports canonical ProperSRC PDC across supported host rates",
     for (const auto& row : sendbloom::kMeasuredLatencyTable)
     {
         plugin.prepareToPlay (row.hostRateHz, sendbloom::kMaxHostBlock);
-        REQUIRE (plugin.getLatencySamples() == row.roundTripSamples);
+        sendbloom::RateConverterPair converters;
+        converters.prepare (row.hostRateHz, sendbloom::kMaxHostBlock);
+        REQUIRE (converters.getRoundTripLatencySamples() == row.roundTripSamples);
         REQUIRE (plugin.getLatencySamples()
-                 == liveProperSrcLatency (row.hostRateHz, sendbloom::kMaxHostBlock));
+                 == liveProcessingLatency (row.hostRateHz, sendbloom::kMaxHostBlock));
     }
 }
 
-TEST_CASE ("Plugin PDC follows the prepared live SRC topology, not a fixed table",
+TEST_CASE ("Plugin PDC follows the prepared live processing topology, not a fixed table",
            "[chain][latency][PDC-01]")
 {
     constexpr std::array<std::pair<double, int>, 4> preparations { {
@@ -124,7 +128,7 @@ TEST_CASE ("Plugin PDC follows the prepared live SRC topology, not a fixed table
     for (const auto& [sampleRate, maxBlock] : preparations)
     {
         plugin.prepareToPlay (sampleRate, maxBlock);
-        REQUIRE (plugin.getLatencySamples() == liveProperSrcLatency (sampleRate, maxBlock));
+        REQUIRE (plugin.getLatencySamples() == liveProcessingLatency (sampleRate, maxBlock));
     }
 }
 

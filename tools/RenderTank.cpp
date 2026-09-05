@@ -10,7 +10,7 @@
       RenderTank host <out.f32> <hostRate> <rt60> <darkMix> <seconds>
       RenderTank src    <out.f32> <hostRate> <seconds>
       RenderTank stream <in.f32> <out.f32> <rt60> <darkMix> <distn> [ring|legacy]
-      RenderTank dirt <in.f32> <out.f32> <distn>
+      RenderTank dirt <in.f32> <out.f32> <distn> [sampleRate]
 */
 
 #include <FixedRateAdapter.h>
@@ -242,7 +242,10 @@ int renderDirt (int argc, char** argv)
 
     std::vector<float> y (x.size(), 0.0f);
     sendbloom::WetOverdriveState od;
-    od.prepare (kRate);
+    const double sampleRate = argc > 5 ? std::atof (argv[5]) : kRate;
+    if (! std::isfinite (sampleRate) || sampleRate < 8000.0 || sampleRate > 1536000.0)
+        return 2;
+    od.prepare (sampleRate);
 
     for (size_t i = 0; i < x.size(); ++i)
         y[i] = od.process (x[i], blend);

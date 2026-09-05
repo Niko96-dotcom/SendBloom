@@ -168,26 +168,30 @@ void printMetricsCsv (const FixtureMetrics& m)
 
 } // namespace
 
-TEST_CASE ("WetOverdrive distn zero returns clean wet exactly", "[od][WetOverdrive][diagnostics]")
+TEST_CASE ("WetOverdrive clean reconstruction has unity settled gain", "[od][WetOverdrive][diagnostics]")
 {
     WetOverdriveState od;
     od.prepare (kSampleRate);
-
-    REQUIRE (od.process (0.35f, 0.0f) == Catch::Approx (0.35f));
-    REQUIRE (od.process (-0.2f, 0.0f) == Catch::Approx (-0.2f));
+    float clean = 0.0f;
+    for (int i = 0; i < 2048; ++i)
+        clean = od.process (0.35f, 0.0f);
+    REQUIRE (clean == Catch::Approx (0.35f).margin (1e-6f));
     REQUIRE (WetOverdrive::process (0.18f, 0.0f) == Catch::Approx (0.18f));
 }
 
-TEST_CASE ("WetOverdrive distn one differs from clean wet", "[od][WetOverdrive][diagnostics]")
+TEST_CASE ("WetOverdrive settled driven branch differs from clean", "[od][WetOverdrive][diagnostics]")
 {
-    WetOverdriveState od;
-    od.prepare (kSampleRate);
-
-    const auto input = 0.35f;
-    const auto clean = od.process (input, 0.0f);
-    const auto dirty = od.process (input, 1.0f);
-
-    REQUIRE (dirty != Catch::Approx (clean).margin (1e-4f));
+    WetOverdriveState clean, dirty;
+    clean.prepare (kSampleRate);
+    dirty.prepare (kSampleRate);
+    double difference = 0;
+    for (int i = 0; i < 4800; ++i)
+    {
+        const auto x = 0.8f * std::sin (0.04f * static_cast<float> (i));
+        const auto delta = clean.process (x, 0) - dirty.process (x, 1);
+        if (i >= 2400) difference += delta * delta;
+    }
+    REQUIRE (std::sqrt (difference / 2400) > 0.01);
 }
 
 TEST_CASE ("WetOverdrive output finite for input range -4 to +4", "[od][WetOverdrive][diagnostics]")
@@ -241,18 +245,20 @@ TEST_CASE ("WetOverdrive active curve tamed tanh asymmetry", "[od][WetOverdrive]
     REQUIRE (std::abs (pos) > std::abs (neg));
 }
 
-TEST_CASE ("WetOverdrive blend interpolates clean and driven branch", "[od][WetOverdrive][diagnostics]")
+TEST_CASE ("WetOverdrive blend interpolates reconstructed clean and driven branches", "[od][WetOverdrive][diagnostics]")
 {
-    WetOverdriveState od;
-    od.prepare (kSampleRate);
-
-    const auto input = 0.3f;
-    const auto blend = 0.5f;
-    od.reset();
-    const auto driven = od.processFilteredBranch (input);
-    const auto expected = input + blend * (driven - input);
-    od.reset();
-    REQUIRE (od.process (input, blend) == Catch::Approx (expected));
+    WetOverdriveState clean, driven, mixed;
+    clean.prepare (kSampleRate);
+    driven.prepare (kSampleRate);
+    mixed.prepare (kSampleRate);
+    for (int i = 0; i < 4096; ++i)
+    {
+        const auto input = 0.8f * std::sin (0.35f * static_cast<float> (i));
+        const auto blend = static_cast<float> (i % 101) / 100.0f;
+        const auto c = clean.process (input, 0);
+        const auto d = driven.processFilteredBranch (input);
+        REQUIRE (mixed.process (input, blend) == Catch::Approx (c + blend * (d-c)).margin (1e-6f));
+    }
 }
 
 TEST_CASE ("WetOverdrive legacy had higher small-signal gain than active curve", "[od][WetOverdrive][diagnostics]")

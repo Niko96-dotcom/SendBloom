@@ -462,8 +462,16 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
 
         monoSum /= static_cast<float> (juce::jmax (1, numChannels));
         monoScratch_[static_cast<size_t> (sample)] = inputStage.processSample (monoSum, inputGain);
+        // The documented hardware pressure/Post interaction cuts the wet tail on
+        // release even while the player continues dry. Key Post from the send,
+        // not that continuing dry input. Pre retains its original key and trails.
+        // Use the existing smoothed send and placement depth so switching modes
+        // never introduces a separate abrupt detector transition. The exact
+        // hardware detector node/timing is unknown (docs/fidelity-20260905).
+        const auto detectorGain = 1.0f - gatePostDepthScratch_[static_cast<size_t> (sample)]
+                                      * (1.0f - sendGainScratch_[static_cast<size_t> (sample)]);
         envelopeScratch_[static_cast<size_t> (sample)] =
-            chain.getEnvelope().process (std::abs (monoScratch_[static_cast<size_t> (sample)]));
+            chain.getEnvelope().process (monoScratch_[static_cast<size_t> (sample)] * detectorGain);
     }
 
     // ADR-V1-06 / RT-06: send, distn, and threshold consumed per sample.

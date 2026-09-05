@@ -3,69 +3,32 @@
 **Status:** implemented, v1.x; the 2026 two-allpass density candidate was rejected by interactive listening and is not the shipping topology
 **Supersedes the tank design in:** ADR-002 (8-line FDN / Schroeder tank)
 
-## The problem
+## Evidence correction — 2026-09-05
 
-SendBloom's reverb was a Freeverb-style tank: four series allpasses into four
-parallel damped combs into one modulated allpass, at 32,768 Hz. Its longest comb
-was 1,202 samples — **36.7 ms**. Everything else about the plugin (parallel dry,
-wet-only overdrive, dual gate placement, pressure send) matched the effect it was
-aiming at, but the reverb itself did not, and no amount of tuning damping or
-decay time was going to close that gap, because the gap was structural.
+The ring is SendBloom's chosen reverb architecture. The previous explanation
+incorrectly treated a chip vendor's design example as proof of the pedal's
+internal topology. A limited RAM budget and a long decay do **not** force an
+allpass ring, and the older comb topology cannot be ruled out from those facts.
+Earlier ripple measurements characterize our earlier engine only.
 
-## What the hardware class actually constrains
+The FV-1 attribution for the reference product is secondary reporting. Spin's
+[demo-board documentation](https://www.spinsemi.com/knowledge_base/demo_board.html)
+describes both 32.768 kHz and 46.6084 kHz crystals. Its recommended watch crystal
+therefore does not establish the pedal's clock, firmware, or analog response.
+SendBloom chooses 32,768 Hz and a nominal 32,768-word delay-memory budget; it
+uses floating point and does not emulate the chip instruction set or converters.
 
-The reference hardware is built on the Spin Semiconductor FV-1. Three numbers
-from its datasheet (SPN1001, 12 March 2010) fix the entire design space:
+Spin's [Effects article](https://www.spinsemi.com/knowledge_base/effects.html)
+describes a ring example with two allpasses per block, but explicitly permits
+one, three, or more, and different block counts. Its advice about loop length,
+diffusion, shelving and modulation guides this design; it is neither a unique
+solution nor a measurement of the original pedal. The 2026 two-allpass candidate
+was rejected in listening, so the accepted single-allpass voicing remains.
 
-| | |
-|---|---|
-| Sample rate | 32,768 Hz (standard watch crystal on X1/X2) |
-| Delay RAM | 32,768 words — *"Total internal memory delay: 1.0 seconds"* |
-| Converters | −3 dB at 14.5–15.5 kHz |
-| Coefficients | S1.14 (16-bit) |
-| Accumulator | S.23 (24-bit) |
-| Instructions | 128 per sample |
-
-One second of delay memory *for the whole program* is the binding constraint. A
-5–6 second decay is therefore not made from long delays — it is made from a
-modest amount of memory with high recirculation gain. That forces a specific
-topology, and Spin documents it.
-
-## The topology Spin documents
-
-From Spin's knowledge base ("Effects → Reverberation", Keith Barr):
-
-> When multiple delays and all pass filters are placed into a loop, sound
-> injected into the loop will recirculate, and the density of any impulse will
-> increase as the signal passes successively through the allpass filters.
-
-The described loop is **four blocks of "2 allpass filters and a delay"** in a
-ring, with a reverb-time coefficient applied once per block, plus:
-
-- input diffusion — *"add a few series allpass filters in the input signal
-  path, so that the signal inserted into the loop has a higher initial density"*
-- in-loop shelving — *"Shelving high pass and low pass filters may be added to
-  the loop to control the decay of high and low frequencies"*
-- modulation — *"slowly modulate some of the delay lengths within the reverb
-  loop... using say, the SIN output in one place and COS in another"*
-- output as taps from inside the ring delays, summed in different proportions
-
-And, decisively, from "Considerations when building a reverb":
-
-> **The total delay (excluding allpass filter delays) in the loop should be at
-> least 200ms.** Shorter delay time will lead to *flutter*, a repeating quality
-> in the tail. The human ear is very sensitive to flutter in the 4 to 8 Hz
-> range; **very short delays will cause a tinny sound**, moderately short delays
-> will cause a noticeable flutter.
-
-The old tank's loop was 36.7 ms — about a fifth of the stated floor. Measured on
-the built binary, its tail rippled at **28.2 Hz at every decay setting**, locked
-to the comb length, which is exactly the failure mode described.
-
-Barr also pins the allpass coefficient: 0.5 makes the reverb "build", 0.6 builds
-quicker but is "fat" during the initial sound, and **0.7 and above "sound more
-immediate, but can have the tendency to produce a 'ringing' sound."** The old
-tank used 0.7.
+See [the current evidence map](fidelity-20260905/RESEARCH.md) for sourced behavior,
+implementation assumptions, and the independently reproduced pressure/Post gate
+correction. No quantitative hardware-equivalence claim follows from this tank's
+memory use, response measurements, or passing regression tests.
 
 ## What is implemented
 

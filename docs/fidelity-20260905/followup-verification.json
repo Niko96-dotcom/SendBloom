@@ -1,0 +1,120 @@
+{
+  "status": "implemented and locally verified; no hardware match claim",
+  "baseline": "pressure-fixed first-pass candidate",
+  "candidate": "4x wet reconstruction plus first pressure correction",
+  "ctest": {
+    "passed": 285,
+    "skipped": 1,
+    "failed": 0,
+    "log": "artifacts/fidelity-followup-20260905/ctest-final.log"
+  },
+  "python_tests": 16,
+  "pluginval": {
+    "strictness": 10,
+    "result": "SUCCESS",
+    "bundle": "Builds/Performance/SendBloom_artefacts/Release/VST3/SendBloom.vst3"
+  },
+  "signatures": "strict AU and VST3 passed",
+  "deterministic_corpus": {
+    "cells_per_build": 60,
+    "repeats": 2
+  },
+  "alias_probes": {
+    "cells_per_build": 64,
+    "rates": [
+      44100,
+      48000,
+      96000,
+      192000
+    ]
+  },
+  "latency_48k": {
+    "before": 186,
+    "after": 192,
+    "additional_ms": 0.125
+  },
+  "cpu": {
+    "protocol": "Three alternating runs; each scenario has seven fresh-prepare repeats, 1s warmup, 20s audio per timing; median of medians; one core equivalent, eight-instance row is aggregate; no audio-device deadline measurement",
+    "rows": [
+      {
+        "scenario": "audio-48k-64",
+        "baseline_core_percent": 0.3309979,
+        "candidate_core_percent": 0.6720565,
+        "relative_change_percent": 103.03950568870674,
+        "candidate_max_observed_core_percent": 0.6793467
+      },
+      {
+        "scenario": "audio-48k-512",
+        "baseline_core_percent": 0.3051666,
+        "candidate_core_percent": 0.6503557,
+        "relative_change_percent": 113.114967365367,
+        "candidate_max_observed_core_percent": 0.6748832
+      },
+      {
+        "scenario": "audio-96k-128",
+        "baseline_core_percent": 0.4785785,
+        "candidate_core_percent": 1.167797,
+        "relative_change_percent": 144.01367800684736,
+        "candidate_max_observed_core_percent": 1.293781
+      },
+      {
+        "scenario": "audio-192k-128",
+        "baseline_core_percent": 0.7919075,
+        "candidate_core_percent": 2.166609,
+        "relative_change_percent": 173.59369623346157,
+        "candidate_max_observed_core_percent": 2.231821
+      },
+      {
+        "scenario": "audio-8-instances",
+        "baseline_core_percent": 2.448051,
+        "candidate_core_percent": 5.215421,
+        "relative_change_percent": 113.04380505144707,
+        "candidate_max_observed_core_percent": 5.251921
+      },
+      {
+        "scenario": "pressure-sparse",
+        "baseline_core_percent": 0.313845,
+        "candidate_core_percent": 0.6575613,
+        "relative_change_percent": 109.51785116857047,
+        "candidate_max_observed_core_percent": 0.6678137
+      },
+      {
+        "scenario": "pressure-dense",
+        "baseline_core_percent": 0.3139596,
+        "candidate_core_percent": 0.6268345,
+        "relative_change_percent": 99.65450968850769,
+        "candidate_max_observed_core_percent": 0.668997
+      },
+      {
+        "scenario": "pressure-stress",
+        "baseline_core_percent": 0.5129552,
+        "candidate_core_percent": 0.8094814,
+        "relative_change_percent": 57.80742645751522,
+        "candidate_max_observed_core_percent": 0.8329546
+      },
+      {
+        "scenario": "irrelevant-midi",
+        "baseline_core_percent": 0.3106304,
+        "candidate_core_percent": 0.652843,
+        "relative_change_percent": 110.16713109856599,
+        "candidate_max_observed_core_percent": 0.6603318
+      }
+    ]
+  },
+  "listening": "Prepared 40 WAVs and HTML; no human listening claimed",
+  "daw": "Not performed; nothing installed",
+  "parameter_compatibility": "13 IDs unchanged; state and program tests passed; wet sound deliberately changes",
+  "limitations": [
+    "No calibrated hardware captures or known PCB/firmware revision",
+    "Analog curve/filter cutoffs and reverb remain approximations",
+    "C++ allocation counter does not cover all direct malloc calls",
+    "Benchmark reports aggregate processing time, not worst callback deadlines"
+  ],
+  "not_performed": [
+    "install",
+    "deploy",
+    "push",
+    "publish",
+    "real music project edits"
+  ]
+}

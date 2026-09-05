@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <juce_dsp/juce_dsp.h>
 
 namespace sendbloom
 {
@@ -16,27 +17,17 @@ enum class OverdriveCurve
 
 struct WetOverdrive
 {
-    // Spin Semiconductor's design notes name the nonlinearity to use for
-    // guitar distortion on this hardware class, and why:
-    //
-    //   "If X<1 then Y=X / If X>1 then Y=2 - 1/X ... The sound however,
-    //    especially for a guitar and keyboard instruments, is very nice, and
-    //    aliasing is largely avoided. This concept delivers nice distortion,
-    //    that is, lower level signals are clean, and only 'break up' on
-    //    transients and emphasized instrumental notes."
-    //
-    // That last property is the audible difference from the tanh curve this
-    // replaces. tanh bends everywhere: its gain fell continuously from 1.95x on
-    // near-silent input to 0.92x at full scale, so it squashed the whole reverb
-    // tail uniformly. The reciprocal curve is exactly linear below threshold and
-    // only rounds above it, so quiet trails stay clean and only the blooms bite
-    // — and being a 1/x form it generates mostly low-order harmonics, which is
-    // why Spin recommends it over curves that alias badly at 32 kHz.
+    // Original-inspired fixed-drive branch. Spin's published reciprocal curve
+    // motivated this shape; it does not specify a pedal's analog overdrive.
+    // Drive, asymmetry, makeup and filters below are unmeasured voicing choices.
+    // In particular, positive/negative small-signal slopes differ here: the
+    // asymmetry is not evidence of any specific diode or measured transfer.
+    // Preserve the accepted voicing until controlled captures support a change.
     static constexpr OverdriveCurve kActiveCurve = OverdriveCurve::BarrReciprocal;
 
     static constexpr float kDriveBarr = 3.0f;
-    // Mild positive-side asymmetry for even-harmonic warmth; the bare function
-    // is symmetric, real pedal clipping stages are not.
+    // Chosen positive-side asymmetry; the bare reciprocal is symmetric.
+    // No product-specific transfer measurement supports this amount.
     static constexpr float kAsymPosBarr = 1.10f;
     // Flat trim. Bracketed from both sides: the dirty branch has to read as
     // *added* rather than as a level drop (GatedBloomChainTest), while the wet
@@ -44,9 +35,8 @@ struct WetOverdrive
     // ceiling, milestone spec 13.7) — otherwise DISTN doubles as a volume knob.
     // 1.20 puts the 220 Hz tail ratio at ~1.06, inside that window.
     //
-    // Being flat, it leaves the part that matters alone: below threshold the
-    // curve is still exactly straight, so quiet trails get level but no
-    // harmonics. The old curve had no straight region at all.
+    // Each polarity is linear below its knee, but the unequal slopes produce
+    // even harmonics across zero, including on quiet trails.
     static constexpr float kMakeupBarr = 1.20f;
 
     // Candidate A — tamed asymmetric tanh with level-dependent drive
@@ -170,9 +160,9 @@ struct WetOverdrive
         return kMakeupC * clipped / kNorm;
     }
 
-    /** Spin/Barr reciprocal soft clip: unity below threshold, 1/x rounding above,
-        asymptotic to +/-2 before scaling. Normalising by the drive keeps the
-        sub-threshold region at exactly unity gain, so it stays genuinely clean. */
+    /** Reciprocal soft clip: linear below each knee, 1/x rounding above.
+        The bare curve approaches +/-2; asymmetry and makeup change both slopes.
+        This is an engineering voicing, not a measured circuit transfer. */
     static float clipBarrReciprocal (float x) noexcept
     {
         auto scaled = x * kDriveBarr;
@@ -277,17 +267,26 @@ private:
 class WetOverdriveState
 {
 public:
-    void prepare (double sampleRate) noexcept
+    void prepare (double sampleRate, int maxBlockSize = 1) noexcept
     {
-        preClipHp.prepare (sampleRate, WetOverdrive::kPreClipHpHz);
-        preClipLp.prepare (sampleRate, WetOverdrive::kPreClipLpHz);
-        postClipLp.prepare (sampleRate, WetOverdrive::kPostClipLpHz);
-        postClipDcBlock.prepare (sampleRate, WetOverdrive::kPostClipDcBlockHpHz);
+        oversampling.initProcessing (static_cast<size_t> (maxBlockSize));
+        returned.setSize (2, maxBlockSize);
+        const auto processingRate = sampleRate * 4.0;
+        preClipHp.prepare (processingRate, WetOverdrive::kPreClipHpHz);
+        preClipLp.prepare (processingRate, WetOverdrive::kPreClipLpHz);
+        postClipLp.prepare (processingRate, WetOverdrive::kPostClipLpHz);
+        postClipDcBlock.prepare (processingRate, WetOverdrive::kPostClipDcBlockHpHz);
         reset();
+    }
+
+    int getLatencySamples() const noexcept
+    {
+        return static_cast<int> (std::lround (oversampling.getLatencyInSamples()));
     }
 
     void reset() noexcept
     {
+        oversampling.reset();
         preClipHp.reset();
         preClipLp.reset();
         postClipLp.reset();
@@ -295,6 +294,40 @@ public:
     }
 
     float processFilteredBranch (float wet) noexcept
+    {
+        float output = 0.0f;
+        processBlock (&wet, &output, 1, nullptr, 1.0f);
+        return output;
+    }
+
+    float process (float wet, float distnBlend) noexcept
+    {
+        float output = 0.0f;
+        processBlock (&wet, &output, 1, nullptr, distnBlend);
+        return output;
+    }
+
+    void processBlock (const float* wet, float* output, int count,
+                       const float* blends, float constantBlend = 0.0f) noexcept
+    {
+        const float* inputs[] { wet, wet };
+        const juce::dsp::AudioBlock<const float> input (inputs, 2, static_cast<size_t> (count));
+        auto up = oversampling.processSamplesUp (input);
+        auto* dirty = up.getChannelPointer (0);
+        for (size_t i = 0; i < up.getNumSamples(); ++i)
+            dirty[i] = processAtInternalRate (dirty[i]);
+        auto down = juce::dsp::AudioBlock<float> (returned).getSubBlock (0, static_cast<size_t> (count));
+        oversampling.processSamplesDown (down);
+        for (int i = 0; i < count; ++i)
+        {
+            const auto clean = returned.getSample (1, i);
+            const auto blend = blends != nullptr ? blends[i] : constantBlend;
+            output[i] = clean + blend * (returned.getSample (0, i) - clean);
+        }
+    }
+
+private:
+    float processAtInternalRate (float wet) noexcept
     {
         auto x = preClipHp.process (wet);
         x = preClipLp.process (x);
@@ -304,13 +337,12 @@ public:
         return x;
     }
 
-    float process (float wet, float distnBlend) noexcept
-    {
-        const auto driven = processFilteredBranch (wet);
-        return wet + distnBlend * (driven - wet);
-    }
-
-private:
+    // Both wet branches share reconstruction phase. Integer latency is included
+    // in chain PDC and direct-path alignment; never blend a delayed dirty return
+    // with an undelayed clean return.
+    juce::dsp::Oversampling<float> oversampling {
+        2, 2, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true, true };
+    juce::AudioBuffer<float> returned;
     OnePoleHighpass preClipHp;
     OnePoleLowpass preClipLp;
     OnePoleLowpass postClipLp;

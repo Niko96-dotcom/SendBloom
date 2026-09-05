@@ -6,37 +6,17 @@
 namespace sendbloom
 {
 
-/** Delay lengths and coefficients for the allpass-ring ("Barr ring") tank.
+/** SendBloom's chosen allpass-ring lengths and coefficients.
 
-    The reference hardware class is built on the Spin Semiconductor FV-1, whose
-    published datasheet fixes three numbers that dominate how such a reverb can
-    possibly sound:
+    The FV-1 supports a standard 32,768 Hz crystal and has 32,768 delay words;
+    other clocks are possible. These are chip-class constraints, not evidence
+    of a particular pedal's clock, program, filter response or topology.
 
-      - Fs = 32,768 Hz (standard watch crystal on X1/X2).
-      - 32,768 words of delay RAM — exactly 1.0 s of total delay, for everything.
-      - Converter response is −3 dB at ~15 kHz.
-
-    Spin's own design notes (Keith Barr, "Effects → Reverberation" and
-    "Considerations when building a reverb") describe the topology those numbers
-    imply, and state the rules this table is built to satisfy:
-
-      - The loop is a ring of blocks, each "2 allpass filters and a delay",
-        with a reverb-time coefficient applied once per block.
-      - "The total delay (excluding allpass filter delays) in the loop should be
-        at least 200ms. Shorter delay time will lead to flutter... very short
-        delays will cause a tinny sound."   -> kRingDelays sum to ~497 ms.
-      - Allpass coefficients "on the order of 0.6 will build quicker, but be
-        'fat' during the initial sound period" (0.7+ tends to ring).
-      - "add a few series allpass filters in the input signal path, so that the
-        signal inserted into the loop has a higher initial density."
-      - Ringing is smoothed by "slowly modulate some of the delay lengths within
-        the reverb loop ... using say, the SIN output in one place and COS in
-        another."
-
-    Lengths below are our own mutually prime choices inside the ranges Spin's
-    freely published reference programs occupy, not a copy of any program, and
-    the whole structure is sized to fit the real 32,768-word RAM budget.
-    See docs/fv1-reverb-architecture.md.
+    Spin's Effects design article offers an allpass ring with input diffusion,
+    shelving and delay modulation, and allows different allpass/block counts.
+    This table uses our own delays and coefficients with one allpass per block.
+    No product firmware or measured hardware impulse response was available.
+    See docs/fv1-reverb-architecture.md for the design and evidence boundaries.
 */
 struct Fv1RingTankTable
 {

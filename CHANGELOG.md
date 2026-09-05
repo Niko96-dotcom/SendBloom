@@ -13,6 +13,8 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ### Added
 
+- Full production-processor offline renderer, immutable DI/test-signal corpus
+  receipts, and matched/original-gain pressure-release listening comparisons.
 - A verified public-reference catalogue with exact listening time codes, pair
   classifications, evidence boundaries, and a structured blind scorecard. No
   third-party media is tracked or treated as calibrated golden audio.
@@ -23,13 +25,21 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ### Changed
 
-- Each fixed-rate ring block now uses the vendor-documented two serial
-  allpasses before its delay. The split preserves loop length, delay-RAM use,
-  taps, onset, and level while materially lowering 100–250 ms crest/kurtosis.
-- Wet-only `distn` now reaches reciprocal breakup at +0.182/−0.200 bloom level
-  instead of +0.303/−0.333. Per-branch normalization keeps quiet-tail gain
-  equal on both polarities while retaining the locked 100 Hz dirty-branch
-  high-pass. Dry and clean-wet routing are unchanged.
+- Wet distortion now runs at 4× host rate to reduce folded digital harmonics.
+  The curve, drive and preset values are retained; both wet branches share
+  reconstruction filters. This adds six samples to reported PDC and dry/bypass
+  delay. Existing presets with wet return have changed phase; dirty presets
+  also have slightly less upper treble and aliasing. See the follow-up fidelity
+  report for measured gain, CPU and listening comparisons.
+- Post gate now follows the pressure-controlled send, allowing release to cut
+  the wet tail while dry playing continues. The gate correction preserves Pre trails and disconnected-send
+  behavior; the separate oversampling change above affects their wet sound. Existing Post/pressure sessions, including Hot Clip,
+  now close on release and can gate at partial pressure; all parameter IDs,
+  automation values and preset files are preserved.
+- Corrected architecture claims: chip constraints and vendor examples do not
+  prove the modeled pedal's topology. The earlier two-allpass and recalibrated
+  wet-drive candidates were rejected in listening; the accepted single-allpass
+  tank and existing drive curve remain unchanged.
 - Documentation now describes 1.2 s as SendBloom's chosen useful Size floor;
   public reference material establishes the 5–6 s maximum but not a hardware
   minimum.

@@ -26,7 +26,7 @@ public:
         // fast release doesn't stutter a sustained chord.
         envelope.prepare (sampleRate, 1.0f, 2.0f);
         gate.prepare (sampleRate);
-        overdrive.prepare (sampleRate);
+        overdrive.prepare (sampleRate, maxBlockSize);
 
         maxBlockSize_ = maxBlockSize;
         wetSendScratch_.assign (static_cast<size_t> (maxBlockSize), 0.0f);
@@ -46,7 +46,7 @@ public:
 
     int getPdcLatencySamples() const noexcept
     {
-        return reverb != nullptr ? reverb->getPdcLatencySamples() : 0;
+        return reverb != nullptr ? reverb->getPdcLatencySamples() + overdrive.getLatencySamples() : 0;
     }
 
     /** Placement crossfade (ADR-V1-11c).
@@ -156,10 +156,6 @@ private:
         if (numSamples > maxBlockSize_)
             return;
 
-        const auto sampleDistn = [distnBlends, constantDistn] (int i) noexcept
-        {
-            return distnBlends != nullptr ? distnBlends[static_cast<size_t> (i)] : constantDistn;
-        };
         const auto sampleSendGain = [sendGains, constantSendGain] (int i) noexcept
         {
             return sendGains != nullptr ? sendGains[static_cast<size_t> (i)] : constantSendGain;
@@ -189,10 +185,11 @@ private:
         reverb->processBlock (wetSendScratch_.data(), reverbScratch_.data(), numSamples,
                               rt60Seconds, darkMix);
 
+        overdrive.processBlock (reverbScratch_.data(), wetOut, numSamples, distnBlends, constantDistn);
+
         for (int i = 0; i < numSamples; ++i)
         {
-            const auto wet = overdrive.process (reverbScratch_[static_cast<size_t> (i)], sampleDistn (i));
-            wetOut[i] = wet * postGateScratch_[static_cast<size_t> (i)];
+            wetOut[i] *= postGateScratch_[static_cast<size_t> (i)];
         }
     }
 

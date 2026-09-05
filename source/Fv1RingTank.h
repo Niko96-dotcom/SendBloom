@@ -14,13 +14,11 @@ namespace sendbloom
     blocks fed by four series input diffusers, with the reverb-time coefficient
     applied once per block.
 
-    This replaces the earlier Freeverb-style tank (four parallel combs, 32-37 ms
-    each). That structure could not sound like the reference hardware class for a
-    structural reason: its recirculation period was ~36 ms where Spin's own
-    design notes require at least 200 ms of plain loop delay, and identify
-    shorter loops as the cause of "flutter" and a "tinny sound". This ring runs
-    ~497 ms of plain delay (~827 ms including allpasses) and fills 96% of the
-    FV-1's real 32,768-word RAM budget.
+    This replaces the earlier four-comb software tank. Spin's published ring
+    example guided the design, but neither its loop-length advice nor the chip's
+    RAM budget proves a particular product's topology. This chosen ring runs
+    ~497 ms of plain delay (~827 ms including allpasses). See the evidence
+    correction in docs/fv1-reverb-architecture.md.
 
     Fixed-rate: FixedRateAdapter always prepares this at 32,768 Hz. Lengths are
     scaled if prepared at another rate so the tank stays usable in isolation.

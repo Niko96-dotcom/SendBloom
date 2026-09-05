@@ -1,0 +1,32 @@
+{
+  "baseline_head": "95a3012b69ab7c0da5225b5ed422131debac02a2",
+  "baseline_renderer_sha256": "b9aab9933db01d36da3e0fb841c522ff950149110144591ee5eba2d7a6fc7a6f",
+  "candidate_renderer_sha256": "ca5d4d1c9e6895e75909de45b4911d9a66f66256273f618454d3f96acf53acac",
+  "ctest": {
+    "discovered": 284,
+    "passed": 283,
+    "skipped": 1,
+    "failed": 0
+  },
+  "pluginval": "VST3 strictness 10 SUCCESS",
+  "python_tests": 16,
+  "audio_cells_per_build": 60,
+  "repeat_count": 2,
+  "unchanged_cells": 44,
+  "unaffected_cells_verified_identical": 40,
+  "actual_hardware_measurement": false,
+  "human_listening": false,
+  "daw_session": false,
+  "installed": false,
+  "evidence_sha256": {
+    "baseline/identity.json": "e0b0e5cf5577374ad226b8526e4e65d13ae5e09acf5fca3a836fc78fd49b3d97",
+    "candidate/identity.json": "761496c73c20ece233285926430476a3b1876e31934457a664ea9de75714d82b",
+    "baseline/render-receipt.json": "efd8639fa51b19e92851165ffbd2d4cc69ed030283a692ae05bef4e086d83090",
+    "candidate/render-receipt.json": "385a1a2ea8cd5a092a3a76371268fd1584aad3e9bdda3600c98445b5a4546944",
+    "comparison.json": "4804b3669dcef1c0f180f2303c486fad7832e439fe5532f2736702f7b8a3692b",
+    "ir-comparison.json": "697501854acb09c02125d3df775e8f82c4054df93f33b4c9324bb24f38f145e1",
+    "ctest-final.log": "76f952b28e0316ece3f9f1f9995fc8bb0b9115c669a927e48a58c39a8676227f",
+    "pluginval.log": "432a9ab56e8c6208f92b53a18cc10236d0fbfdb7217128c3a42340885626a2e1",
+    "benchmarks/summary.json": "92e56965a4286147b464c57a5dccc913b6330ee44fe0c3630e846c98ae54db84"
+  }
+}

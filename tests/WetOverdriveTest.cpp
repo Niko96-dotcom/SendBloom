@@ -36,13 +36,15 @@ TEST_CASE ("WetOverdrive blend interpolates clean and driven", "[od][WetOverdriv
     REQUIRE (sendbloom::WetOverdrive::process (input, blend) == Catch::Approx (expected));
 }
 
-TEST_CASE ("WetOverdrive stateful matches stateless at distn extremes", "[od][WetOverdrive]")
+TEST_CASE ("WetOverdrive stateful clean settles to unity and dirty rejects DC", "[od][WetOverdrive]")
 {
     sendbloom::WetOverdriveState od;
     od.prepare (48000.0);
 
     const auto input = 0.25f;
-    REQUIRE (od.process (input, 0.0f) == Catch::Approx (input));
+    float clean = 0;
+    for (int i = 0; i < 48000; ++i) clean = od.process (input, 0);
+    REQUIRE (clean == Catch::Approx (input).margin (1e-6f));
 
     const auto statelessDriven = sendbloom::WetOverdrive::asymmetricTanh (input);
     const auto statefulDriven = od.process (input, 1.0f);
