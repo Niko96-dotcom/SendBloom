@@ -137,3 +137,23 @@ TEST_CASE ("Prepared processor callbacks perform no C++ heap allocations",
         }
     }
 }
+
+TEST_CASE ("Ignoring large SysEx messages performs no C++ heap allocations",
+           "[midi][realtime][allocation][regression]")
+{
+    sendbloom::PluginProcessor plugin;
+    plugin.prepareToPlay (48000.0, 128);
+    juce::AudioBuffer<float> buffer (2, 1024);
+    buffer.clear();
+    std::array<juce::uint8, 4096> payload {};
+    juce::MidiBuffer midi;
+    for (int position : { -1, 0, 63, 128, 511, 1023, 1024 })
+        midi.addEvent (juce::MidiMessage::createSysExMessage (payload.data(),
+                          static_cast<int> (payload.size())), position);
+    midi.addEvent (juce::MidiMessage::controllerEvent (1, 1, 100), 63);
+    {
+        AllocationScope scope;
+        plugin.processBlock (buffer, midi);
+    }
+    REQUIRE (allocations == 0);
+}

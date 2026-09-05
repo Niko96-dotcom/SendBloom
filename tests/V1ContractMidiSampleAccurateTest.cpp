@@ -4,6 +4,10 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
+#include <array>
+#include <bit>
+#include <cstdint>
+#include <cstring>
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -399,5 +403,59 @@ TEST_CASE ("v1 MIDI CC1 remains finite across block sizes",
         REQUIRE (isFiniteBuffer (buffer));
         REQUIRE (*plugin.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::sendAmount)
                  == Catch::Approx (0.0f).margin (1.0e-6f));
+    }
+}
+
+TEST_CASE ("Pressure MIDI preserves collision priority and ignores unrelated and out-of-block events",
+           "[midi][realtime][regression]")
+{
+    for (const bool resetFirst : { false, true })
+    {
+        sendbloom::PluginProcessor canonical, noisy;
+        configureConnectedRest (canonical, 128);
+        configureConnectedRest (noisy, 128);
+        juce::AudioBuffer<float> a (2, 1024), b (2, 1024);
+        juce::MidiBuffer expected, actual;
+        const auto cc = [] (int value) { return juce::MidiMessage::controllerEvent (1, 1, value); };
+
+        expected.addEvent (cc (90), 0);
+        expected.addEvent (cc (70), 127);
+        expected.addEvent (juce::MidiMessage::allControllersOff (1), 128);
+        expected.addEvent (cc (100), 511);
+        expected.addEvent (cc (30), 1023);
+
+        actual.addEvent (cc (127), -1); // not part of this block
+        actual.addEvent (cc (90), 0);
+        actual.addEvent (cc (10), 127);
+        actual.addEvent (cc (70), 127); // last CC1 wins at the same timestamp
+        if (resetFirst)
+            actual.addEvent (juce::MidiMessage::allControllersOff (1), 128);
+        actual.addEvent (cc (127), 128);
+        if (! resetFirst)
+            actual.addEvent (juce::MidiMessage::allControllersOff (1), 128);
+        actual.addEvent (cc (100), 511);
+        actual.addEvent (cc (30), 1023);
+        actual.addEvent (cc (127), 1024); // next block boundary is excluded
+        std::array<juce::uint8, 512> payload {};
+        for (int sample : { 0, 1, 126, 127, 128, 129, 512, 1023 })
+        {
+            actual.addEvent (juce::MidiMessage::createSysExMessage (payload.data(),
+                              static_cast<int> (payload.size())), sample);
+            actual.addEvent (juce::MidiMessage::controllerEvent (2, 2, 127), sample);
+        }
+        const auto eventsBefore = actual.getNumEvents();
+        for (int block = 0; block < 12; ++block)
+        {
+            fillTone (a);
+            fillTone (b);
+            canonical.processBlock (a, expected);
+            noisy.processBlock (b, actual);
+            for (int ch = 0; ch < 2; ++ch)
+                REQUIRE (std::memcmp (a.getReadPointer (ch), b.getReadPointer (ch),
+                                      static_cast<size_t> (a.getNumSamples()) * sizeof (float)) == 0);
+        }
+        REQUIRE (actual.getNumEvents() == eventsBefore);
+        REQUIRE (std::bit_cast<uint32_t> (canonical.pressureController.processSample())
+                 == std::bit_cast<uint32_t> (noisy.pressureController.processSample()));
     }
 }

@@ -49,6 +49,10 @@ ctest --test-dir Builds --output-on-failure -C Release
 
 **Artifacts:**
 
+For an install-free interactive editor, deterministic processor benchmarks,
+verification logs and tested worktree setup, see
+[Local development and verification](docs/local-verification.md).
+
 | Format | Path |
 |--------|------|
 | VST3 | `Builds/SendBloom_artefacts/Release/VST3/SendBloom.vst3` |

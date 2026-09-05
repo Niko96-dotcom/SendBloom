@@ -317,53 +317,6 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
   #endif
 }
 
-void PluginProcessor::applyPressureMidiAtSample (const juce::MidiBuffer& midiMessages,
-                                                 int samplePosition) noexcept
-{
-    // ADR-V1-03: MIDI is realtime modulation only — never touch APVTS / host notify.
-    bool resetControllers = false;
-    std::optional<float> cc1Value;
-
-    for (const auto metadata : midiMessages)
-    {
-        if (metadata.samplePosition != samplePosition)
-            continue;
-
-        const auto message = metadata.getMessage();
-
-        if (message.isResetAllControllers())
-            resetControllers = true;
-        else if (message.isController() && message.getControllerNumber() == 1)
-            cc1Value = static_cast<float> (message.getControllerValue()) / 127.0f;
-    }
-
-    if (resetControllers)
-        pressureController.setMidiPressureTarget (0.0f);
-    else if (cc1Value.has_value())
-        pressureController.setMidiPressureTarget (*cc1Value);
-}
-
-int PluginProcessor::findNextPressureMidiSampleAfter (const juce::MidiBuffer& midiMessages,
-                                                      int afterSample,
-                                                      int numSamples) const noexcept
-{
-    int next = numSamples;
-
-    for (const auto metadata : midiMessages)
-    {
-        const auto message = metadata.getMessage();
-
-        if (! message.isResetAllControllers()
-            && (! message.isController() || message.getControllerNumber() != 1))
-            continue;
-
-        if (metadata.samplePosition > afterSample && metadata.samplePosition < next)
-            next = metadata.samplePosition;
-    }
-
-    return next;
-}
-
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                     juce::MidiBuffer& midiMessages)
 {
@@ -387,14 +340,47 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     const auto numSamples = buffer.getNumSamples();
     int offset = 0;
+    auto midi = midiMessages.cbegin();
+    const auto midiEnd = midiMessages.cend();
+    // MidiBuffer is sorted by sample position. Inspect its non-owning metadata
+    // once, rather than rescanning/copying all messages for every control span.
+    // In particular, unrelated SysEx must never construct an owning MidiMessage.
+    const auto isPressure = [] (const juce::MidiMessageMetadata& event) noexcept
+    {
+        return event.numBytes == 3 && (event.data[0] & 0xf0) == 0xb0
+            && (event.data[1] == 1 || event.data[1] == 121);
+    };
+    const auto skipUnrelated = [&] () noexcept
+    {
+        while (midi != midiEnd && ((*midi).samplePosition < offset || ! isPressure (*midi)))
+            ++midi;
+    };
+    skipUnrelated();
 
     while (offset < numSamples)
     {
-        // RT-04 / MIDI-04/05: apply CC1 at this sample, then cut span before the next CC1.
-        applyPressureMidiAtSample (midiMessages, offset);
+        // Preserve same-sample semantics: reset wins regardless of event order;
+        // otherwise the last CC1 wins. Events outside this block are ignored.
+        bool resetControllers = false;
+        std::optional<float> cc1Value;
+        while (midi != midiEnd && (*midi).samplePosition == offset)
+        {
+            const auto event = *midi;
+            if (event.data[1] == 121)
+                resetControllers = true;
+            else
+                cc1Value = static_cast<float> (event.data[2]) / 127.0f;
+            ++midi;
+            skipUnrelated();
+        }
+        if (resetControllers)
+            pressureController.setMidiPressureTarget (0.0f);
+        else if (cc1Value.has_value())
+            pressureController.setMidiPressureTarget (*cc1Value);
 
         const auto remaining = numSamples - offset;
-        const auto nextPressureMidi = findNextPressureMidiSampleAfter (midiMessages, offset, numSamples);
+        const auto nextPressureMidi = midi != midiEnd
+            ? juce::jmin ((*midi).samplePosition, numSamples) : numSamples;
         const auto distanceToNextPressureMidi = nextPressureMidi - offset;
         const auto span = juce::jmin (remaining, preparedMaxBlock_, kControlQuantum,
                                      distanceToNextPressureMidi);

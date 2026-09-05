@@ -90,11 +90,6 @@ private:
     DirectPathDelayLine directPathDelay_;
     int directPathChannels_ { 0 };
     void delayDirectPaths (juce::AudioBuffer<float>& buffer, int offset, int span) noexcept;
-    void applyPressureMidiAtSample (const juce::MidiBuffer& midiMessages,
-                                    int samplePosition) noexcept;
-    int findNextPressureMidiSampleAfter (const juce::MidiBuffer& midiMessages,
-                                         int afterSample,
-                                         int numSamples) const noexcept;
     void processSpan (juce::AudioBuffer<float>& buffer,
                       int offset,
                       int span,

@@ -130,6 +130,19 @@ target_compile_definitions(EditorSnapshot PRIVATE
     JUCE_MODAL_LOOPS_PERMITTED=1)
 target_link_libraries(EditorSnapshot PRIVATE SharedCode)
 
+# Optional windowed host for disposable manual UI checks. A real app bundle on
+# macOS makes the preview discoverable to accessibility/computer-use tools.
+juce_add_gui_app(EditorPreview
+    PRODUCT_NAME "SendBloom Editor Preview"
+    BUNDLE_ID "com.nikoaudiolabs.sendbloom.editor-preview")
+set_target_properties(EditorPreview PROPERTIES EXCLUDE_FROM_ALL TRUE)
+target_sources(EditorPreview PRIVATE tools/EditorPreview.cpp)
+target_compile_features(EditorPreview PRIVATE cxx_std_20)
+target_compile_definitions(EditorPreview PRIVATE
+    $<FILTER:$<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>,EXCLUDE,JUCE_STANDALONE_APPLICATION>
+    JUCE_MODAL_LOOPS_PERMITTED=1)
+target_link_libraries(EditorPreview PRIVATE SharedCode)
+
 add_executable(SvgSnapshot tools/SvgSnapshot.cpp)
 target_compile_features(SvgSnapshot PRIVATE cxx_std_20)
 target_compile_definitions(SvgSnapshot PRIVATE
@@ -144,6 +157,14 @@ target_include_directories(RenderTank PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source
 target_compile_definitions(RenderTank PRIVATE
     $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
 target_link_libraries(RenderTank PRIVATE SharedCode)
+
+# Opt-in local benchmark, using shipping code without test diagnostics. Never
+# registered with CTest: timing is observational, not a machine-dependent gate.
+add_executable(BenchmarkProcessor EXCLUDE_FROM_ALL tools/BenchmarkProcessor.cpp)
+target_compile_features(BenchmarkProcessor PRIVATE cxx_std_20)
+target_compile_definitions(BenchmarkProcessor PRIVATE
+    $<TARGET_PROPERTY:${PROJECT_NAME},COMPILE_DEFINITIONS>)
+target_link_libraries(BenchmarkProcessor PRIVATE SharedCode)
 
 # include(PamplejuceIPP)
 
