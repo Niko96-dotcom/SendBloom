@@ -15,7 +15,6 @@ struct ParameterSnapshot
     float inputThresholdDb {};
     float inputThresholdLinear {};
     float sizeNorm {};
-    float rt60Seconds {};
     float levelNorm {};
     float wetGain {};
     float distnNorm {};
@@ -23,7 +22,6 @@ struct ParameterSnapshot
     float outputGainDb {};
     float outputGainLinear {};
     float sendAmountNorm {};
-    float sendGain {};
     bool darkMode {};
     bool gatePre {};
     bool sendConnected {};
@@ -43,13 +41,9 @@ struct ParameterSnapshot
         s.inputThresholdLinear = juce::Decibels::decibelsToGain (s.inputThresholdDb);
 
         s.sizeNorm = apvts.getRawParameterValue (ParameterIDs::size)->load();
-        s.rt60Seconds = ParameterCurves::sizeToRT60 (s.sizeNorm);
 
         s.levelNorm = apvts.getRawParameterValue (ParameterIDs::level)->load();
-        {
-            float dryUnity = 1.0f;
-            ParameterCurves::levelEqualPower (s.levelNorm, dryUnity, s.wetGain);
-        }
+        s.wetGain = ParameterCurves::levelWetGain (s.levelNorm);
 
         s.distnNorm = apvts.getRawParameterValue (ParameterIDs::distn)->load();
         s.distnBlend = ParameterCurves::distnBlend (s.distnNorm);
@@ -63,9 +57,6 @@ struct ParameterSnapshot
 
         s.sendAmountNorm = apvts.getRawParameterValue (ParameterIDs::sendAmount)->load();
         s.sendFirmFeel = static_cast<int> (apvts.getRawParameterValue (ParameterIDs::sendFeel)->load()) == 0;
-        s.sendGain = s.sendConnected
-                       ? ParameterCurves::sendGain (s.sendAmountNorm, s.sendFirmFeel)
-                       : 1.0f;
 
         s.extendedStereo = apvts.getRawParameterValue (ParameterIDs::extendedStereo)->load() > 0.5f;
         s.bypassed = apvts.getRawParameterValue (ParameterIDs::bypass)->load() > 0.5f;

@@ -59,7 +59,6 @@ private:
 
     juce::RangedAudioParameter* connectedParam { nullptr };
     juce::RangedAudioParameter* amountParam { nullptr };
-    juce::Point<float> touchPoint;
     bool pressed { false };
     bool amountGestureActive { false };
     float displayAmount { 0.0f };

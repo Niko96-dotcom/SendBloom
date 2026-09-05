@@ -12,7 +12,6 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
 {
     addChildComponent (gateSensKnob);
     gateSensKnob.setLabelColour (juce::Colour (0xffe66c0b));
-    gateSensKnob.setRangeText ("", "");
     gateSensKnob.setDefaultValue (0.5);
     gateSensKnob.setValueFormatter ([] (double value)
     {

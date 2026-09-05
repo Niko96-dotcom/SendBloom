@@ -35,7 +35,6 @@ juce::String formatInputGainDb (double norm)
 PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (&p),
       processorRef (p),
-      clipLed ([this] { return processorRef.isClipHoldActive(); }),
       pressurePad (p.getAPVTS(), ParameterIDs::sendConnected, ParameterIDs::sendAmount),
       advancedDrawer (p.getAPVTS(),
                       ParameterIDs::inputThreshold,
@@ -44,9 +43,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                       ParameterIDs::sendConnected)
 {
     setLookAndFeel (&lookAndFeel);
-
-    titleLabel.setVisible (false);
-    addAndMakeVisible (titleLabel);
 
     for (int i = 0; i < processorRef.getNumPrograms(); ++i)
         presetBox.addItem (upperPresetName (processorRef, i), i + 1);
@@ -100,10 +96,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     gateToggle.setClickingTogglesState (true);
     addAndMakeVisible (darkToggle);
     addAndMakeVisible (gateToggle);
-
-    clipLed.setInterceptsMouseClicks (false, false);
-    addAndMakeVisible (clipLed);
-    clipLed.setVisible (false);
 
     pressurePad.setOpaque (false);
     addAndMakeVisible (pressurePad);
@@ -172,9 +164,7 @@ void PluginEditor::paint (juce::Graphics& g)
 {
     ui::paintPedalFaceplate (g,
                              getLocalBounds().toFloat(),
-                             lookAndFeel.cyanColour(),
                              processorRef.getAPVTS(),
-                             processorRef.isClipHoldActive(),
                              advancedDrawer.isExpanded(),
                              pressurePad.isPressed(),
                              pressurePad.getDisplayAmount(),
@@ -243,7 +233,6 @@ void PluginEditor::resized()
 {
     using namespace ui::facelayout;
 
-    titleLabel.setBounds (0, 0, 0, 0);
     // Invisible hit targets parked on the shared faceplate layout rectangles.
     presetBox.setBounds (kPresetField);
     loadPresetButton.setBounds (kPresetLoad);

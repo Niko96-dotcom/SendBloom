@@ -5,7 +5,7 @@
 
 using namespace sendbloom::ParameterCurves;
 
-TEST_CASE ("sizeToRT60 spans the ring tank's achievable decay range", "[curves][parm]")
+TEST_CASE ("sizeToRT60 spans the ring tank's achievable decay range", "[curves][parm][TEST-01]")
 {
     // Requested targets below roughly a second collapse toward the same ring
     // tail, so 1.2 s is the chosen useful floor. The public manual establishes
@@ -16,7 +16,7 @@ TEST_CASE ("sizeToRT60 spans the ring tank's achievable decay range", "[curves][
              == Catch::Approx (std::sqrt (kMinRT60Seconds * kMaxRT60Seconds)).epsilon (1e-5));
 }
 
-TEST_CASE ("sizeToRT60 is monotonic and clamped", "[curves][parm]")
+TEST_CASE ("sizeToRT60 is monotonic and clamped", "[curves][parm][TEST-01]")
 {
     auto previous = sizeToRT60 (0.0f);
 
@@ -31,7 +31,7 @@ TEST_CASE ("sizeToRT60 is monotonic and clamped", "[curves][parm]")
     REQUIRE (sizeToRT60 (1.5f) == Catch::Approx (kMaxRT60Seconds));
 }
 
-TEST_CASE ("distnBlend reaches both extremes across the knob", "[curves][parm]")
+TEST_CASE ("distnBlend reaches both extremes across the knob", "[curves][parm][TEST-01]")
 {
     REQUIRE (distnBlend (0.0f) == Catch::Approx (0.0f));
     REQUIRE (distnBlend (1.0f) == Catch::Approx (1.0f));
@@ -42,22 +42,20 @@ TEST_CASE ("distnBlend reaches both extremes across the knob", "[curves][parm]")
     REQUIRE (distnBlend (0.5f) > 0.3f);
 }
 
-TEST_CASE ("level equal-power wet-only at 0.5", "[curves][parm]")
+TEST_CASE ("level equal-power wet-only at 0.5", "[curves][parm][TEST-01]")
 {
-    float dry {}, wet {};
-    levelEqualPower (0.5f, dry, wet);
-    REQUIRE (dry == Catch::Approx (1.0f).margin (1e-5f));
+    const auto wet = levelWetGain (0.5f);
     REQUIRE (wet == Catch::Approx (std::sin (juce::MathConstants<float>::halfPi * 0.5f)).margin (1e-5f));
 }
 
-TEST_CASE ("inputGainDb ADR-V1-08 anchors", "[curves][parm]")
+TEST_CASE ("inputGainDb ADR-V1-08 anchors", "[curves][parm][TEST-01]")
 {
     REQUIRE (inputGainDb (0.0f) == Catch::Approx (-9.0f).margin (1e-4f));
     REQUIRE (inputGainDb (0.5f) == Catch::Approx (0.0f).margin (1e-4f));
     REQUIRE (inputGainDb (1.0f) == Catch::Approx (9.0f).margin (1e-4f));
 }
 
-TEST_CASE ("inputThresholdDb is a small gate trim around the reference", "[curves][parm]")
+TEST_CASE ("inputThresholdDb is a small gate trim around the reference", "[curves][parm][TEST-01]")
 {
     // Demoted from an independent -52..-18 dB threshold to a +/-6 dB trim so that
     // INPT is the dominant gate-sensitivity control (see kGateReferenceDb).
@@ -66,7 +64,7 @@ TEST_CASE ("inputThresholdDb is a small gate trim around the reference", "[curve
     REQUIRE (inputThresholdDb (1.0f) == Catch::Approx (-39.0f)); // +6 dB trim
 }
 
-TEST_CASE ("sendGain Firm vs Soft differ at 0.5", "[curves][parm]")
+TEST_CASE ("sendGain Firm vs Soft differ at 0.5", "[curves][parm][TEST-01]")
 {
     const auto firm = sendGain (0.5f, true);
     const auto soft = sendGain (0.5f, false);

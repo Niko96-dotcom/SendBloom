@@ -293,41 +293,10 @@ private:
         float feedback_ { 0.6f };
     };
 
-    /** Plain predelay for Dark. */
-    class Predelay
-    {
-    public:
-        void prepare (int lengthSamples)
-        {
-            length_ = std::max (2, lengthSamples);
-            buffer_.assign (static_cast<size_t> (length_), 0.0f);
-            writeIndex_ = 0;
-        }
-
-        float process (float x) noexcept
-        {
-            const auto out = buffer_[static_cast<size_t> (writeIndex_)];
-            buffer_[static_cast<size_t> (writeIndex_)] = x;
-            writeIndex_ = writeIndex_ + 1 >= length_ ? 0 : writeIndex_ + 1;
-            return out;
-        }
-
-        void reset() noexcept
-        {
-            std::fill (buffer_.begin(), buffer_.end(), 0.0f);
-            writeIndex_ = 0;
-        }
-
-    private:
-        std::vector<float> buffer_;
-        int length_ { 2 };
-        int writeIndex_ { 0 };
-    };
-
     std::array<ModulatedAllpass, 4> inputDiffusers_;
     std::array<ModulatedAllpass, 4> ringAllpasses_;
     std::array<RingDelay, 4> ringDelays_;
-    Predelay predelay_;
+    RingDelay predelay_;
 
     std::array<int, 4> tapOffsets_ {};
     std::array<float, 4> lfState_ {};

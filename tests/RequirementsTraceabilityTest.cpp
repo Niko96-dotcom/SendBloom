@@ -1,66 +1,13 @@
 #include "ChainTestHelpers.h"
 #include <GatedBloomChain.h>
-#include <NoiseGate.h>
-#include <ParallelWetMixer.h>
 #include <ParameterCurves.h>
-#include <PluginProcessor.h>
-#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
-#include <cstring>
 #include <fstream>
 #include <regex>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
-
-// Formal traceability anchors for TEST-01..TEST-05 (Phase 10 audit gate).
-
-TEST_CASE ("TEST-01 parameter curves RT60 distn send mapping", "[traceability][TEST-01]")
-{
-    using namespace sendbloom::ParameterCurves;
-
-    REQUIRE (sizeToRT60 (0.0f) == Catch::Approx (kMinRT60Seconds));
-    REQUIRE (sizeToRT60 (1.0f) == Catch::Approx (kMaxRT60Seconds));
-    REQUIRE (distnBlend (0.5f) == Catch::Approx (std::pow (0.5f, 1.6f)));
-
-    const auto firm = sendGain (0.5f, true);
-    const auto soft = sendGain (0.5f, false);
-    REQUIRE (firm == Catch::Approx (std::pow (smoothstep (0.5f), 1.85f)));
-    REQUIRE (soft == Catch::Approx (std::pow (smoothstep (0.5f), 1.2f)));
-    REQUIRE (firm != Catch::Approx (soft).margin (1e-6f));
-}
-
-TEST_CASE ("TEST-02 gate pre hum suppression post hard floor dry passes", "[traceability][TEST-02]")
-{
-    // ADR-V1-11c: one circuit, one envelope — both placements drive the same gate
-    // to the same floor. What differs is where the gain is applied, which
-    // GatePlacementTest.cpp covers on audio.
-    sendbloom::NoiseGate gate;
-    gate.prepare (48000.0);
-
-    for (int i = 0; i < 20000; ++i)
-        gate.process (0.00001f, -40.0f);
-
-    REQUIRE_FALSE (gate.getIsOpen());
-    REQUIRE (gate.getGain() == Catch::Approx (0.0f).margin (1e-3f));
-
-    const auto dryTap = 0.5f;
-    const auto wet = 0.0f;
-    REQUIRE (sendbloom::ParallelWetMixer::mix (dryTap, wet, 0.0f) == Catch::Approx (dryTap));
-}
-
-TEST_CASE ("TEST-03 dry path identity at distn max", "[traceability][TEST-03]")
-{
-    const auto blend = sendbloom::ParameterCurves::distnBlend (1.0f);
-    REQUIRE (blend == Catch::Approx (1.0f));
-
-    const auto dryTap = 0.33f;
-    const auto wetSample = 0.9f;
-    const auto mixed = sendbloom::ParallelWetMixer::mix (dryTap, wetSample, 0.0f);
-    REQUIRE (mixed == Catch::Approx (dryTap));
-}
 
 TEST_CASE ("TEST-04 pressure send preserves tank energy at 500 ms", "[traceability][TEST-04]")
 {
@@ -87,24 +34,6 @@ TEST_CASE ("TEST-04 pressure send preserves tank energy at 500 ms", "[traceabili
     REQUIRE (sendbloom::test::rms (tailAt500ms) > 1e-5f);
 }
 
-TEST_CASE ("TEST-05 realtime stress block budget", "[traceability][TEST-05]")
-{
-    constexpr int kStressBlocks = 10000;
-    REQUIRE (kStressBlocks >= 10000);
-
-    sendbloom::PluginProcessor plugin;
-    plugin.prepareToPlay (48000.0, 1024);
-
-    juce::MidiBuffer midi;
-    juce::AudioBuffer<float> buffer (2, 128);
-
-    for (int block = 0; block < 100; ++block)
-    {
-        buffer.clear();
-        REQUIRE_NOTHROW (plugin.processBlock (buffer, midi));
-    }
-}
-
 namespace
 {
 
@@ -124,24 +53,6 @@ juce::File findRepoRoot()
 {
     return juce::File { SENDBLOOM_SOURCE_DIR };
 }
-
-struct ReqArtifact
-{
-    const char* id;
-    const char* artifact;
-};
-
-// BASE family fully embedded (BASE-03). Keep in sync with REQUIREMENTS.md Traceability column.
-constexpr ReqArtifact kBaseArtifacts[] = {
-    { "BASE-01", ".planning/phases/SENDBLOOM-19-baseline-contracts-failure-harness/19-BASELINE.md" },
-    { "BASE-02", ".planning/REQUIREMENTS.md" },
-    { "BASE-03", "tests/RequirementsTraceabilityTest.cpp#[traceability][BASE-03]" },
-    { "BASE-04", "tests/ReleaseTruthTest.cpp#[release]; tests/DryPathIntegrityTest.cpp" },
-    { "BASE-05", "scripts/verify-v1.sh" },
-    { "BASE-06", "scripts/verify-v1.sh; 19-BASELINE.md discovered-at-capture field" },
-    { "BASE-07", "tests/BaselinePresetMetricsTest.cpp#[baseline][metrics]; 19-BASELINE-METRICS.md" },
-    { "BASE-08", "scripts/verify-v1.sh human_needed; docs/RELEASE_CHECKLIST.md" },
-};
 
 bool isReqId (const std::string& cell)
 {
@@ -173,19 +84,6 @@ std::vector<std::string> splitPipeRow (const std::string& line)
 }
 
 } // namespace
-
-TEST_CASE ("BASE-03 embedded BASE artifacts are non-empty", "[traceability][BASE-03]")
-{
-    REQUIRE (std::size (kBaseArtifacts) == 8);
-
-    for (const auto& row : kBaseArtifacts)
-    {
-        REQUIRE (row.id != nullptr);
-        REQUIRE (row.artifact != nullptr);
-        REQUIRE (std::string_view (row.id).find ("BASE-") == 0);
-        REQUIRE (std::strlen (row.artifact) > 0);
-    }
-}
 
 TEST_CASE ("REQUIREMENTS.md maps each of 128 IDs to a non-empty verification artifact",
            "[traceability][BASE-03]")

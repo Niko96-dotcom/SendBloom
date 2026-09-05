@@ -8,7 +8,6 @@
 #include "SmoothedParameterBank.h"
 #include "GatedBloomChain.h"
 #include "InputStage.h"
-#include "OutputStage.h"
 #include "PressureController.h"
 
 namespace sendbloom

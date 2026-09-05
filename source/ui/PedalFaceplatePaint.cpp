@@ -245,15 +245,12 @@ bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, f
 
 void paintPedalFaceplate (juce::Graphics& g,
                           juce::Rectangle<float> bounds,
-                          juce::Colour accent,
                           juce::AudioProcessorValueTreeState& apvts,
-                          bool clipActive,
                           bool advancedExpanded,
                           bool padPressed,
                           float padDisplayAmount,
                           float footTravel)
 {
-    juce::ignoreUnused (accent, clipActive);
     using namespace facelayout;
     const auto& art = artwork();
 

@@ -78,7 +78,7 @@ float rmsAt (const std::vector<float>& v, size_t from, size_t count)
 } // namespace
 
 TEST_CASE ("Pre placement keeps sub-threshold hum out of the wet path",
-           "[gate][placement][CORE-13]")
+           "[gate][placement][CORE-13][TEST-02]")
 {
     // The manual's stated reason the gate exists: taming cable hum reaching the
     // reverb and distortion stages when there is no signal.
@@ -98,7 +98,7 @@ TEST_CASE ("Pre placement keeps sub-threshold hum out of the wet path",
 }
 
 TEST_CASE ("Pre placement leaves the tail alone while Post chops it",
-           "[gate][placement][CORE-12][CORE-13]")
+           "[gate][placement][CORE-12][CORE-13][TEST-02]")
 {
     auto sig = sine (static_cast<size_t> (kSampleRate * 2.0), 220.0f, 0.5f);
     sig.resize (static_cast<size_t> (kSampleRate * 3.0), 0.0f);
@@ -123,7 +123,7 @@ TEST_CASE ("Pre placement leaves the tail alone while Post chops it",
 }
 
 TEST_CASE ("Pre placement stops hum entering the tank once the gate has closed",
-           "[gate][placement][CORE-13]")
+           "[gate][placement][CORE-13][TEST-02]")
 {
     // Regression guard for the profile removed in ADR-V1-11c: its 150 ms one-pole
     // release was only 5 dB down 100 ms into a gap and took 705 ms to reach

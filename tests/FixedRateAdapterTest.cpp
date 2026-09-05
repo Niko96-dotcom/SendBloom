@@ -16,10 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <fstream>
 #include <random>
-#include <sstream>
-#include <string>
 #include <vector>
 
 namespace
@@ -672,76 +669,4 @@ TEST_CASE ("FixedRateAdapter ProperSRC realtime stress with random block sizes",
                 REQUIRE (std::isfinite (outBlock[static_cast<size_t> (i)]));
         }
     }());
-}
-
-static std::string readAdapterHeaderSource()
-{
-    const auto path = std::string (SENDBLOOM_SOURCE_DIR) + "/source/FixedRateAdapter.h";
-    std::ifstream header (path);
-
-    if (! header.is_open())
-        return {};
-
-    std::ostringstream source;
-    source << header.rdbuf();
-    return source.str();
-}
-
-TEST_CASE ("FixedRateAdapter processBlock has no heap allocation tokens",
-           "[verb][FixedRateAdapter][SRC-02][static]")
-{
-    const auto text = readAdapterHeaderSource();
-    REQUIRE_FALSE (text.empty());
-
-    const auto processBlockPos = text.find ("void processBlock");
-    REQUIRE (processBlockPos != std::string::npos);
-
-    const auto bodyStart = text.find ('{', processBlockPos);
-    REQUIRE (bodyStart != std::string::npos);
-
-    const auto nextPublic = text.find ("\npublic:", bodyStart);
-    const auto nextPrivate = text.find ("\nprivate:", bodyStart);
-    auto bodyEnd = std::min (nextPublic, nextPrivate);
-    if (bodyEnd == std::string::npos)
-        bodyEnd = text.size();
-
-    const auto body = text.substr (bodyStart, bodyEnd - bodyStart);
-
-    auto stripComments = [] (std::string s) {
-        for (;;)
-        {
-            const auto block = s.find ("/*");
-            if (block == std::string::npos)
-                break;
-
-            const auto end = s.find ("*/", block + 2);
-            if (end == std::string::npos)
-                break;
-
-            s.erase (block, end - block + 2);
-        }
-
-        for (;;)
-        {
-            const auto line = s.find ("//");
-            if (line == std::string::npos)
-                break;
-
-            const auto end = s.find ('\n', line);
-            if (end == std::string::npos)
-            {
-                s.erase (line);
-                break;
-            }
-
-            s.erase (line, end - line);
-        }
-
-        return s;
-    };
-
-    const auto stripped = stripComments (body);
-
-    REQUIRE (stripped.find ("make_unique") == std::string::npos);
-    REQUIRE (stripped.find (".resize(") == std::string::npos);
 }

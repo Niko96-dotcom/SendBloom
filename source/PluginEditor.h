@@ -5,7 +5,6 @@
 #include "ui/TransparentControls.h"
 #include "ui/PedalKnob.h"
 #include "ui/PressureSendPad.h"
-#include "ui/ClipLed.h"
 #include "ui/AdvancedDrawer.h"
 #include "ParameterIDs.h"
 
@@ -45,7 +44,6 @@ private:
     ui::SendBloomLookAndFeel lookAndFeel;
     ui::TransparentControlsLookAndFeel transparentControls;
 
-    juce::Label titleLabel;
     juce::ComboBox presetBox;
     // A matched hardware family: skirted main controls and straight-sided
     // mini controls, each path-traced one frame per pointer angle in the
@@ -57,7 +55,6 @@ private:
     ui::PedalKnob outKnob { "OUTPUT", BinaryData::knob_small_strip_png, BinaryData::knob_small_strip_pngSize };
     juce::ToggleButton darkToggle { "Dark" };
     juce::ToggleButton gateToggle { "Gate Post" };
-    ui::ClipLed clipLed;
     ui::PressureSendPad pressurePad;
     ui::TransparentHitButton advancedButton { "Advanced" };
     juce::TextButton loadPresetButton;

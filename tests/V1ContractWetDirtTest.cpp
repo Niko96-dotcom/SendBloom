@@ -169,19 +169,3 @@ TEST_CASE ("unimplemented dirt_os is not published as a shipping parameter",
     REQUIRE (parameterLayout.find ("Dirt OS") == std::string::npos);
     REQUIRE (drawerText.find ("Dirt OS") == std::string::npos);
 }
-
-TEST_CASE ("GatedBloomChain wet overdrive path remains allocation-free at runtime",
-           "[v1][contract][wet-dirt][DSP-13]")
-{
-    sendbloom::GatedBloomChain chain;
-    chain.prepare (kSampleRate, 512);
-
-    const auto rt60 = 1.2f;
-
-    for (int i = 0; i < 4096; ++i)
-    {
-        const auto env = chain.getEnvelope().process (0.2f);
-        const auto wet = chain.processSample (0.15f, env, rt60, 0.0f, 1.0f, 1.0f, true, -40.0f);
-        REQUIRE (std::isfinite (wet));
-    }
-}

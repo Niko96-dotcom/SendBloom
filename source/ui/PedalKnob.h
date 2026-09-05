@@ -77,8 +77,6 @@ public:
         engravedCaption = false; // custom colour means a dark panel, not the plate
     }
 
-    void setRangeText (juce::String, juce::String) {}
-
     void setDefaultValue (double value)
     {
         slider.setDoubleClickReturnValue (true, value);

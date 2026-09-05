@@ -233,26 +233,26 @@ Exact 1:1 requirement → phase mapping (roadmap 2026-07-12). No orphans, no dup
 | BASE-06 | Phase 19 | Complete | scripts/verify-v1.sh; 19-BASELINE.md discovered-at-capture |
 | BASE-07 | Phase 19 | Complete | tests/BaselinePresetMetricsTest.cpp#[baseline][metrics]; 19-BASELINE-METRICS.md |
 | BASE-08 | Phase 19 | Complete | scripts/verify-v1.sh human_needed; docs/RELEASE_CHECKLIST.md |
-| SEND-01 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-02 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-03 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-04 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-05 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-06 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-07 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-08 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-09 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-10 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-11 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-12 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-13 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
-| SEND-14 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureSendTest.cpp |
+| SEND-01 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-02 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-03 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-04 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-05 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-06 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-07 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-08 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-09 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-10 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-11 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-12 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-13 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
+| SEND-14 | Phase 20 | Complete | tests/V1ContractPressure*.cpp#[v1][contract] (Phase 20); tests/PressureControllerTest.cpp |
 | UX-01 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-02 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-03 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-04 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
 | UX-05 | Phase 20 | Complete | tests/V1Contract*.cpp / UI faceplate sources (Phase 20 UX-01..05) |
-| RT-01 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
+| RT-01 | Phase 21 | Complete | tests/RealtimeAllocationTest.cpp#[allocation]; tests/V1ContractRealtime*.cpp#[v1][contract] |
 | RT-02 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-03 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |
 | RT-05 | Phase 21 | Complete | tests/V1ContractRealtime*.cpp#[v1][contract] (Phase 21); BypassCrossfadeTest |

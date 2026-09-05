@@ -1,7 +1,6 @@
 #include <IReverbEngine.h>
 #include <ParameterIDs.h>
 #include <PluginProcessor.h>
-#include <PressureSend.h>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <ui/PressureSendPad.h>
@@ -164,13 +163,8 @@ TEST_CASE ("v1 pressure release stays connected-at-rest with amount 0 and no new
     const float connectedAfter = plugin.getAPVTS().getRawParameterValue (sendConnected)->load();
     const float amountAfter = plugin.getAPVTS().getRawParameterValue (sendAmount)->load();
 
-    // Intended failures on current tree: mouseUp sets connected=false and does not zero amount.
     REQUIRE (connectedAfter > 0.5f);
     REQUIRE (amountAfter == Catch::Approx (0.0f).margin (1.0e-4f));
-
-    // Connected-at-rest ⇒ PressureSend gain must be 0 (not the disconnected always-on 1.0).
-    REQUIRE (sendbloom::PressureSend::computeGain (amountAfter, connectedAfter > 0.5f, true)
-             == Catch::Approx (0.0f).margin (1.0e-6f));
 
     // ADR-V1-04 / SEND-10: PressureController releases raw pressure over ~25 ms.
     // Settle before proving wet feed is dry (one 512-sample block is only ~10.7 ms).

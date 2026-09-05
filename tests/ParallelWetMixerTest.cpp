@@ -41,15 +41,13 @@ TEST_CASE ("ParallelWetMixer dry contribution unchanged when wetGain rises", "[c
     REQUIRE (atFull == Catch::Approx (dryIn + wet));
 }
 
-TEST_CASE ("ParallelWetMixer wetGain matches levelEqualPower wet leg", "[chain][routing][ParallelWet]")
+TEST_CASE ("ParallelWetMixer wetGain matches levelWetGain curve", "[chain][routing][ParallelWet]")
 {
     const float levelNorms[] = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
 
     for (const auto levelNorm : levelNorms)
     {
-        float dryLeg = 0.0f;
-        float wetLeg = 0.0f;
-        sendbloom::ParameterCurves::levelEqualPower (levelNorm, dryLeg, wetLeg);
+        const auto wetLeg = sendbloom::ParameterCurves::levelWetGain (levelNorm);
 
         const auto mixed = sendbloom::ParallelWetMixer::mix (1.0f, 1.0f, wetLeg);
         REQUIRE (mixed == Catch::Approx (1.0f + wetLeg).margin (1e-5f));
@@ -63,14 +61,11 @@ TEST_CASE ("ParallelWetMixer differs from dual-scaled equal-power sum", "[chain]
     const auto wetSample = 0.6f;
     const auto levelNorm = 0.65f;
 
-    float dryGain = 0.0f;
-    float wetGain = 0.0f;
-    sendbloom::ParameterCurves::levelEqualPower (levelNorm, dryGain, wetGain);
+    const auto wetGain = sendbloom::ParameterCurves::levelWetGain (levelNorm);
 
     const auto parallelMix = sendbloom::ParallelWetMixer::mix (dryTap, wetSample, wetGain);
     const auto dualScaled = legacyDualScaledEqualPowerSum (dryTap, wetSample, levelNorm);
 
-    REQUIRE (dryGain == Catch::Approx (1.0f).margin (1e-5f));
     REQUIRE (wetGain > 0.0f);
     REQUIRE (parallelMix != Catch::Approx (dualScaled).margin (1e-4f));
     REQUIRE (parallelMix == Catch::Approx (dryTap + wetSample * wetGain).margin (1e-5f));

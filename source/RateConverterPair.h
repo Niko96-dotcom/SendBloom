@@ -57,8 +57,7 @@ public:
                                                              quality.phase);
 
         scratchIn_.resize (static_cast<size_t> (maxHostBlock));
-        upOut_.resize (static_cast<size_t> (upsampler_->getMaxOutLen (maxHostBlock)));
-        downOut_.resize (static_cast<size_t> (downsampler_->getMaxOutLen (maxInternalIn)));
+        maxInternalOutput_ = upsampler_->getMaxOutLen (maxHostBlock);
         const auto maxDownsampled = downsampler_->getMaxOutLen (maxInternalIn);
         // r8brain may release a short burst after priming. Keep enough fixed storage for
         // that burst plus several maximum host blocks without allocating on the audio thread.
@@ -77,7 +76,7 @@ public:
         double* op = nullptr;
         const int produced = upsampler_->process (scratchIn_.data(), nHost, op);
 
-        const int toCopy = std::min (produced, static_cast<int> (upOut_.size()));
+        const int toCopy = std::min (produced, maxInternalOutput_);
         for (int i = 0; i < toCopy; ++i)
             internalOut[i] = op[i];
 
@@ -185,8 +184,7 @@ private:
     std::unique_ptr<r8b::CDSPResampler> upsampler_;
     std::unique_ptr<r8b::CDSPResampler> downsampler_;
     std::vector<double> scratchIn_;
-    std::vector<double> upOut_;
-    std::vector<double> downOut_;
+    int maxInternalOutput_ { 0 };
     std::vector<double> leftoverFifo_;
     int leftoverDown_ { 0 };
     int maxHostBlock_ { 0 };

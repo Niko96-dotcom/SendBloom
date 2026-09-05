@@ -17,7 +17,7 @@ void configureBypassPlugin (sendbloom::PluginProcessor& plugin)
 
     auto& apvts = plugin.getAPVTS();
     *apvts.getRawParameterValue (inputGain) = 0.5f;
-    // Non-unity output so any OutputStage application breaks per-channel unity.
+    // Non-unity output so applying output trim after bypass breaks per-channel unity.
     *apvts.getRawParameterValue (outputGain) = 6.0f;
     *apvts.getRawParameterValue (bypass) = 1.0f;
     *apvts.getRawParameterValue (level) = 1.0f;

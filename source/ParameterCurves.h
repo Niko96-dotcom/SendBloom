@@ -35,12 +35,11 @@ inline float distnBlend (float norm) noexcept
     return std::pow (juce::jlimit (0.0f, 1.0f, norm), 1.6f);
 }
 
-inline void levelEqualPower (float norm, float& dry, float& wet) noexcept
+inline float levelWetGain (float norm) noexcept
 {
     // ADR-V1-09: Level scales wet return only; dry stays unity.
     constexpr auto halfPi = juce::MathConstants<float>::halfPi;
-    dry = 1.0f;
-    wet = std::sin (halfPi * norm);
+    return std::sin (halfPi * norm);
 }
 
 inline float inputGainDb (float norm) noexcept

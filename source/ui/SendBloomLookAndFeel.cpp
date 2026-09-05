@@ -6,7 +6,6 @@ namespace sendbloom::ui
 SendBloomLookAndFeel::SendBloomLookAndFeel()
 {
     chassis = juce::Colour (0xfff7f7f3);
-    facePlate = juce::Colour (0xffffffff);
     accent = juce::Colour (0xffff8f25);
     labelText = juce::Colour (0xff050505);
     cyan = juce::Colour (0xffe66c0b);

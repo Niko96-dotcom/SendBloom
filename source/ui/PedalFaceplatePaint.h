@@ -95,9 +95,7 @@ bool shouldDrawFootswitchPressedOverlay (bool padPressed, float displayAmount, f
 /** Draw the production clear-shell composite and its live control-state artwork. */
 void paintPedalFaceplate (juce::Graphics& g,
                           juce::Rectangle<float> bounds,
-                          juce::Colour cyan,
                           juce::AudioProcessorValueTreeState& apvts,
-                          bool clipActive,
                           bool advancedExpanded,
                           bool padPressed = false,
                           float padDisplayAmount = 0.0f,

@@ -33,15 +33,8 @@ public:
 
     juce::Font getComboBoxFont (juce::ComboBox& box) override;
 
-    juce::Colour chassisColour() const noexcept { return chassis; }
-    juce::Colour facePlateColour() const noexcept { return facePlate; }
-    juce::Colour accentColour() const noexcept { return accent; }
-    juce::Colour labelColour() const noexcept { return labelText; }
-    juce::Colour cyanColour() const noexcept { return cyan; }
-
 private:
     juce::Colour chassis;
-    juce::Colour facePlate;
     juce::Colour accent;
     juce::Colour labelText;
     juce::Colour cyan;

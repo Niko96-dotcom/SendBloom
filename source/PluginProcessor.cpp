@@ -7,7 +7,6 @@
 #include "ParameterCurves.h"
 #include "BypassCrossfade.h"
 #include "ParallelWetMixer.h"
-#include "OutputStage.h"
 #include "SafeXml.h"
 
 #include <cmath>
@@ -494,7 +493,7 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
     delayDirectPaths (dryBuffer, 0, span);
 
     // ADR-V1-10: build output-gained engaged path first, then crossfade against
-    // original per-channel dry. Never apply OutputStage after the bypass mix.
+    // original per-channel dry. Apply output gain before the bypass mix.
     for (int sample = 0; sample < span; ++sample)
     {
         const auto wetGain = wetGainScratch_[static_cast<size_t> (sample)];
@@ -509,7 +508,7 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
             {
                 const auto dryTap = dryBuffer.getReadPointer (channel)[sample];
                 const auto mixed = ParallelWetMixer::mix (dryTap, wet, wetGain);
-                const auto engaged = OutputStage::processSample (mixed, outputGain);
+                const auto engaged = mixed * outputGain;
                 buffer.getWritePointer (channel)[outIndex] =
                     BypassCrossfade::mixSample (dryTap, engaged, engagedMix);
             }
@@ -524,7 +523,7 @@ void PluginProcessor::processSpan (juce::AudioBuffer<float>& buffer,
 
             monoSum /= static_cast<float> (juce::jmax (1, numChannels));
             const auto mixed = ParallelWetMixer::mix (monoSum, wet, wetGain);
-            const auto engaged = OutputStage::processSample (mixed, outputGain);
+            const auto engaged = mixed * outputGain;
 
             for (int channel = 0; channel < numChannels; ++channel)
             {

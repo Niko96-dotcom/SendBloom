@@ -3,7 +3,6 @@
 #include "EnvelopeDetector.h"
 #include "IReverbEngine.h"
 #include "NoiseGate.h"
-#include "PressureSend.h"
 #include "SchroederTank32.h"
 #include "WetOverdrive.h"
 #include <memory>
@@ -79,7 +78,7 @@ public:
         const auto g = gate.process (inputEnvelope, thresholdDb);
 
         auto wet = input * (g + (1.0f - g) * postDepth);
-        wet = PressureSend::process (wet, sendGain);
+        wet *= sendGain;
         wet = reverb->processSample (wet, rt60Seconds, darkModeMix);
         wet = overdrive.process (wet, distnBlend);
 
@@ -184,7 +183,7 @@ private:
             postGateScratch_[static_cast<size_t> (i)] = 1.0f - (1.0f - g) * postDepth;
 
             const auto wet = monoIn[i] * (g + (1.0f - g) * postDepth);
-            wetSendScratch_[static_cast<size_t> (i)] = PressureSend::process (wet, sampleSendGain (i));
+            wetSendScratch_[static_cast<size_t> (i)] = wet * sampleSendGain (i);
         }
 
         reverb->processBlock (wetSendScratch_.data(), reverbScratch_.data(), numSamples,

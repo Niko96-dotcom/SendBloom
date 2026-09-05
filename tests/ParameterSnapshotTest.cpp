@@ -21,13 +21,13 @@ TEST_CASE ("ParameterSnapshot capture applies curve mappings", "[parm][snapshot]
 
     const auto snap = sendbloom::ParameterSnapshot::capture (apvts);
 
-    REQUIRE (snap.rt60Seconds == Catch::Approx (sendbloom::ParameterCurves::sizeToRT60 (0.5f)));
+    REQUIRE (snap.sizeNorm == Catch::Approx (0.5f));
     REQUIRE (snap.distnBlend == Catch::Approx (1.0f));
     REQUIRE (snap.wetGain == Catch::Approx (std::sin (juce::MathConstants<float>::halfPi * 0.5f)).margin (1e-5f));
-    REQUIRE (snap.sendGain == Catch::Approx (1.0f));
+    REQUIRE_FALSE (snap.sendConnected);
 }
 
-TEST_CASE ("ParameterSnapshot send gain when connected", "[parm][snapshot]")
+TEST_CASE ("ParameterSnapshot captures pressure controls", "[parm][snapshot]")
 {
     using namespace sendbloom::ParameterIDs;
 
@@ -39,5 +39,7 @@ TEST_CASE ("ParameterSnapshot send gain when connected", "[parm][snapshot]")
     *apvts.getRawParameterValue (sendFeel) = 0.0f;
 
     const auto snap = sendbloom::ParameterSnapshot::capture (apvts);
-    REQUIRE (snap.sendGain == Catch::Approx (sendbloom::ParameterCurves::sendGain (0.5f, true)));
+    REQUIRE (snap.sendConnected);
+    REQUIRE (snap.sendAmountNorm == Catch::Approx (0.5f));
+    REQUIRE (snap.sendFirmFeel);
 }

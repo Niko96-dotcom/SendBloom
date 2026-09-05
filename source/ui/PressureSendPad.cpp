@@ -37,7 +37,6 @@ void PressureSendPad::mouseDown (const juce::MouseEvent& e)
 {
     stopBloomFade();
     pressed = true;
-    touchPoint = e.position;
     setConnected (true);
     beginAmountGesture();
     setAmountFromY (e.position.y);
@@ -48,7 +47,6 @@ void PressureSendPad::mouseDown (const juce::MouseEvent& e)
 
 void PressureSendPad::mouseDrag (const juce::MouseEvent& e)
 {
-    touchPoint = e.position;
     setAmountFromY (e.position.y);
     if (auto* parent = getParentComponent())
         parent->repaint();

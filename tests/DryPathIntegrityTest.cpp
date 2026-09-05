@@ -57,7 +57,7 @@ RenderCapture renderWithDistn (float distnValue)
     const auto thresholdDb = sendbloom::ParameterCurves::inputThresholdDb (snap.inputThresholdNorm);
     const auto inputGainLinear = juce::Decibels::decibelsToGain (snap.inputGainDb);
     const auto distnBlend = snap.distnBlend;
-    const auto sendGain = snap.sendGain;
+    const auto sendGain = plugin.pressureController.processSample();
     const auto gatePre = snap.gatePre;
     const auto darkModeMix = snap.darkMode ? 1.0f : 0.0f;
 
@@ -105,7 +105,7 @@ RenderCapture renderWithDistn (float distnValue)
 
 } // namespace
 
-TEST_CASE ("dry tap extract matches input at level max", "[chain][od][thd][DryPath]")
+TEST_CASE ("dry tap extract matches input at level max", "[chain][od][thd][DryPath][TEST-03]")
 {
     const auto capture = renderWithDistn (1.0f);
     const auto start = capture.dryExtract.size() - kMeasureSamples;
@@ -122,7 +122,7 @@ TEST_CASE ("dry tap extract matches input at level max", "[chain][od][thd][DryPa
     REQUIRE (maxDelta < 0.02f);
 }
 
-TEST_CASE ("dry path THD unchanged at distn max level max", "[chain][od][thd][DryPath]")
+TEST_CASE ("dry path THD unchanged at distn max level max", "[chain][od][thd][DryPath][TEST-03]")
 {
     const auto clean = renderWithDistn (0.0f);
     const auto driven = renderWithDistn (1.0f);
@@ -152,4 +152,39 @@ TEST_CASE ("wet grind increases with distn at level max", "[chain][od][DryPath]"
     const auto wetDriven = std::vector<float> (driven.wet.begin() + static_cast<std::ptrdiff_t> (start), driven.wet.end());
 
     REQUIRE (sendbloom::test::rms (wetDriven) != Catch::Approx (sendbloom::test::rms (wetClean)).margin (1e-4f));
+}
+
+TEST_CASE ("Output trim scales engaged audio and leaves host bypass unchanged",
+           "[io][output-gain][regression]")
+{
+    using namespace sendbloom::ParameterIDs;
+    for (const auto gainDb : { -6.0f, 0.0f, 6.0f })
+    {
+        sendbloom::PluginProcessor plugin;
+        auto& state = plugin.getAPVTS();
+        *state.getRawParameterValue (level) = 0.0f;
+        *state.getRawParameterValue (extendedStereo) = 1.0f;
+        *state.getRawParameterValue (outputGain) = gainDb;
+        plugin.prepareToPlay (48000.0, 512);
+        juce::AudioBuffer<float> buffer (2, 512);
+        juce::MidiBuffer midi;
+        for (int block = 0; block < 4; ++block)
+        {
+            for (int sample = 0; sample < 512; ++sample)
+            {
+                buffer.setSample (0, sample, 0.2f);
+                buffer.setSample (1, sample, -0.1f);
+            }
+            if (block < 2)
+                plugin.processBlock (buffer, midi);
+            else
+                plugin.processBlockBypassed (buffer, midi);
+            const auto gain = block < 2 ? juce::Decibels::decibelsToGain (gainDb) : 1.0f;
+            if (block == 1 || block == 3)
+            {
+                REQUIRE (buffer.getSample (0, 511) == Catch::Approx (0.2f * gain));
+                REQUIRE (buffer.getSample (1, 511) == Catch::Approx (-0.1f * gain));
+            }
+        }
+    }
 }
