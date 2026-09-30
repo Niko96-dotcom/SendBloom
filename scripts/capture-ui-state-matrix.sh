@@ -16,14 +16,14 @@ fi
 
 mkdir -p "$output_dir"
 
-states=(default dark gate-pre send clip advanced bypass
-        rotary-min rotary-centre rotary-max
+states=(default dark gate-pre gate-post send send-released clip advanced bypass
+        rotary-min rotary-centre rotary-max opposing
         preset-menu preset-longest preset-custom
-        load-hover load-focus save-hover save-focus)
-flags=("" "--dark" "--gate-pre" "--send" "--clip" "--advanced" "--bypass"
-       "--rotary-min" "--rotary-centre" "--rotary-max"
+        load-hover load-focus save-hover save-focus load-down save-down advanced-down)
+flags=("" "--dark" "--gate-pre" "--gate-post" "--send" "--send-released" "--clip" "--advanced" "--bypass"
+       "--rotary-min" "--rotary-centre" "--rotary-max" "--opposing"
        "--preset-menu" "--preset-longest" "--preset-custom"
-       "--load-hover" "--load-focus" "--save-hover" "--save-focus")
+       "--load-hover" "--load-focus" "--save-hover" "--save-focus" "--load-down" "--save-down" "--advanced-down")
 
 dimensions() {
   local image=$1
@@ -34,7 +34,7 @@ dimensions() {
 }
 
 for scale in 1 2; do
-  expected="$((420 * scale))x$((780 * scale))"
+  expected="$((840 * scale))x$((700 * scale))"
   for index in "${!states[@]}"; do
     state=${states[$index]}
     output="$output_dir/${state}-${scale}x.png"

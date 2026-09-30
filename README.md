@@ -4,7 +4,7 @@ Gated dirty ambience guitar effect — AU and VST3 plugin built with JUCE 8.
 
 SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placement, and a momentary pressure/send control. The dry guitar stays clean while the wet path blooms then chops hard when you stop playing — the signature "edited sample" ambience feel.
 
-**Publisher:** Niko Audio Labs  
+**Publisher:** Niko Music<br>
 **Formats:** AU (macOS), VST3 (macOS, Windows, Linux)  
 **Distributed builds:** macOS only — AU + VST3, universal (arm64 + x86_64). Windows and Linux VST3 builds run in CI but are not part of the signed public release.  
 **License:** MIT
@@ -24,8 +24,8 @@ SendBloom delivers parallel wet reverb with wet-only overdrive, dual gate placem
   See the [fidelity comparison and preset impact](docs/fidelity-20260905/RESULTS.md).
 - Optional Extended Stereo wet return in the Advanced drawer
 - 8 factory presets with host save/load round-trip
-- Bright/clear polycarbonate pedal UI with a populated visible cavity, clip LED,
-  and advanced drawer
+- Bright/clear polycarbonate pedal UI at 840×700 with registered rotary and
+  pressure animation, live values, clip LED, host bypass and advanced drawer
 - Truthful normal host PDC: the prepared SRC plus wet reconstruction latency is reported live and
   the direct/APVTS-bypass/host-bypass paths are aligned to it; this production
   topology has no exposed zero-latency route, so it does not advertise a VST3
@@ -116,15 +116,16 @@ GitHub Actions builds and tests on Linux, macOS, and Windows. Each matrix leg ru
 ```
 source/          Plugin processor, DSP chain, UI
 tests/           Catch2 unit and integration tests, plus release-script tests
-resources/       Factory presets and the UI art the plugin embeds
+resources/       Factory presets and legacy UI art
+assets/          Active registered scene and pressure fallback art
 tools/           Faceplate renderer, SVG tooling, snapshot and probe harnesses
 scripts/         Legal metadata audit and the release pipeline
 cmake/           CMake build helpers (submodule)
 cmake-local/     Project-owned CMake modules, incl. the canonical version parser
 docs/            Clean-room, architecture, UI-render and release documentation
-.planning/       Roadmap, requirements, ADRs and per-phase planning records
+.planning/       Historical roadmap, requirements, ADRs and phase records
 .github/         CI workflows, issue and pull-request templates
 ```
 
 `Builds/` is the canonical build tree and `JUCE/` and `cmake/` are submodules;
-all three are untracked by design.
+build output is ignored and both submodule revisions are tracked.

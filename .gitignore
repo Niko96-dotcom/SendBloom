@@ -74,3 +74,10 @@ repomix-output.md
 
 # Vendored third-party repo samples (local research only)
 .planning/repo-samples/
+
+# Earlier UI design studies; only the active scene and pressure fallback ship.
+assets/clear-instruments/
+assets/realism-v4/
+assets/realism-v2/*
+!assets/realism-v2/pressure-pad-0.png
+!assets/realism-v2/pressure-pad-1.png

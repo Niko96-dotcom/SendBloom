@@ -1,0 +1,702 @@
+{
+  "version": "clear-instruments-whole-scene-v6-sendbloom",
+  "logical_size": [
+    840,
+    700
+  ],
+  "render": {
+    "width": 1680,
+    "height": 1400,
+    "origin": "top-left"
+  },
+  "base_image": "scene-base.png",
+  "knobs": {
+    "input_gain": {
+      "crop_px": [
+        192,
+        552,
+        248,
+        240
+      ],
+      "default_frame": 32,
+      "frames": {
+        "file": "knob_input_gain.png",
+        "count": 65,
+        "width": 248,
+        "height": 240,
+        "columns": 9,
+        "rows": 8
+      },
+      "hitbox_px": [
+        198,
+        548,
+        221,
+        247
+      ]
+    },
+    "distn": {
+      "crop_px": [
+        456,
+        552,
+        248,
+        240
+      ],
+      "default_frame": 0,
+      "frames": {
+        "file": "knob_distn.png",
+        "count": 65,
+        "width": 248,
+        "height": 240,
+        "columns": 9,
+        "rows": 8
+      },
+      "hitbox_px": [
+        464,
+        548,
+        221,
+        247
+      ]
+    },
+    "size": {
+      "crop_px": [
+        720,
+        552,
+        248,
+        240
+      ],
+      "default_frame": 32,
+      "frames": {
+        "file": "knob_size.png",
+        "count": 65,
+        "width": 248,
+        "height": 240,
+        "columns": 9,
+        "rows": 8
+      },
+      "hitbox_px": [
+        722,
+        542,
+        236,
+        260
+      ]
+    },
+    "level": {
+      "crop_px": [
+        984,
+        552,
+        248,
+        240
+      ],
+      "default_frame": 32,
+      "frames": {
+        "file": "knob_level.png",
+        "count": 65,
+        "width": 248,
+        "height": 240,
+        "columns": 9,
+        "rows": 8
+      },
+      "hitbox_px": [
+        995,
+        548,
+        221,
+        247
+      ]
+    },
+    "output_gain": {
+      "crop_px": [
+        1248,
+        552,
+        280,
+        240
+      ],
+      "default_frame": 32,
+      "frames": {
+        "file": "knob_output_gain.png",
+        "count": 65,
+        "width": 280,
+        "height": 240,
+        "columns": 9,
+        "rows": 8
+      },
+      "hitbox_px": [
+        1261,
+        548,
+        221,
+        247
+      ]
+    }
+  },
+  "pressure": {
+    "send_amount": {
+      "crop_px": [
+        624,
+        792,
+        432,
+        500
+      ],
+      "default_frame": 0,
+      "frames": {
+        "file": "pressure_send_amount.png",
+        "count": 17,
+        "width": 432,
+        "height": 500,
+        "columns": 5,
+        "rows": 4
+      },
+      "hitbox_px": [
+        647,
+        955,
+        386,
+        222
+      ],
+      "visual_source": "press_travel",
+      "semantics": {
+        "id": "send_amount",
+        "frames": 17,
+        "visual_press_travel": "index / 16; independent from send_amount and send_connected",
+        "root_local_z_m": "-0.00075 * visual_press_travel",
+        "press_down_ms": 60,
+        "press_up_ms": 140,
+        "display_fade_release_ms": 200,
+        "active_predicate": "isPressed() || getDisplayAmount() > 0.001 || liveAmount > 0.001",
+        "idle_getPressTravel": -1,
+        "idle_fallback": "Use active predicate to choose final visual travel",
+        "release": "DSP send_amount immediately becomes zero; send_connected remains true. Display fade is not delayed DSP release.",
+        "sampling_rationale": "17 poses across 0.75 mm travel give about 0.125 logical pixel steps. Actual input and timers remain continuous."
+      }
+    }
+  },
+  "discrete_groups": [
+    {
+      "crop_px": [
+        640,
+        400,
+        320,
+        144
+      ],
+      "default_frame": 0,
+      "frames": {
+        "file": "group_top.png",
+        "count": 4,
+        "width": 320,
+        "height": 144,
+        "columns": 2,
+        "rows": 2
+      },
+      "id": "top",
+      "state_sources": [
+        {
+          "kind": "button_down",
+          "id": "load_preset"
+        },
+        {
+          "kind": "button_down",
+          "id": "save_preset"
+        }
+      ]
+    },
+    {
+      "crop_px": [
+        192,
+        792,
+        320,
+        544
+      ],
+      "default_frame": 0,
+      "frames": {
+        "file": "group_left.png",
+        "count": 4,
+        "width": 320,
+        "height": 544,
+        "columns": 2,
+        "rows": 2
+      },
+      "id": "left",
+      "state_sources": [
+        {
+          "kind": "parameter",
+          "id": "dark_mode"
+        },
+        {
+          "kind": "parameter",
+          "id": "gate_pre_post"
+        }
+      ]
+    },
+    {
+      "crop_px": [
+        1248,
+        792,
+        340,
+        544
+      ],
+      "default_frame": 0,
+      "frames": {
+        "file": "group_right.png",
+        "count": 8,
+        "width": 340,
+        "height": 544,
+        "columns": 4,
+        "rows": 2
+      },
+      "id": "right",
+      "state_sources": [
+        {
+          "kind": "parameter",
+          "id": "bypass"
+        },
+        {
+          "kind": "button_down",
+          "id": "advanced"
+        },
+        {
+          "kind": "processor_flag",
+          "id": "clip"
+        }
+      ]
+    }
+  ],
+  "input_regions": {
+    "input_gain": {
+      "hitbox_px": [
+        198,
+        548,
+        221,
+        247
+      ],
+      "evidence": "Union of projected moving hardware vertices across all65 rotary poses,4pxsource padding"
+    },
+    "distn": {
+      "hitbox_px": [
+        464,
+        548,
+        221,
+        247
+      ],
+      "evidence": "Union of projected moving hardware vertices across all65 rotary poses,4pxsource padding"
+    },
+    "size": {
+      "hitbox_px": [
+        722,
+        542,
+        236,
+        260
+      ],
+      "evidence": "Union of projected moving hardware vertices across all65 rotary poses,4pxsource padding"
+    },
+    "level": {
+      "hitbox_px": [
+        995,
+        548,
+        221,
+        247
+      ],
+      "evidence": "Union of projected moving hardware vertices across all65 rotary poses,4pxsource padding"
+    },
+    "output_gain": {
+      "hitbox_px": [
+        1261,
+        548,
+        221,
+        247
+      ],
+      "evidence": "Union of projected moving hardware vertices across all65 rotary poses,4pxsource padding"
+    },
+    "dark_mode": {
+      "hitbox_px": [
+        258,
+        984,
+        156,
+        76
+      ],
+      "evidence": "Projected fixed flange plus both actuator positions,4pxsource padding"
+    },
+    "gate_pre_post": {
+      "hitbox_px": [
+        258,
+        1111,
+        156,
+        76
+      ],
+      "evidence": "Projected fixed flange plus both actuator positions,4pxsource padding"
+    },
+    "bypass": {
+      "hitbox_px": [
+        1257,
+        984,
+        155,
+        76
+      ],
+      "evidence": "Projected fixed flange plus both actuator positions,4pxsource padding"
+    },
+    "load_preset": {
+      "hitbox_px": [
+        658,
+        421,
+        119,
+        59
+      ],
+      "evidence": "Projected fixed flange and both momentary cap states,4pxsource padding"
+    },
+    "save_preset": {
+      "hitbox_px": [
+        801,
+        421,
+        119,
+        59
+      ],
+      "evidence": "Projected fixed flange and both momentary cap states,4pxsource padding"
+    },
+    "advanced": {
+      "hitbox_px": [
+        1242,
+        1116,
+        186,
+        65
+      ],
+      "evidence": "Projected fixed flange and both momentary cap states,4pxsource padding"
+    },
+    "preset": {
+      "hitbox_px": [
+        250,
+        422,
+        345,
+        80
+      ],
+      "evidence": "Actual preset housing, flange and lens projection,4pxsource padding"
+    },
+    "send_amount": {
+      "hitbox_px": [
+        647,
+        955,
+        386,
+        222
+      ],
+      "evidence": "Frozen adapter hitbox including caption allowance; preserve original pressure y mapping"
+    }
+  },
+  "displays": {
+    "input_gain": {
+      "center_mm": [
+        -87.0,
+        -15.0
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 24.8,
+      "content_height_mm": 4.6000000000000005,
+      "content_safe_quad_px": [
+        [
+          232.977,
+          864.318
+        ],
+        [
+          232.977,
+          839.983
+        ],
+        [
+          384.427,
+          839.983
+        ],
+        [
+          384.427,
+          864.318
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        233,
+        840,
+        151,
+        24
+      ]
+    },
+    "distn": {
+      "center_mm": [
+        -43.5,
+        -15.0
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 24.8,
+      "content_height_mm": 4.6000000000000005,
+      "content_safe_quad_px": [
+        [
+          498.626,
+          864.318
+        ],
+        [
+          498.626,
+          839.983
+        ],
+        [
+          650.076,
+          839.983
+        ],
+        [
+          650.076,
+          864.318
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        499,
+        840,
+        151,
+        24
+      ]
+    },
+    "size": {
+      "center_mm": [
+        0.0,
+        -15.0
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 24.8,
+      "content_height_mm": 4.6000000000000005,
+      "content_safe_quad_px": [
+        [
+          764.275,
+          864.318
+        ],
+        [
+          764.275,
+          839.983
+        ],
+        [
+          915.725,
+          839.983
+        ],
+        [
+          915.725,
+          864.318
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        765,
+        840,
+        150,
+        24
+      ]
+    },
+    "level": {
+      "center_mm": [
+        43.5,
+        -15.0
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 24.8,
+      "content_height_mm": 4.6000000000000005,
+      "content_safe_quad_px": [
+        [
+          1029.924,
+          864.318
+        ],
+        [
+          1029.924,
+          839.983
+        ],
+        [
+          1181.374,
+          839.983
+        ],
+        [
+          1181.374,
+          864.318
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        1030,
+        840,
+        151,
+        24
+      ]
+    },
+    "output_gain": {
+      "center_mm": [
+        87.0,
+        -15.0
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 24.8,
+      "content_height_mm": 4.6000000000000005,
+      "content_safe_quad_px": [
+        [
+          1295.573,
+          864.318
+        ],
+        [
+          1295.573,
+          839.983
+        ],
+        [
+          1447.023,
+          839.983
+        ],
+        [
+          1447.023,
+          864.318
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        1296,
+        840,
+        151,
+        24
+      ]
+    },
+    "send_amount": {
+      "center_mm": [
+        0.0,
+        -81.0
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 23.8,
+      "content_height_mm": 4.6000000000000005,
+      "content_safe_quad_px": [
+        [
+          767.328,
+          1213.463
+        ],
+        [
+          767.328,
+          1189.128
+        ],
+        [
+          912.672,
+          1189.128
+        ],
+        [
+          912.672,
+          1213.463
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        768,
+        1190,
+        144,
+        23
+      ]
+    },
+    "ui_preset": {
+      "center_mm": [
+        -68.4,
+        59.4
+      ],
+      "face_z_mm": 11.325,
+      "content_z_mm": 11.36,
+      "content_width_mm": 50.8,
+      "content_height_mm": 5.2,
+      "content_safe_quad_px": [
+        [
+          267.176,
+          472.323
+        ],
+        [
+          267.176,
+          444.815
+        ],
+        [
+          577.405,
+          444.815
+        ],
+        [
+          577.405,
+          472.323
+        ]
+      ],
+      "baked_live_glyphs": false,
+      "content_safe_bounds_px": [
+        268,
+        445,
+        309,
+        27
+      ]
+    }
+  },
+  "paint_order": [
+    "knobs/input_gain",
+    "knobs/distn",
+    "knobs/size",
+    "knobs/level",
+    "knobs/output_gain",
+    "pressure/send_amount",
+    "discrete_groups/top",
+    "discrete_groups/left",
+    "discrete_groups/right"
+  ],
+  "source_contract": {
+    "frozen_files": {
+      "projection.json": "02970389cb303c816946c101dc4082f716969c0b29aa09982f34bc56bdc67f06"
+    },
+    "render": {
+      "source_canvas_px": [
+        1680,
+        1400
+      ],
+      "samples": 64,
+      "seed": 7218,
+      "adaptive": false,
+      "denoising": true,
+      "device": "METAL GPU"
+    },
+    "regional_rendering": {
+      "knobs_source_region_px": [
+        160,
+        520,
+        1400,
+        304
+      ],
+      "pressure_source_region_px": [
+        592,
+        760,
+        496,
+        564
+      ],
+      "denoiser_context_px": 32,
+      "actual_source_pngs_are_cropped": true
+    },
+    "documented_approximation": {
+      "quiet_repeat": "Measured signed4x4 maximum1.125/255,p99 0.0625/255; a separate repeated base measurement, not a description of clip reflections.",
+      "rotary_to_lower_receivers": "Held at factory pose; isolated input/size/output outsidecrop signed4x4 maximum3.9375/255, sizeframe17 maximum2.5/255.",
+      "pressure_outside_receiver": "Isolated maximum1.9375/255.",
+      "clip_illumination_outside_right_group": "Weak coherent global illumination omitted from independent right receiver. Signed4x4 maximum7.9375/255,p99 2.5625/255,73blocks above4/255,none above8/255. Root explicitly accepted actual-size full/composite comparison; this is an approximation, not noise or physically exact all-state rendering.",
+      "camera_border_vs_full": "Rotaries maximum1.1875/255,p99 0.625; pressure maximum2.625/255,p99 1.5625. Neither had blocks above4; zero pixel registration uniquely best.",
+      "final_mixed": {
+        "all_min_maximum": 3.9375,
+        "all_max_maximum": 3.6875,
+        "intermediate_maximum": 3.875,
+        "opposing_with_clip": {
+          "signed_4x4_maximum": 8.75,
+          "p99": 2.625,
+          "blocks_above4": 128,
+          "blocks_above8": 1,
+          "maximum_block_source_px": [
+            1364,
+            772,
+            4,
+            4
+          ]
+        },
+        "units": "8-bit channel levels",
+        "visual_review": "Root and independent auditor accepted full/composite comparison at840x700 with no visible missing glint or seam. This remains a documented physical-lighting approximation, not noise."
+      }
+    },
+    "parameter_values": "Host parameters and pressure input/timers remain continuous; only art is sampled in frames.",
+    "verification_evidence": "Delivered separately. Renderer provenance does not assert runtime or host validation.",
+    "approved_source": {
+      "path": "/Users/niko/Documents/Codex/2026-09-05/fin/outputs/realism-v6/aged-sendbloom-study.blend",
+      "sha256": "8b313625de72927c65dda2810b2eb5ebf98dc2c88034469228348f61a15be24e"
+    }
+  },
+  "decoded_mib_estimate": 118.30322265625
+}

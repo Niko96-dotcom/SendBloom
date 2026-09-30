@@ -1,14 +1,15 @@
 # Niko ClearShell contract — SendBloom
 
 SendBloom belongs to the **Bright** Niko ClearShell register.  It keeps its
-vertical pressure-pedal archetype and deliberately does not inherit desktop or
-stompbox controls from other products.  The editable construction source remains
-`tools/render_ui.py`; this contract records the portfolio rules that the local
-implementation proves.
+pressure-pedal interactions and deliberately does not inherit desktop or
+stompbox controls from other products. The current 840×700 editor embeds the
+camera-registered scene under
+`assets/realism-v6/`; its manifest defines the frames, hitboxes and value
+carriers. See [scene assets](ui-scene-assets.md) for provenance and limits.
 
 The Phase 45 product establishes the portfolio's neutral-white value direction,
 not a shared enclosure template.  SendBloom translates that direction into its
-own tall clear polycarbonate pedal: white-soldermask internals, graphite controls
+own clear polycarbonate pedal: white-soldermask internals, graphite controls
 and print, neutral metal, and a scarce warm-orange functional accent.  Green/cyan
 colour grading and global tint overlays are prohibited.
 
@@ -20,7 +21,7 @@ colour grading and global tint overlays are prohibited.
 - Live preset text, labels, control faces, LEDs, identity/preset carriers, and
   readable values are deliberately opaque.  They remain dynamic JUCE state;
   permanent panel print stays registered hardware art.
-- The established vertical pedal layout, tangible rotary/treadle interactions,
+- The registered scene layout, tangible rotary/pressure interactions,
   keyboard focus, reset, tooltip, and accessibility behavior remain product
   specific and authoritative.
 - Every rotary exposes its printed control name and live value through the
@@ -57,8 +58,9 @@ reversible installed-bundle comparison, and a separately observed Cubase result
 are required.  A render, source build, or validator alone is not an installation
 or host claim.
 
-The deterministic state matrix covers default, Dark, Gate Pre, Send, Clip,
-Advanced, Bypass, all-rotary minimum/centre/maximum, longest factory preset,
-Custom preset, the open preset menu, and LOAD/SAVE hover/focus feedback at both
+The 23-state deterministic matrix covers default, Dark, Gate Pre/Post, Send,
+released pressure, Clip, Advanced, Bypass, all-rotary minimum/centre/maximum, longest factory preset,
+Custom preset, the open preset menu, opposing rotary values, LOAD/SAVE
+hover/focus/pressed feedback and pressed Advanced at both
 1x and HiDPI.  Render tests enforce the neutral Bright register across the
 HiDPI rotary extremes, not just the default 1x view.

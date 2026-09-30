@@ -118,7 +118,32 @@ juce_add_binary_data(SendBloomPresets
         resources/ui/clip_off.png
         resources/ui/clip_on.png)
 
-target_link_libraries(SharedCode INTERFACE SendBloomPresets)
+# Camera-registered runtime scene; earlier design studies stay local.
+juce_add_binary_data(ClearInstrumentsAssets
+    NAMESPACE ClearInstrumentsData
+    HEADER_NAME ClearInstrumentsData.h
+    SOURCES
+        assets/realism-v6/manifest.json
+        assets/realism-v6/scene-base.png
+        assets/realism-v6/knob_input_gain.png
+        assets/realism-v6/knob_distn.png
+        assets/realism-v6/knob_size.png
+        assets/realism-v6/knob_level.png
+        assets/realism-v6/knob_output_gain.png
+        assets/realism-v6/pressure_send_amount.png
+        assets/realism-v6/group_top.png
+        assets/realism-v6/group_left.png
+        assets/realism-v6/group_right.png
+        assets/realism-v6/aux-knob-strip.png
+        assets/realism-v6/aux-switch-0.png
+        assets/realism-v6/aux-switch-1.png
+        assets/realism-v6/aux-display.png
+        assets/realism-v6/aux-button-0.png
+        assets/realism-v6/aux-button-1.png
+        assets/realism-v2/pressure-pad-0.png
+        assets/realism-v2/pressure-pad-1.png)
+
+target_link_libraries(SharedCode INTERFACE SendBloomPresets ClearInstrumentsAssets)
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 

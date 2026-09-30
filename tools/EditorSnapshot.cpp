@@ -43,6 +43,9 @@ int main (int argc, char* argv[])
     bool openAdvanced = false;
     bool darkOn = false;
     bool gatePre = false;
+    bool gatePost = false;
+    bool opposing = false;
+    bool sendReleased = false;
     bool sendPressed = false;
     bool clipActive = false;
     bool bypassed = false;
@@ -64,6 +67,18 @@ int main (int argc, char* argv[])
             darkOn = true;
         else if (arg == "--gate-pre")
             gatePre = true;
+        else if (arg == "--gate-post")
+            gatePost = true;
+        else if (arg == "--opposing")
+            opposing = true;
+        else if (arg == "--send-released")
+            sendReleased = true;
+        else if (arg == "--load-down")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::loadDown;
+        else if (arg == "--save-down")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::saveDown;
+        else if (arg == "--advanced-down")
+            presetActionState = sendbloom::PluginEditor::PresetActionSnapshotState::advancedDown;
         else if (arg == "--send")
             sendPressed = true;
         else if (arg == "--clip")
@@ -113,6 +128,8 @@ int main (int argc, char* argv[])
         setParam (processor, darkMode, 1.0f);
     if (gatePre)
         setParam (processor, gatePrePost, 0.0f);
+    if (gatePost)
+        setParam (processor, gatePrePost, 1.0f);
     if (sendPressed)
     {
         setParam (processor, sendConnected, 1.0f);
@@ -133,6 +150,12 @@ int main (int argc, char* argv[])
             setParam (processor, id, value);
     }
 
+    if (opposing)
+    {
+        int index = 0;
+        for (const auto* id : { inputGain, distn, size, level, outputGain })
+            setParam (processor, id, (index++ % 2) == 0 ? 0.0f : 1.0f);
+    }
     if (presetCustom)
     {
         processor.setCurrentProgram (2);
@@ -150,6 +173,15 @@ int main (int argc, char* argv[])
     // Allow attachments, component visibility, and image-backed child paints to settle
     // before capturing. Immediate construction-frame snapshots can omit child layers.
     juce::MessageManager::getInstance()->runDispatchLoopUntil (30);
+
+    if (sendReleased)
+        for (auto* child : editor.getChildren())
+            if (auto* pad = dynamic_cast<sendbloom::ui::PressureSendPad*>(child))
+            {
+                pad->keyPressed (juce::KeyPress(juce::KeyPress::endKey));
+                juce::MessageManager::getInstance()->runDispatchLoopUntil(100);
+                pad->keyPressed (juce::KeyPress(juce::KeyPress::homeKey));
+            }
 
     const auto imageWidth = juce::roundToInt (static_cast<float> (editor.getWidth()) * renderScale);
     const auto imageHeight = juce::roundToInt (static_cast<float> (editor.getHeight()) * renderScale);

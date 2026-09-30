@@ -79,7 +79,7 @@ bash scripts/capture-ui-state-matrix.sh "$PWD/Builds/Performance/EditorSnapshot"
   "$PWD/artifacts/local-ui-matrix"
 ```
 
-The matrix captures 17 states at 1x and 2x and checks dimensions. Inspect the
+The matrix captures 23 states at 840×700 (1x) and 1680×1400 (2x) and checks dimensions. Inspect the
 images as well; image creation alone does not prove controls work.
 
 ## Deterministic processor benchmark

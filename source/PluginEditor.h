@@ -1,8 +1,9 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "ui/SendBloomLookAndFeel.h"
-#include "ui/TransparentControls.h"
+#include "ui/NikoClearLookAndFeel.h"
+#include "ui/SendBloomSceneArt.h"
+#include "ui/SendBloomSceneLookAndFeel.h"
 #include "ui/PedalKnob.h"
 #include "ui/PressureSendPad.h"
 #include "ui/AdvancedDrawer.h"
@@ -22,6 +23,9 @@ public:
         loadFocus,
         saveHover,
         saveFocus,
+        loadDown,
+        saveDown,
+        advancedDown,
     };
 
     explicit PluginEditor (PluginProcessor&);
@@ -41,22 +45,21 @@ private:
     void timerCallback() override;
 
     PluginProcessor& processorRef;
-    ui::SendBloomLookAndFeel lookAndFeel;
-    ui::TransparentControlsLookAndFeel transparentControls;
+    niko::clear::LookAndFeel lookAndFeel;
+    const ui::SendBloomSceneArt& sceneArt = ui::SendBloomSceneArt::instance();
+    ui::SendBloomSceneLookAndFeel sceneLookAndFeel;
 
     juce::ComboBox presetBox;
-    // A matched hardware family: skirted main controls and straight-sided
-    // mini controls, each path-traced one frame per pointer angle in the
-    // faceplate's own light rig.
-    ui::PedalKnob inKnob { "INPUT", BinaryData::knob_small_strip_png, BinaryData::knob_small_strip_pngSize };
-    ui::PedalKnob sizeKnob { "SIZE", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
-    ui::PedalKnob lvlKnob { "LEVEL", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
-    ui::PedalKnob distnKnob { "DISTORTION", BinaryData::knob_large_strip_png, BinaryData::knob_large_strip_pngSize };
-    ui::PedalKnob outKnob { "OUTPUT", BinaryData::knob_small_strip_png, BinaryData::knob_small_strip_pngSize };
+    ui::PedalKnob inKnob { "INPUT" };
+    ui::PedalKnob sizeKnob { "SIZE" };
+    ui::PedalKnob lvlKnob { "LEVEL" };
+    ui::PedalKnob distnKnob { "DISTORTION" };
+    ui::PedalKnob outKnob { "OUTPUT" };
     juce::ToggleButton darkToggle { "Dark" };
-    juce::ToggleButton gateToggle { "Gate Post" };
+    juce::ToggleButton gateToggle { "GATE POST" };
+    juce::ToggleButton bypassToggle { "BYPASS" };
     ui::PressureSendPad pressurePad;
-    ui::TransparentHitButton advancedButton { "Advanced" };
+    juce::TextButton advancedButton { "Advanced" };
     juce::TextButton loadPresetButton;
     juce::TextButton savePresetButton;
     ui::AdvancedDrawer advancedDrawer;
@@ -70,6 +73,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> darkAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> gateAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
     juce::TooltipWindow tooltipWindow { this, 650 };
 
     void loadPresetFromDisk();

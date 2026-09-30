@@ -13,6 +13,9 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ### Added
 
+- Camera-registered clear-shell scene assets, animated rotary/pressure controls,
+  an attached host-bypass switch, and editor regression checks for independent
+  control motion and immediate pressure release.
 - Full production-processor offline renderer, immutable DI/test-signal corpus
   receipts, and matched/original-gain pressure-release listening comparisons.
 - A verified public-reference catalogue with exact listening time codes, pair
@@ -25,6 +28,10 @@ release otherwise. Historical entries below are never rewritten on a bump.
 
 ### Changed
 
+- The editor now uses an 840×700 scene with manifest-defined control hitboxes
+  and value displays. Advanced settings use the matching auxiliary skins.
+- The local snapshot matrix now covers 23 states at 1x and 2x, including Gate
+  Post, released pressure, opposing rotary values and pressed action buttons.
 - Wet distortion now runs at 4× host rate to reduce folded digital harmonics.
   The curve, drive and preset values are retained; both wet branches share
   reconstruction filters. This adds six samples to reported PDC and dry/bypass

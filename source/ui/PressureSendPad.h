@@ -14,6 +14,7 @@ public:
                      const juce::String& amountParamId);
 
     void paint (juce::Graphics& g) override;
+    void setSceneMode (bool enabled) { sceneMode = enabled; repaint(); }
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
@@ -59,6 +60,8 @@ private:
 
     juce::RangedAudioParameter* connectedParam { nullptr };
     juce::RangedAudioParameter* amountParam { nullptr };
+    juce::Image releasedSkin, pressedSkin;
+    bool sceneMode { false };
     bool pressed { false };
     bool amountGestureActive { false };
     float displayAmount { 0.0f };

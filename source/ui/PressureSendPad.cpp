@@ -1,5 +1,7 @@
 #include "PressureSendPad.h"
 #include "PedalFaceplatePaint.h"
+#include "NikoClearLookAndFeel.h"
+#include <ClearInstrumentsData.h>
 
 namespace sendbloom::ui
 {
@@ -18,6 +20,8 @@ PressureSendPad::PressureSendPad (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& connectedParamId,
                                   const juce::String& amountParamId)
 {
+    releasedSkin = juce::ImageCache::getFromMemory (ClearInstrumentsData::pressurepad0_png, ClearInstrumentsData::pressurepad0_pngSize);
+    pressedSkin = juce::ImageCache::getFromMemory (ClearInstrumentsData::pressurepad1_png, ClearInstrumentsData::pressurepad1_pngSize);
     connectedParam = dynamic_cast<juce::RangedAudioParameter*> (apvts.getParameter (connectedParamId));
     amountParam = dynamic_cast<juce::RangedAudioParameter*> (apvts.getParameter (amountParamId));
     setOpaque (false);
@@ -28,9 +32,40 @@ PressureSendPad::PressureSendPad (juce::AudioProcessorValueTreeState& apvts,
     setHelpText ("Press Space or Return to engage or release. Use the arrow keys to adjust pressure.");
 }
 
-void PressureSendPad::paint (juce::Graphics&)
+void PressureSendPad::paint (juce::Graphics& g)
 {
-    // Faceplate art + editor overlays draw the footswitch; this component is the hit target.
+    if (sceneMode)
+    {
+        if (hasKeyboardFocus (true))
+        {
+            g.setColour (niko::clear::palette::signal);
+            g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (5.0f), 5.0f, 1.2f);
+        }
+        return;
+    }
+    const auto liveAmount = amountParam != nullptr ? amountParam->getValue() : 0.0f;
+    const auto amount = juce::jmax (displayAmount, liveAmount);
+    const auto active = pressed || amount > 0.001f;
+    const auto body = getLocalBounds().toFloat().withTrimmedBottom (22.0f);
+    // Rendered silicone pressure surface and metal cradle. Only the existing
+    // momentary state chooses the material frame; no latching behavior is added.
+    g.setOpacity (1.0f);
+    g.drawImage (active ? pressedSkin : releasedSkin, body, juce::RectanglePlacement::centred);
+    g.setColour (niko::clear::palette::signal);
+    g.fillRoundedRectangle (body.getX() + 25.0f, body.getBottom() - 23.0f,
+                            (body.getWidth() - 50.0f) * amount, 2.0f, 1.0f);
+    const auto caption = getLocalBounds().toFloat().withTop (static_cast<float> (getHeight() - 22)).reduced (4.0f, 0.0f);
+    g.setColour (niko::clear::palette::warmWhite.withAlpha (0.96f));
+    g.fillRect (caption);
+    g.setColour (niko::clear::palette::ink);
+    g.setFont (niko::clear::sans (12.0f, true));
+    g.drawText ("PRESSURE SEND   " + juce::String (juce::roundToInt (liveAmount * 100.0f)) + "%",
+                caption, juce::Justification::centred);
+    if (hasKeyboardFocus (true))
+    {
+        g.setColour (niko::clear::palette::signal);
+        g.drawRect (body.reduced (7.0f, 10.0f), 1.5f);
+    }
 }
 
 void PressureSendPad::mouseDown (const juce::MouseEvent& e)

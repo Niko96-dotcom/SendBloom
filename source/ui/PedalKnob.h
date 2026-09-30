@@ -1,40 +1,23 @@
 #pragma once
-
-#include "PedalFaceplatePaint.h"
-#include "TransparentControls.h"
-
+#include "NikoClearLookAndFeel.h"
 #include <BinaryData.h>
 #include <functional>
-#include <juce_gui_basics/juce_gui_basics.h>
-
 namespace sendbloom::ui
 {
-
-/** Path-traced rotary control: a vertical filmstrip (one frame per pointer
-    angle, rendered by tools/render_ui.py in the faceplate's light rig) plus a
-    screen-printed caption underneath. The strip shows the control's name and
-    swaps to the live value while the knob is hovered or dragged.
-
-    The knob never rotates an image. Each frame was lit for its own pointer
-    angle, so the room's reflection stays put while the pointer moves — which
-    is why this class has no hand-painted shading pass any more. */
+/** Shared brand rotary with a permanent legend and live value carrier. */
 class PedalKnob : public juce::Component
 {
 public:
-    PedalKnob (juce::String labelText, const void* stripData = nullptr, size_t stripSize = 0)
+    PedalKnob (juce::String labelText, const void* = nullptr, size_t = 0)
         : labelName (std::move (labelText))
     {
         slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
         slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
-        slider.setRotaryParameters (juce::MathConstants<float>::pi * 1.2f,
-                                    juce::MathConstants<float>::pi * 2.8f,
-                                    true);
-        slider.setLookAndFeel (&transparentLnf);
-        slider.setOpaque (false);
+        slider.setRotaryParameters (juce::MathConstants<float>::pi * 1.25f,
+                                   juce::MathConstants<float>::pi * 2.75f, true);
         slider.setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
         slider.setMouseDragSensitivity (240);
-        slider.setVelocityModeParameters (0.18, 1, 0.0, true,
-                                          juce::ModifierKeys::shiftModifier);
+        slider.setVelocityModeParameters (0.18, 1, 0.0, true, juce::ModifierKeys::shiftModifier);
         slider.setScrollWheelEnabled (true);
         slider.setWantsKeyboardFocus (true);
         slider.setName (labelName);
@@ -44,132 +27,72 @@ public:
                             "Option-click or double-click resets the value.");
         slider.setTooltip (labelName + ": drag vertically, Shift-drag for fine control, "
                            "or Option-click/double-click to reset");
-        slider.onValueChange = [this] { repaint(); };
+        slider.onValueChange = [this] { repaint(); if (sceneMode && getParentComponent() != nullptr) getParentComponent()->repaint(); };
         addAndMakeVisible (slider);
-
-        strip = loadStrip (stripData, stripSize);
-        stripLo = boxHalveImage (strip);
     }
-
-    ~PedalKnob() override
-    {
-        slider.setLookAndFeel (nullptr);
-    }
-
     juce::Slider& getSlider() noexcept { return slider; }
-
-    void paintOverChildren (juce::Graphics& g) override
+    void setSceneGeometry (juce::Rectangle<int> input, juce::Rectangle<float> value)
     {
-        paintKnob (g);
-        paintCaption (g);
+        sceneMode = true;
+        sceneInput = input;
+        sceneValue = value;
+        resized();
     }
-
     void resized() override
     {
-        const auto size = knobSize();
-        slider.setBounds ((getWidth() - size) / 2, 0, size, size);
+        if (sceneMode) { slider.setBounds (sceneInput); return; }
+        const auto side = juce::jmin (getWidth(), getHeight() - 56);
+        slider.setBounds ((getWidth() - side) / 2, 24, side, side);
     }
-
-    void setLabelColour (juce::Colour colour)
+    void paint (juce::Graphics& g) override
     {
-        labelColour = colour;
-        valueColour = colour;
-        engravedCaption = false; // custom colour means a dark panel, not the plate
-    }
-
-    void setDefaultValue (double value)
-    {
-        slider.setDoubleClickReturnValue (true, value);
-    }
-
-    void setValueFormatter (std::function<juce::String (double)> formatter)
-    {
-        valueFormatter = std::move (formatter);
-        repaint();
-    }
-
-    juce::String getDisplayValue() const
-    {
-        if (valueFormatter != nullptr)
-            return valueFormatter (slider.getValue());
-
-        return juce::String (slider.getValue(), 2);
-    }
-
-private:
-    static juce::Image loadStrip (const void* data, size_t size)
-    {
-        auto image = juce::ImageFileFormat::loadFrom (data, size);
-        if (! image.isValid())
-            image = juce::ImageFileFormat::loadFrom (
-                BinaryData::knob_large_strip_png,
-                static_cast<size_t> (BinaryData::knob_large_strip_pngSize));
-        return image;
-    }
-
-    // Knob square is as wide as the component; whatever height remains is the caption strip.
-    int knobSize() const noexcept { return juce::jmin (getWidth(), getHeight()); }
-
-    int frameCount() const noexcept
-    {
-        return strip.isValid() ? juce::jmax (1, strip.getHeight() / strip.getWidth()) : 0;
-    }
-
-    void paintKnob (juce::Graphics& g)
-    {
-        const auto frames = frameCount();
-        if (frames == 0)
-            return;
-
-        const auto t = slider.valueToProportionOfLength (slider.getValue());
-        const auto frame = juce::roundToInt (juce::jlimit (0.0, 1.0, t) * (frames - 1));
-
-        // Standard-DPI contexts get the box-halved strip drawn 1:1; JUCE's own
-        // 2:1 resampling would blur away the cap's machined micro-texture.
-        const auto& art = wantsHiResArt (g) ? strip : stripLo;
-        const auto side = art.getWidth();
-
-        const auto bounds = slider.getBounds();
-        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
-        g.drawImage (art,
-                     bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(),
-                     0, frame * side, side, side);
-    }
-
-    void paintCaption (juce::Graphics& g)
-    {
-        const auto strip_ = getLocalBounds().withTop (knobSize());
-        if (strip_.isEmpty())
-            return;
-
-        const auto showValue = slider.isMouseOverOrDragging();
-        const auto text = showValue ? getDisplayValue() : labelName.toUpperCase();
-        // Bright/Clear legends are compact dark second-surface print over the
-        // frosted carrier; live values keep the orange product accent.
-        auto font = juce::Font (juce::FontOptions (10.0f, juce::Font::bold));
-        font.setHorizontalScale (0.86f);
-        font.setExtraKerningFactor (0.035f);
-        g.setFont (font);
-        if (engravedCaption)
+        if (sceneMode)
         {
-            g.setColour (juce::Colours::black.withAlpha (0.44f));
-            g.drawText (text, strip_.translated (0, 1), juce::Justification::centred, false);
+            g.setColour (juce::Colour(0xffeee9db));
+            g.setFont (niko::clear::numeric (13.0f));
+            g.drawText (getDisplayValue(), sceneValue, juce::Justification::centred);
+            if (slider.hasKeyboardFocus (true))
+            {
+                g.setColour (niko::clear::palette::signal);
+                g.drawRoundedRectangle (sceneInput.toFloat().reduced(2.0f), 5.0f, 1.2f);
+            }
+            return;
         }
-        g.setColour ((showValue ? valueColour : labelColour).withAlpha (0.91f));
-        g.drawText (text, strip_, juce::Justification::centred, false);
+        const auto legend = getLocalBounds().removeFromTop (20).toFloat();
+        g.setColour (niko::clear::palette::warmWhite.withAlpha (0.94f));
+        if (labelBackgroundVisible) g.fillRect (legend.reduced (1.0f, 0.0f));
+        g.setColour (labelColour);
+        g.setFont (niko::clear::sans (12.0f, true));
+        g.drawText (labelName.toUpperCase(), legend, juce::Justification::centred);
+        auto value = getLocalBounds().withTop (getHeight() - 28).toFloat();
+        if (auto* shared = dynamic_cast<niko::clear::LookAndFeel*> (&getLookAndFeel()))
+            value = shared->paintValueWindow (g, value, isEnabled(), slider.hasKeyboardFocus (true));
+        else
+        {
+            g.setColour (juce::Colour (0xff232a2b));
+            g.fillRect (value);
+        }
+        g.setColour (juce::Colour (0xfff0ead6));
+        g.setFont (niko::clear::numeric (14.0f));
+        g.drawText (getDisplayValue(), value, juce::Justification::centred);
     }
 
+    void setLabelBackgroundVisible (bool visible) { labelBackgroundVisible = visible; repaint(); }
+    void setLabelColour (juce::Colour colour) { labelColour = colour; }
+    void setDefaultValue (double value) { slider.setDoubleClickReturnValue (true, value); }
+    void setValueFormatter (std::function<juce::String (double)> formatter)
+    { valueFormatter = std::move (formatter); repaint(); }
+    juce::String getDisplayValue() const
+    { return valueFormatter ? valueFormatter (slider.getValue()) : juce::String (slider.getValue(), 2); }
+private:
+    bool sceneMode = false;
+    bool labelBackgroundVisible = true;
+    juce::Rectangle<int> sceneInput;
+    juce::Rectangle<float> sceneValue;
     juce::String labelName;
     std::function<juce::String (double)> valueFormatter;
-    juce::Colour labelColour { 0xff0e1b20 };
-    juce::Colour valueColour { 0xffe66c0b };
-    bool engravedCaption { true };
-    TransparentControlsLookAndFeel transparentLnf;
+    juce::Colour labelColour { 0xff292d2e };
     juce::Slider slider;
-    juce::Image strip;
-    juce::Image stripLo;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PedalKnob)
 };
-
-} // namespace sendbloom::ui
+}

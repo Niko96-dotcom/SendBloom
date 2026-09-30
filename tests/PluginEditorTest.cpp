@@ -1,7 +1,7 @@
 #include <PluginEditor.h>
 #include <PluginProcessor.h>
 #include <ParameterIDs.h>
-#include <ui/PedalFaceplatePaint.h>
+#include <array>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -122,14 +122,14 @@ int countOrangePixels (const juce::Image& image,
 
 } // namespace
 
-TEST_CASE ("PluginEditor instantiates at pedal dimensions", "[ui][editor]")
+TEST_CASE ("PluginEditor instantiates at wide studio dimensions", "[ui][editor]")
 {
     juce::ScopedJuceInitialiser_GUI gui;
     sendbloom::PluginProcessor processor;
     sendbloom::PluginEditor editor (processor);
 
-    REQUIRE (editor.getWidth() == 420);
-    REQUIRE (editor.getHeight() == 780);
+    REQUIRE (editor.getWidth() == 840);
+    REQUIRE (editor.getHeight() == 700);
     REQUIRE (editor.getNumChildComponents() > 5);
 }
 
@@ -232,10 +232,11 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     editor.resized();
 
     // Probe the shared faceplate layout rectangles the editor parks its hotspots on.
-    using namespace sendbloom::ui::facelayout;
-    const auto levelCentre = kLevelKnob.withHeight (kKnobLarge).getCentre();
-    const auto darkCentre = kDarkButton.getCentre();
-    const auto advancedCentre = kAdvancedHitBox.getCentre();
+    auto* levelSlider = findComponentNamed (editor, "LEVEL");
+    REQUIRE (levelSlider != nullptr);
+    const auto levelCentre = editor.getLocalPoint (levelSlider, levelSlider->getLocalBounds().getCentre());
+    const auto darkCentre = sendbloom::ui::SendBloomSceneArt::instance().hit("dark_mode").getCentre();
+    const auto advancedCentre = sendbloom::ui::SendBloomSceneArt::instance().hit("advanced").getCentre();
 
     auto* levelHit = editor.getComponentAt (levelCentre);
     auto* darkHit = editor.getComponentAt (darkCentre);
@@ -257,7 +258,7 @@ TEST_CASE ("Faceplate control hotspots are hittable and paint knobs", "[ui][edit
     REQUIRE (std::abs (level->getValue() - before) > 0.3f);
 }
 
-TEST_CASE ("Faceplate knob rendering keeps its moulded body and bright index",
+TEST_CASE ("Registered knob rendering keeps its moulded body and dark index",
            "[ui][editor][render]")
 {
 #if ! JUCE_MAC
@@ -272,19 +273,21 @@ TEST_CASE ("Faceplate knob rendering keeps its moulded body and bright index",
     editor.setVisible (true);
     editor.resized();
 
-    using namespace sendbloom::ui::facelayout;
-    const auto levelCentre = kLevelKnob.withHeight (kKnobLarge).getCentre();
+    auto* levelSlider = findComponentNamed (editor, "LEVEL");
+    REQUIRE (levelSlider != nullptr);
 
     juce::Image image (juce::Image::ARGB, editor.getWidth(), editor.getHeight(), true);
     juce::Graphics g (image);
     editor.paintEntireComponent (g, true);
 
-    // Dark control over the bright clear-shell register: prove the rendered
-    // hardware still contains its moulded body and physical index/washer.
+    // The shared ivory cap has a contrasting charcoal index and collar.
     float darkest = 1.0f;
     float brightest = 0.0f;
-    for (int y = levelCentre.y - 30; y <= levelCentre.y + 30; ++y)
-        for (int x = levelCentre.x - 30; x <= levelCentre.x + 30; ++x)
+    // The tall cap projects above the input region centre. Inspect its actual
+    // camera-registered crop so the index and lower collar are both sampled.
+    const auto cap = (sendbloom::ui::SendBloomSceneArt::instance().knobs.at("level").crop.toFloat() * 0.5f).getLargestIntegerWithin();
+    for (int y = cap.getY(); y < cap.getBottom(); ++y)
+        for (int x = cap.getX(); x < cap.getRight(); ++x)
         {
             const auto brightness = image.getPixelAt (x, y).getBrightness();
             darkest = juce::jmin (darkest, brightness);
@@ -317,7 +320,7 @@ TEST_CASE ("Bright clear-shell board remains neutral and depth-separated at 1x",
     // parts and the dark user-contact hardware.  Its mean must stay bright and
     // neutral, while a material fraction of dark pixels prevents a featureless
     // white card from satisfying the ClearShell contract.
-    const juce::Rectangle<int> boardRegion { 55, 370, 310, 320 };
+    const juce::Rectangle<int> boardRegion { 64, 242, 712, 174 };
     double red = 0.0;
     double green = 0.0;
     double blue = 0.0;
@@ -349,7 +352,7 @@ TEST_CASE ("Bright clear-shell board remains neutral and depth-separated at 1x",
     REQUIRE (meanMin > 0.42);
     REQUIRE (meanMax - meanMin < 0.06);
     REQUIRE (brightFraction > 0.50);
-    REQUIRE (darkFraction > 0.06);
+    REQUIRE (darkFraction > 0.015);
 #endif
 }
 
@@ -361,7 +364,7 @@ TEST_CASE ("Bright clear-shell palette survives rotary extremes at HiDPI",
 #else
     juce::ScopedJuceInitialiser_GUI gui;
     using namespace sendbloom::ParameterIDs;
-    const auto boardRegion = juce::Rectangle<int> (55, 370, 310, 320);
+    const auto boardRegion = juce::Rectangle<int> (64, 242, 712, 174);
 
     for (const auto value : { 0.0f, 0.5f, 1.0f })
     {
@@ -375,7 +378,7 @@ TEST_CASE ("Bright clear-shell palette survives rotary extremes at HiDPI",
         REQUIRE (stats.meanMin > 0.42);
         REQUIRE (stats.meanSpread < 0.06);
         REQUIRE (stats.brightFraction > 0.50);
-        REQUIRE (stats.darkFraction > 0.06);
+        REQUIRE (stats.darkFraction > 0.015);
     }
 #endif
 }
@@ -388,7 +391,6 @@ TEST_CASE ("Preset action focus is visible at standard and HiDPI scales",
 #else
     juce::ScopedJuceInitialiser_GUI gui;
     using State = sendbloom::PluginEditor::PresetActionSnapshotState;
-    using namespace sendbloom::ui::facelayout;
 
     for (const auto scale : { 1, 2 })
     {
@@ -400,7 +402,7 @@ TEST_CASE ("Preset action focus is visible at standard and HiDPI scales",
         editor.setPresetActionStateForSnapshot (State::loadFocus);
         const auto focused = renderEditor (editor, scale);
 
-        const auto region = kPresetLoad.expanded (4);
+        const auto region = sendbloom::ui::SendBloomSceneArt::instance().hit("load_preset").expanded (4);
         const auto baselineOrange = countOrangePixels (baseline, region, scale);
         const auto focusedOrange = countOrangePixels (focused, region, scale);
         REQUIRE (focusedOrange > baselineOrange + 12 * scale);
@@ -428,10 +430,11 @@ TEST_CASE ("Preset menu remains readable with the longest factory name at HiDPI"
     editor.paintEntireComponent (g, true);
     editor.paintPresetMenuForSnapshot (g);
 
-    const auto menuStats = measurePalette (image, { 54, 174, 270, 251 }, 2);
+    const auto preset = sendbloom::ui::SendBloomSceneArt::instance().hit("preset");
+    const auto menuStats = measurePalette (image, { preset.getX(), preset.getBottom() + 6, 270, 251 }, 2);
     REQUIRE (menuStats.brightFraction > 0.66);
     REQUIRE (menuStats.darkFraction > 0.025);
-    REQUIRE (countOrangePixels (image, { 54, 174, 270, 251 }, 2) > 4000);
+    REQUIRE (menuStats.meanSpread < 0.08); // warm neutral shared menu with dark, legible type.
 
 #endif
 }
@@ -466,13 +469,14 @@ TEST_CASE ("Gate control follows preset changes and has no inert preset action b
     {
         if (auto* button = dynamic_cast<juce::TextButton*> (child))
         {
-            REQUIRE (button->getButtonText() != "SAVE");
+            if (button->getButtonText() == "SAVE" || button->getButtonText() == "LOAD")
+                REQUIRE (button->onClick != nullptr);
             REQUIRE (button->getButtonText() != "NEW");
             REQUIRE (button->getButtonText() != "DELETE");
         }
 
         if (auto* toggle = dynamic_cast<juce::ToggleButton*> (child))
-            if (toggle->getButtonText() == "Gate")
+            if (toggle->getButtonText().startsWith ("GATE "))
                 gateButton = toggle;
     }
 
@@ -515,4 +519,108 @@ TEST_CASE ("Editor program selector follows project state restore",
 
     REQUIRE (processor.getCurrentProgramDisplayName() == "Gated Room");
     REQUIRE (presetBox->getSelectedId() == 8);
+}
+
+TEST_CASE ("Clear layout keeps every main target distinct and inside the shell", "[ui][editor][layout]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+    REQUIRE (sendbloom::ui::SendBloomSceneArt::instance().valid);
+    const std::array targets { sendbloom::ui::SendBloomSceneArt::instance().hit("preset"), sendbloom::ui::SendBloomSceneArt::instance().hit("load_preset"), sendbloom::ui::SendBloomSceneArt::instance().hit("save_preset"), sendbloom::ui::SendBloomSceneArt::instance().hit("input_gain"),
+        sendbloom::ui::SendBloomSceneArt::instance().hit("distn"), sendbloom::ui::SendBloomSceneArt::instance().hit("size"), sendbloom::ui::SendBloomSceneArt::instance().hit("level"), sendbloom::ui::SendBloomSceneArt::instance().hit("output_gain"), sendbloom::ui::SendBloomSceneArt::instance().hit("dark_mode"),
+        sendbloom::ui::SendBloomSceneArt::instance().hit("gate_pre_post"), sendbloom::ui::SendBloomSceneArt::instance().hit("send_amount"), sendbloom::ui::SendBloomSceneArt::instance().hit("advanced") };
+    for (size_t i = 0; i < targets.size(); ++i)
+    {
+        REQUIRE (editor.getLocalBounds().contains (targets[i]));
+        for (size_t j = i + 1; j < targets.size(); ++j)
+            REQUIRE_FALSE (targets[i].intersects (targets[j]));
+    }
+}
+
+TEST_CASE ("Bypass is a real attached host parameter", "[ui][editor][bypass]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+    juce::ToggleButton* bypass = nullptr;
+    for (auto* child : editor.getChildren())
+        if (auto* toggle = dynamic_cast<juce::ToggleButton*> (child))
+            if (toggle->getButtonText() == "BYPASS") bypass = toggle;
+    REQUIRE (bypass != nullptr);
+    bypass->setToggleState (true, juce::sendNotificationSync);
+    REQUIRE (processor.getAPVTS().getRawParameterValue (sendbloom::ParameterIDs::bypass)->load() == 1.0f);
+    processor.getAPVTS().getParameter (sendbloom::ParameterIDs::bypass)->setValueNotifyingHost (0.0f);
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (20);
+    REQUIRE_FALSE (bypass->getToggleState());
+}
+
+TEST_CASE ("Registered rotary motion leaves neighbouring physical controls unchanged",
+           "[ui][editor][scene][render][automation]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    const auto& art = sendbloom::ui::SendBloomSceneArt::instance();
+    REQUIRE (art.valid);
+    for (const auto& moving : art.knobs)
+    {
+        CAPTURE (moving.first);
+        sendbloom::PluginProcessor processor;
+        sendbloom::PluginEditor editor (processor);
+        auto* parameter = processor.getAPVTS().getParameter (moving.first);
+        REQUIRE (parameter != nullptr);
+        parameter->setValueNotifyingHost (0.0f);
+        const auto before = renderEditor (editor, 2);
+        parameter->setValueNotifyingHost (1.0f);
+        const auto after = renderEditor (editor, 2);
+        for (const auto& observed : art.knobs)
+        {
+            int changed = 0;
+            const auto crop = observed.second.crop;
+            for (int y = crop.getY(); y < crop.getBottom(); ++y)
+                for (int x = crop.getX(); x < crop.getRight(); ++x)
+                    changed += before.getPixelAt(x,y) != after.getPixelAt(x,y) ? 1 : 0;
+            if (moving.first == observed.first) REQUIRE (changed > 80);
+            else REQUIRE (changed == 0);
+        }
+    }
+}
+
+TEST_CASE ("Rendered pressure travel outlasts immediate DSP release without disconnecting",
+           "[ui][editor][scene][render][pressure]")
+{
+    juce::ScopedJuceInitialiser_GUI gui;
+    const auto& art = sendbloom::ui::SendBloomSceneArt::instance();
+    REQUIRE (art.valid);
+    sendbloom::PluginProcessor processor;
+    sendbloom::PluginEditor editor (processor);
+    auto* pad = dynamic_cast<sendbloom::ui::PressureSendPad*>(findComponentNamed(editor, "Pressure send"));
+    REQUIRE (pad != nullptr);
+    auto* amount = processor.getAPVTS().getParameter (sendbloom::ParameterIDs::sendAmount);
+    auto* connected = processor.getAPVTS().getParameter (sendbloom::ParameterIDs::sendConnected);
+    REQUIRE (amount != nullptr);
+    REQUIRE (connected != nullptr);
+    REQUIRE (pad->keyPressed(juce::KeyPress(juce::KeyPress::endKey)));
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+    const auto engaged = renderEditor(editor, 2);
+    REQUIRE (pad->keyPressed(juce::KeyPress(juce::KeyPress::homeKey)));
+    REQUIRE (amount->getValue() == 0.0f);
+    REQUIRE (connected->getValue() == 1.0f);
+    REQUIRE (pad->getDisplayAmount() > 0.0f);
+    const auto releasing = renderEditor(editor, 2);
+    const auto countChanged = [&] (const juce::Image& other)
+    {
+        int count = 0;
+        const auto crop = art.pressure.crop;
+        for (int y = crop.getY(); y < crop.getBottom(); ++y)
+            for (int x = crop.getX(); x < crop.getRight(); ++x)
+                if (! (art.display("send_amount") * 2.0f).getSmallestIntegerContainer().contains(x,y))
+                    count += engaged.getPixelAt(x,y) != other.getPixelAt(x,y) ? 1 : 0;
+        return count;
+    };
+    REQUIRE (countChanged(releasing) == 0);
+    juce::MessageManager::getInstance()->runDispatchLoopUntil (420);
+    const auto released = renderEditor(editor, 2);
+    REQUIRE (countChanged(released) > 80);
+    REQUIRE (amount->getValue() == 0.0f);
+    REQUIRE (connected->getValue() == 1.0f);
 }

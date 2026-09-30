@@ -10,29 +10,26 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& extendedStereoId,
                                 const juce::String& sendConnectedId)
 {
+    gateSensKnob.setLabelBackgroundVisible (false);
+    pressureModeToggle.setLookAndFeel (&serviceLookAndFeel);
+    extendedStereoToggle.setLookAndFeel (&serviceLookAndFeel);
     addChildComponent (gateSensKnob);
-    gateSensKnob.setLabelColour (juce::Colour (0xffe66c0b));
+    gateSensKnob.setLabelColour (juce::Colour (0xff292d2e));
     gateSensKnob.setDefaultValue (0.5);
     gateSensKnob.setValueFormatter ([] (double value)
     {
         // CORE-07: Gate Sens reports canonical threshold dB.
-        return juce::String (ParameterCurves::inputThresholdDb (static_cast<float> (value)), 2);
+        return juce::String (ParameterCurves::inputThresholdDb (static_cast<float> (value)), 1) + " dB";
     });
 
     sendFeelLabel.setText ("SEND FEEL", juce::dontSendNotification);
     sendFeelLabel.setJustificationType (juce::Justification::centred);
-    sendFeelLabel.setColour (juce::Label::textColourId, juce::Colour (0xffddd3b7));
+    sendFeelLabel.setColour (juce::Label::textColourId, juce::Colour (0xff292d2e));
     sendFeelLabel.setFont (juce::FontOptions (13.0f, juce::Font::bold));
     addChildComponent (sendFeelLabel);
 
     sendFeelBox.addItem ("Firm", 1);
     sendFeelBox.addItem ("Soft", 2);
-    const auto orange = juce::Colour (0xffe66c0b);
-    sendFeelBox.setColour (juce::ComboBox::backgroundColourId, juce::Colour (0xff191411));
-    sendFeelBox.setColour (juce::ComboBox::textColourId, orange);
-    sendFeelBox.setColour (juce::ComboBox::outlineColourId, orange.withAlpha (0.55f));
-    sendFeelBox.setColour (juce::ComboBox::arrowColourId, orange);
-    sendFeelBox.setColour (juce::ComboBox::buttonColourId, juce::Colour (0xff191411));
     addChildComponent (sendFeelBox);
 
     pressureModeToggle.setTooltip ("Pressure Mode: when on, wet feed follows pressure; "
@@ -56,39 +53,27 @@ AdvancedDrawer::AdvancedDrawer (juce::AudioProcessorValueTreeState& apvts,
         apvts, extendedStereoId, extendedStereoToggle);
 }
 
+AdvancedDrawer::~AdvancedDrawer()
+{
+    pressureModeToggle.setLookAndFeel(nullptr);
+    extendedStereoToggle.setLookAndFeel(nullptr);
+}
+
 void AdvancedDrawer::paint (juce::Graphics& g)
 {
-    const auto bounds = getLocalBounds().toFloat();
-
-    juce::Path panel;
-    panel.startNewSubPath (14.0f, 0.0f);
-    panel.lineTo (bounds.getRight() - 3.0f, 0.0f);
-    panel.lineTo (bounds.getRight() - 3.0f, bounds.getBottom() - 28.0f);
-    panel.lineTo (bounds.getRight() - 28.0f, bounds.getBottom() - 3.0f);
-    panel.lineTo (2.0f, bounds.getBottom() - 3.0f);
-    panel.lineTo (2.0f, 14.0f);
-    panel.closeSubPath();
-
-    juce::ColourGradient face (juce::Colour (0xff1a1714), 0.0f, 0.0f,
-                               juce::Colour (0xff070706), 0.0f, bounds.getBottom(), false);
-    g.setGradientFill (face);
-    g.fillPath (panel);
-    g.setColour (juce::Colour (0xffb8aa8c).withAlpha (0.74f));
-    g.strokePath (panel, juce::PathStrokeType (1.5f));
-    g.setColour (juce::Colour (0xffe66c0b).withAlpha (0.78f));
-    g.strokePath (panel, juce::PathStrokeType (0.8f));
-
-    g.setColour (juce::Colour (0xffddd3b7));
-    g.setFont (juce::FontOptions (15.5f, juce::Font::bold));
-    g.drawText ("ADVANCED", 18, 8, getWidth() - 54, 22, juce::Justification::centred);
-    g.setColour (juce::Colour (0xffe66c0b));
-    g.drawText ("<", getWidth() - 40, 8, 20, 22, juce::Justification::centred);
-    g.drawHorizontalLine (34, 18.0f, bounds.getRight() - 18.0f);
-
-    g.setColour (juce::Colour (0xffddd3b7).withAlpha (0.90f));
-    g.setFont (juce::FontOptions (9.0f, juce::Font::bold));
-    g.drawText ("PRESSURE MODE", 14, 124, 108, 20, juce::Justification::centredLeft, false);
-    g.drawText ("EXTENDED STEREO", 14, 150, 108, 20, juce::Justification::centredLeft, false);
+    auto tray = getLocalBounds().toFloat().reduced (1.0f);
+    g.setColour (juce::Colours::black.withAlpha (0.23f));
+    g.fillRoundedRectangle (tray.translated (0.0f, 3.0f), 5.0f);
+    g.setGradientFill (juce::ColourGradient (juce::Colour (0xffeeecdf), tray.getTopLeft(),
+                                            juce::Colour (0xffd8d8c8), tray.getBottomRight(), false));
+    g.fillRoundedRectangle (tray, 5.0f);
+    g.setColour (juce::Colour (0xff777d70));
+    g.drawRoundedRectangle (tray, 5.0f, 1.0f);
+    g.setColour (juce::Colours::white.withAlpha (0.9f));
+    g.drawRoundedRectangle (tray.reduced (2.0f), 3.0f, 1.0f);
+    g.setColour (niko::clear::palette::ink);
+    g.setFont (niko::clear::sans (12.0f, true));
+    g.drawText ("SEND SETTINGS", 154, 16, 190, 22, juce::Justification::centredLeft);
 }
 
 void AdvancedDrawer::setExpanded (bool shouldExpand)
@@ -108,12 +93,12 @@ void AdvancedDrawer::resized()
     if (! expanded)
         return;
 
-    gateSensKnob.setBounds (16, 38, 68, 82);
-    sendFeelLabel.setBounds (86, 43, 66, 16);
-    sendFeelBox.setBounds (84, 63, 68, 26);
+    gateSensKnob.setBounds (26, 10, 104, 132);
+    sendFeelLabel.setBounds (154, 49, 126, 20);
+    sendFeelBox.setBounds (154, 77, 126, 34);
+    pressureModeToggle.setBounds (320, 30, 176, 36);
+    extendedStereoToggle.setBounds (320, 83, 176, 36);
 
-    pressureModeToggle.setBounds (116, 124, 38, 18);
-    extendedStereoToggle.setBounds (116, 150, 38, 18);
 }
 
 } // namespace sendbloom::ui

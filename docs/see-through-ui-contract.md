@@ -1,10 +1,15 @@
 # SendBloom Bright/Clear Shell Contract
 
-Status: implemented in `tools/render_ui.py`; the current product register is
+Status: current runtime art is embedded from `assets/realism-v6/`; see
+[scene assets](ui-scene-assets.md). The product register is
 **bright/clear**.  This is a separate product direction from the former black
 opaque faceplate, not a global alpha adjustment.
 
-## Construction and internals inventory
+## Earlier renderer construction and internals inventory
+
+The following inventory, optical settings and probe values describe the earlier
+`tools/render_ui.py` faceplate. They are historical evidence and must not be
+attributed to the current registered scene.
 
 The clear moulding is one generated shell mesh (`plate`) with a 2.35 mm wall,
 2.10 mm top skin, cavity ceiling, sidewall, and bottom return.  The rear
@@ -78,16 +83,19 @@ behind.
 
 ## Runtime state matrix
 
-`scripts/capture-ui-state-matrix.sh` captures the real `EditorSnapshot` in 17
-states: default, Dark, Gate Pre, Send, Clip, Advanced, Bypass, all-rotary
-minimum/centre/maximum, open preset menu with the longest factory name, longest
-factory preset, Custom preset, and LOAD/SAVE hover/focus feedback.  Every state
-is captured at both 420×780 and 840×1560.  The script verifies dimensions and
+`scripts/capture-ui-state-matrix.sh` captures the real `EditorSnapshot` in 23
+states: default, Dark, Gate Pre/Post, Send, released pressure, Clip, Advanced,
+Bypass, opposing rotary values, all-rotary minimum/centre/maximum, open preset menu with the longest factory name, longest
+factory preset, Custom preset, LOAD/SAVE hover/focus/pressed feedback, and
+pressed Advanced. Every state
+is captured at both 840×700 and 1680×1400.  The script verifies dimensions and
 fails closed on a missing snapshot.  These composites are the 1x/HiDPI review
 surface; isolated render assets do not substitute for them.
 
 ## Evidence boundary
 
-The source validator and rendered state assets prove construction, layout, and
-runtime registration.  They do not prove human perceptual equivalence to a
+The earlier source validator describes that renderer only. Current scene
+validation checks asset dimensions, frame counts, distinct layer crops, and
+manifest hitboxes; the snapshot matrix shows runtime registration. They do not
+prove human perceptual equivalence to a
 physical clear enclosure; that remains a `human_needed` listening/visual check.
